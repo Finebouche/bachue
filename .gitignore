@@ -12,18 +12,9 @@ dist/
 .pytest_cache/
 CLAUDE.md
 
-# Dataset: audio of the Zenodo record and MFCC caches (the annotations, corrected, are tracked)
-/bachue/datasets/marron1/*
-!/bachue/datasets/marron1/annotations/
-
-# Datasets of hag (bachue.datasets.load_*): downloaded or linked at their first use
-/bachue/datasets/Canary
-/bachue/datasets/CatsDogs
-/bachue/datasets/JapaneseVowels
-/bachue/datasets/SpeechCommands
-/bachue/datasets/fsdd
-/bachue/datasets/FSDD
-/bachue/datasets/HAART
+# Datasets: all in bachue/datasets/datasets, downloaded at their first use (the audio of marron1 from Zenodo, those of
+# hag) or copied by hand (the corrected annotations of marron1, not published yet), and the MFCC caches
+/bachue/datasets/datasets/
 
 # outputs/<study>/{hpo,performances,analysis}: the databases of the datasets (hpo/<dataset>_db.sqlite3) and the
 # result CSVs are tracked, not the parts
@@ -37,4 +28,3 @@ CLAUDE.md
 # Slurm logs and task lists of the jobs
 /slurm/logs/
 /slurm/tasks/
-bachue/datasets/marron1/

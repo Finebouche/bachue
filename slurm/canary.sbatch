@@ -98,7 +98,10 @@ elif [ "${HAG_CANARY_MODE:-hpo}" = next_phrase ]; then
     python -m bachue.performances.readout_window_evaluation "$@"
 elif [ "${HAG_CANARY_MODE:-hpo}" = readout_rules ]; then
     if [ -n "${HAG_CANARY_TASKS:-}" ]; then set -- run "$@"; fi
-    python -m bachue.performances.learning_rules_evaluation "$@"
+    case "${HAG_CANARY_HPO_RULE:-}" in
+        *:*[!0-9]*) python -m bachue.performances.partial_order2_evaluation studies "$@" ;;  # (<rule>:<selection>)
+        *) python -m bachue.performances.learning_rules_evaluation "$@" ;;
+    esac
 elif [ "${HAG_CANARY_MODE:-hpo}" = monomial_selection ] || [ "${HAG_CANARY_MODE:-hpo}" = monomial_selection_rules ]; then
     if [ -n "${HAG_CANARY_TASKS:-}" ]; then set -- run "$@"; fi
     if [ "$HAG_CANARY_MODE" = monomial_selection_rules ]; then set -- rules "$@"; fi

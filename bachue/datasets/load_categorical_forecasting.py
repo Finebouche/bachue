@@ -6,7 +6,9 @@ of bachue.datasets.load_data). Its only dataset: the canary songs.
 Canary song dataset (M1-2016-spring, https://zenodo.org/records/6521932): canary songs are sequences of phrases
 (A -> A -> B -> C ...), annotated segment by segment (phrases, calls, silences SIL and noises TRASH).
 
-The dataset is in CANARY_DIR: its annotations (ANNOTATIONS_DIR, tracked), those of the Zenodo record corrected, and
+The dataset is in CANARY_DIR (bachue/datasets/datasets/marron1, not tracked, as all the datasets): its annotations
+(ANNOTATIONS_DIR, copied by hand from our computer, e.g. to PlaFRIM: they are not published yet), those of the Zenodo
+record corrected, and
 its audio, downloaded from Zenodo into CANARY_DIR / "audio" (~855 MB), with the MFCC caches of bachue.common (not
 tracked).
 
@@ -27,8 +29,8 @@ from joblib import Parallel, delayed
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
-DATASETS_DIR = Path(__file__).resolve().parent
-CANARY_DIR = DATASETS_DIR / "marron1"  # (tracked: the annotations only)
+DATASETS_DIR = Path(__file__).resolve().parent / "datasets"  # (all the data, downloaded or copied: not tracked)
+CANARY_DIR = DATASETS_DIR / "marron1"
 # The annotations of the Zenodo record, corrected. The annotations of 5 songs (172, 290, 365, 418, 430) are late on
 # their audio in the record (all their phrases sound like the label of a later one; their audio was probably cut at the
 # start after the annotation): shifted by -0.810, -0.990, -1.715, -1.980 and -1.380 s, estimated by the alignment of
@@ -90,7 +92,12 @@ def songs_mfcc(audios, config, nb_jobs=-1):
 
 
 def download_canary_if_needed():
-    """(directory of the annotations, directory of the audio), the audio downloaded from Zenodo if needed."""
+    """(directory of the annotations, directory of the audio), the audio downloaded from Zenodo if needed. The
+    annotations, corrected, are not downloaded: they are copied by hand into ANNOTATIONS_DIR."""
+    if not any(ANNOTATIONS_DIR.rglob("*.csv")):
+        raise FileNotFoundError(f"{ANNOTATIONS_DIR}: no annotation. The corrected annotations of marron1 are not "
+                                "published: copy them from our computer (rsync -a <bachue>/bachue/datasets/datasets/"
+                                "marron1/annotations/ <here>)")
     audio_dir = CANARY_DIR / "audio"
     if not any(audio_dir.rglob("*.wav")):
         audio_dir.mkdir(parents=True, exist_ok=True)

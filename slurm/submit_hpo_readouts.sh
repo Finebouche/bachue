@@ -35,8 +35,8 @@ BEGIN=${BEGIN:-19:00}
 MAX_RUNNING=${MAX_RUNNING:-8}
 cd "$(dirname "$0")/.."
 mkdir -p slurm/logs slurm/tasks
-if [ -z "$(find bachue/datasets/marron1/audio -name "*.wav" -print -quit)" ] || [ ! -f bachue/datasets/marron1/boundary_features_44100_no_floor.pkl ]; then
-    echo "bachue/datasets/marron1: audio or MFCC cache missing (the compute nodes have no internet)" >&2
+if [ -z "$(find bachue/datasets/datasets/marron1/audio -name "*.wav" -print -quit)" ] || [ ! -f bachue/datasets/datasets/marron1/boundary_features_44100_no_floor.pkl ]; then
+    echo "bachue/datasets/datasets/marron1: audio or MFCC cache missing (the compute nodes have no internet)" >&2
     exit 1
 fi
 

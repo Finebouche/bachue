@@ -231,15 +231,6 @@ def point_data(reservoirs, songs, waves, readouts, fit=(), classes=None):
                     for training, (inputs, labels) in accumulated.items()}
 
 
-def point_states(reservoirs, songs, waves, fit=(), classes=None):
-    """{wave: states of the prediction points of the songs, (points, units)} for the decision of the first readout
-    (READOUTS) and, with the songs fit (and the classes), its training data on them (point_data)."""
-    result = point_data(reservoirs, songs, waves, READOUTS[:1], fit, classes)
-    if not fit:
-        return result[decision_of(READOUTS[0])]
-    return result[0][decision_of(READOUTS[0])], result[1][training_of(READOUTS[0])]
-
-
 def song_data(reservoirs, songs, waves, readout, classes, frame_songs=()):
     """({wave: states of the decision of its points}, {wave: (training rows, one-hot next labels)}, moments) of the
     readout (as bachue.tasks.next_phrase.point_data, by song: the rows of a song in its time order);

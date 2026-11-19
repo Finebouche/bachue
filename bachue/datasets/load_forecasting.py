@@ -4,7 +4,7 @@ from reservoirpy.datasets import to_forecasting
 from aeon.datasets import load_forecasting
 from pathlib import Path
 
-DATASETS_DIR = Path(__file__).resolve().parent
+DATASETS_DIR = Path(__file__).resolve().parent / "datasets"  # (all the data, downloaded or copied: not tracked)
 
 def visualize_data(X_test, Y_test, figsize=(16, 5), colors_x=None, colors_y=None, legend_labels=None):
     """

@@ -13,8 +13,8 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 from torchaudio.datasets import SPEECHCOMMANDS
 
-DATASETS_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = DATASETS_DIR.parent
+DATASETS_DIR = Path(__file__).resolve().parent / "datasets"  # (all the data, downloaded or copied: not tracked)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _first_existing(*paths: Path) -> Path | None:

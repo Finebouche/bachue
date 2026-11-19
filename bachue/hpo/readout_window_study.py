@@ -59,11 +59,6 @@ def choose_ridges(model, params, size, songs, train_songs, frame, classes, reado
     return {readout: (float(RIDGES[int(np.argmax(c))]), c.max() / total) for readout, c in correct.items()}
 
 
-def choose_ridge(model, params, size, songs, train_songs, frame, classes):
-    """(ridge coefficient, out-of-fold accuracy) of the first readout (choose_ridges)."""
-    return choose_ridges(model, params, size, songs, train_songs, frame, classes, READOUTS[:1])[READOUTS[0]]
-
-
 # ---- readouts study
 def objective_of(model, size, songs, train_songs, frame, classes, length):  # (the data of next_phrase_data)
     readout = READOUTS[0]  # (that of HAG_CANARY_HPO_READOUT, or "last" -> "last")

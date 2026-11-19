@@ -28,7 +28,6 @@ N_FOLDS = 3  # (cross-validation by song on the train songs)
 MAX_TAIL = 10
 # next-phrase prediction: readout trained by an online rule (bachue.performances.learning_rules_evaluation), not ridge
 HPO_RULE = os.environ.get("HAG_CANARY_HPO_RULE") if TASK in ("next_phrase", "classification") and not TAIL_SEPARATE else None
-HPO_RULE_BASE = HPO_RULE.partition(":")[0] if HPO_RULE else None  # (the rule, without the order or the selection)
 # next-phrase prediction: a fixed readout of the studies, "<points>:<decision>[:<tail>]" (e.g. "tail_mean:tail_mean:10",
 # "mean:mean", "last:tail_mean:5"; bachue.tasks.next_phrase.readout_of), instead of "last" -> "last"
 HPO_READOUT = (os.environ.get("HAG_CANARY_HPO_READOUT") or None

@@ -1,7 +1,19 @@
 """
-Final evaluation of the readouts on selected products of degree 2 (bachue.models.product_selection: the methods): can
+Final evaluations of the readouts on selected products of degree 2 (bachue.models.product_selection: the methods): can
 a few hundred or thousand products, chosen before the regression, replace all those of the generalized readout?
-Exploratory: all the readouts read the same reservoirs, those of the studies of the variables of the environment
+
+The studies of bachue.hpo.partial_order2_study (the command "studies"): for each condition (the reservoirs of the
+studies of HAG_CANARY_HPO_RULE=<rule>:<selection>, optimized for it), its rate, noise and alpha of the study, its number
+of epochs (and ridge coefficient) chosen again by the 3-fold cross-validation on the train songs, then the rule
+trained on all the train songs and scored on the test songs for each seed (reservoirs drawn with the seed). Results:
+outputs/partial_order2/performances/<prefix>readout_rules.csv (one row per condition, size and seed) and _cv.csv,
+the paired comparisons with the other conditions in outputs/partial_order2/analysis (bachue.analysis.comparisons).
+Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_HPO_RULE=<rule>:<selection>
+[HAG_CANARY_LEAK=1]):
+  python -m bachue.performances.partial_order2_evaluation studies run <condition> <size> [nb_seeds]   (results in _parts)
+  python -m bachue.performances.partial_order2_evaluation studies merge
+
+The exploratory comparisons of the selections (the commands "run", "merge", "list" and "rules"). Exploratory: all the readouts read the same reservoirs, those of the studies of the variables of the environment
 (HAG_CANARY_HPO_RULE=ridge:2: the reservoirs optimized for the full readout of order 2, which they approximate), not
 reservoirs optimized for each (for that: HAG_CANARY_HPO_RULE=<rule>:<selection>, bachue.hpo.partial_order2_study).
 
@@ -48,16 +60,17 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import KFold
 
+from bachue.analysis.comparisons import compare_rules
 from bachue.analysis.selection_diagnostics import selection_diagnostics
 from bachue.common import OUTPUTS_DIR, RIDGES, load_dataset, pretrain_phrases
-from bachue.hpo.learning_rules_study import NEH_NOISES, configurations
+from bachue.hpo.learning_rules_study import JOBS as RULE_JOBS, MAX_EPOCHS as STUDY_MAX_EPOCHS, NEH_NOISES, choose as choose_rule, configurations
 from bachue.hpo.studies import CV_SEED, FOLD_SEED
 from bachue.models.product_selection import COMPONENT_KINDS, RIDGES_STD, SIZES, Selection, UNIT_KINDS
-from bachue.models.readout_rules.training import trained
+from bachue.models.readout_rules.training import rule_inputs as label_inputs, selected_rows, trained
 from bachue.models.reservoirs import build
 from bachue.performances.readout_window_evaluation import all_conditions
-from bachue.settings import N_FOLDS, STUDY_PREFIX
-from bachue.tasks.next_phrase import metrics, prepare, reservoir_data, stacked
+from bachue.settings import HPO_RULE, N_FOLDS, SELECTION, STUDY_PREFIX
+from bachue.tasks.next_phrase import BASE_READOUT, metrics, prepare, reservoir_data, song_data, stacked
 
 
 OUTPUTS = OUTPUTS_DIR / "partial_order2" / "performances"
@@ -325,7 +338,93 @@ def run_rules(todo, nb_seeds, methods=RULES_METHODS, rules=RULES):
     return pd.DataFrame(results), pd.concat(curves, ignore_index=True)
 
 
+# ---- The final evaluation of the studies of bachue.hpo.partial_order2_study (the command "studies")
+STUDIES_RESULTS = f"{STUDY_PREFIX}readout_rules{os.environ.get('HAG_CANARY_RULES_SUFFIX', '')}"
+STUDIES_PARTS = OUTPUTS / f"{STUDIES_RESULTS}_parts"
+
+
+def study_seed_scores(label, hyper, all_data, all_states, train_songs, test_songs, true, classes, seed):
+    """Metrics on the test songs of the rule and selection label with the hyperparameters hyper of its study, trained
+    on the train songs (the reservoirs of the seed; the selection chosen on the train songs)."""
+    rule, order, selection = label_inputs(label)
+    config = {key: value for key, value in hyper.items() if key != "epochs"}
+    data, inputs = selected_rows(selection, all_data, train_songs, None, seed)
+    X_test = inputs(np.vstack([all_states[w] for w in test_songs]))
+    epochs = [hyper["epochs"]] if hyper["epochs"] is not None else [None]
+    _, node = next(trained(rule, config, data, train_songs, np.random.default_rng([seed, 1]), epochs, order, True))
+    with np.errstate(all="ignore"):
+        return metrics(np.nan_to_num(node.run(X_test), nan=0.0), true, classes)
+
+
+def run_studies(todo, nb_seeds):
+    """(results of the rule and selection HPO_RULE for each condition and seed, its cross-validation)."""
+    songs, train_songs, test_songs, frame = load_dataset(top_db=None)
+    classes = prepare(songs, train_songs, frame)
+    rows, curves = [], []
+    for condition, model, params, _, size in todo:
+        print(f"{condition} ({size}): {HPO_RULE}", flush=True)
+        # (the rate, noise and alpha of the study; the hybrids, without study: those of the grid)
+        chosen, curve = choose_rule(model, params, size, songs, train_songs, frame, classes, BASE_READOUT, [HPO_RULE],
+                                    params.get("readout:rate"), STUDY_MAX_EPOCHS, params.get("readout:noise"),
+                                    params.get("readout:alpha"))
+        curves.append(curve.assign(condition=condition, network_size=size))
+        hyper, cv_accuracy = chosen[HPO_RULE]
+        print(f"  {hyper}, cross-validation accuracy {100 * cv_accuracy:.2f} %", flush=True)
+        true = np.concatenate([songs[w]["next"] for w in test_songs])
+        seed_data = []
+        for seed in range(nb_seeds):
+            np.random.seed(seed)
+            reservoirs = build(model, params, size, pretrain_phrases(songs, train_songs, frame))
+            all_states, all_data, _ = song_data(reservoirs, songs, train_songs + test_songs, BASE_READOUT, classes)
+            seed_data.append((all_data, all_states))
+        results = Parallel(n_jobs=min(RULE_JOBS, nb_seeds))(
+            delayed(study_seed_scores)(HPO_RULE, hyper, *seed_data[seed], train_songs, test_songs, true, classes, seed)
+            for seed in range(nb_seeds))
+        for seed, result in enumerate(results):
+            rows.append(dict(condition=condition, network_size=size, seed=seed, rule=HPO_RULE, order=1,
+                             selection=label_inputs(HPO_RULE)[2], points="last", decision="last", tail=None, **hyper,
+                             cv_accuracy=cv_accuracy, **result))
+            print(f"  seed {seed}: {100 * result['accuracy']:.1f} %", flush=True)
+    return pd.DataFrame(rows), pd.concat(curves, ignore_index=True)
+
+
+def studies_command(arguments):
+    """The command "studies": run <condition> <size> [nb_seeds], merge."""
+    if not SELECTION:
+        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection>")
+    command = arguments[0] if arguments else ""
+    if command == "run":
+        condition, size = arguments[1], int(arguments[2])
+        nb_seeds = int(arguments[3]) if len(arguments) > 3 else 10
+        todo = [c for c in all_conditions([size]) if c[0] == condition and c[4] == size]
+        if not todo:
+            raise ValueError(f"Unknown condition {condition} ({size})")
+        STUDIES_PARTS.mkdir(parents=True, exist_ok=True)
+        results, curves = run_studies(todo, nb_seeds)
+        results.to_csv(STUDIES_PARTS / f"{condition}_{size}.csv", index=False)
+        curves.to_csv(STUDIES_PARTS / f"{condition}_{size}_cv.csv", index=False)
+    elif command == "merge":
+        parts = sorted(part for part in STUDIES_PARTS.glob("*.csv") if not part.stem.endswith("_cv"))
+        print(f"{len(parts)} conditions")
+        results = pd.concat([pd.read_csv(part) for part in parts], ignore_index=True)
+        OUTPUTS.mkdir(parents=True, exist_ok=True)
+        results.to_csv(OUTPUTS / f"{STUDIES_RESULTS}.csv", index=False)
+        curve_parts = sorted(STUDIES_PARTS.glob("*_cv.csv"))
+        if curve_parts:
+            pd.concat([pd.read_csv(part) for part in curve_parts], ignore_index=True).to_csv(
+                OUTPUTS / f"{STUDIES_RESULTS}_cv.csv", index=False)
+        comparisons = compare_rules(results)
+        ANALYSIS.mkdir(parents=True, exist_ok=True)
+        comparisons.to_csv(ANALYSIS / f"{STUDIES_RESULTS}_comparisons.csv", index=False)
+        print("Saved to", OUTPUTS / f"{STUDIES_RESULTS}.csv", "and", ANALYSIS / f"{STUDIES_RESULTS}_comparisons.csv")
+    else:
+        raise ValueError(f"Unknown command studies {command!r}: studies run or studies merge")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "studies":  # (the final evaluation of the studies)
+        studies_command(sys.argv[2:])
+        sys.exit()
     if len(sys.argv) > 1 and sys.argv[1] == "rules":  # (the online rules on the selected products)
         command = sys.argv[2] if len(sys.argv) > 2 else ""
         if command == "run":

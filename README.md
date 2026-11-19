@@ -11,11 +11,13 @@ The code was copied from [canopy](https://github.com/Finebouche/canopy) on 2026-
 The package follows the layout of [hag](https://github.com/Finebouche/hag): the hyperparameters, the final
 evaluations and the analyses are separate.
 
-- `bachue/datasets/`: the canary songs (`load_categorical_forecasting.py`; annotations tracked, audio and MFCC caches not tracked, in
-  `bachue/datasets/marron1/`) and the benchmarks of HAG's evaluations (`benchmarks.py`: `load("JapaneseVowels")`, ...),
-  with the loaders and the preparation copied from `hag.datasets` (`load_*.py`, `pipeline.py`, `preprocessing.py`,
-  `spectral_decomposition.py`, with the MFCC of `mfcc_configs.py` merged into it; without `peak_centered_decomposition.py` and its representation
-  "custom"). The datasets are downloaded into `bachue/datasets/<name>/` at their first use (not tracked).
+- `bachue/datasets/`: the canary songs (`load_categorical_forecasting.py`) and the benchmarks of HAG's evaluations
+  (`benchmarks.py`: `load("JapaneseVowels")`, ...), with the loaders and the preparation copied from `hag.datasets`
+  (`load_*.py`, `pipeline.py`, `preprocessing.py`, `spectral_decomposition.py` with the MFCC of `mfcc_configs.py`;
+  without `peak_centered_decomposition.py` and its representation "custom"). All the data are in
+  `bachue/datasets/datasets/` (not tracked): downloaded at their first use (the audio of marron1 from Zenodo, the
+  datasets of hag), except the corrected annotations of marron1, not published yet, to copy by hand into
+  `bachue/datasets/datasets/marron1/annotations/` (from our computer to PlaFRIM, for instance).
 - `bachue/models/`: the reservoirs, from hag (`reservoirs.py`); the readouts trained online, `readout_rules/` (LMS and
   NLMS, recursive least squares with the bias as the weight of a constant input, the exploratory Hebbian rule and its
   versions, their dual forms on the monomials, and `training.py`: a readout trained by a rule from its label
@@ -30,9 +32,11 @@ evaluations and the analyses are separate.
   (a rule on selected products: `nlms:pca:64`, `ridge:random_pairs:2080`, ...), their shared parts in `studies.py`
   (search space of the reservoirs, run of a study). The other modules choose the hyperparameters of the readouts by
   cross-validation on the train set (`ridge.py`, `readout_rules.py`, `monomial_selection.py`, ...).
-- `bachue/performances/`: the final evaluations on the test set, one module per campaign (`next_phrase.py`,
-  `readout_rules.py`, `monomial_selection.py`, `monomial_selection_rules.py`, `benchmark_rules.py` for the datasets of
-  hag: `python -m bachue.performances.hag_benchmarks_evaluation JapaneseVowels random_ee 10`).
+- `bachue/performances/`: the final evaluations on the test set, one file per study: `readout_window_evaluation.py`,
+  `learning_rules_evaluation.py`, `partial_order2_evaluation.py` (its command `studies` for the studies of
+  `partial_order2_study`, and the exploratory comparisons of the selections); `hag_benchmarks_evaluation.py` (the rules
+  on the datasets of hag: `python -m bachue.performances.hag_benchmarks_evaluation JapaneseVowels random_ee 10`) and
+  `phrase_boundaries_evaluation.py`.
 - `bachue/analysis/`: the paired comparisons of the results and the diagnostics of the selections.
 - `bachue/settings.py`: the task, its variants and the names of the studies, from the variables of the environment.
 - `slurm/`: job scripts for PlaFRIM (`submit_hpo_rules.sh`: the studies of the rules, `DATASETS="marron1 JapaneseVowels"`;

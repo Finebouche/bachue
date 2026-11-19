@@ -10,7 +10,7 @@ Rule of the study: HAG_CANARY_HPO_RULE (studies "next_phrase_calls_[leak_]<rule>
   - or on the state and all its monomials of degree 2 (the generalized readout of Ohkubo & Inubushi 2024): "ridge:2"
     (ridge regression), "nlms:2" and "neh:2" (in dual form).
 (The linear ridge readout, "ridge": the studies of "last" -> "last", bachue.hpo.readout_window_study. The rules on selected
-products: bachue.hpo.partial_order2_study.)
+products: bachue.hpo.partial_order2_study, with its own objective and the same ranges.)
 
 Search: the parameters of the reservoirs (bachue.hpo.studies.reservoir_parameters, 400 trials by default) and those of
 the rule: its normalized learning rate (LMS, NLMS and EH: "readout:rate", log-uniform in RULE_RATES; one training per

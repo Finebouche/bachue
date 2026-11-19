@@ -12,11 +12,11 @@ Three kinds of tasks (bachue.datasets.load_data):
     the audio of a phrase and the label of the next one).
 The "Canary" of hag is one instance per phrase (its audio); the studies of bachue read the whole songs instead
 (bachue.datasets.load_categorical_forecasting.load_songs: MFCC without floor; bachue.common.load_dataset). Both have
-the corrected annotations of bachue/datasets/marron1.
+the corrected annotations of bachue/datasets/datasets/marron1.
 
 The spectral representation is that of HAG's test evaluations (hag.performances.run_test_evaluation): "mfcc" for the
-audio and already spectral datasets (MFCC_DATASETS), "stft" for the others. Some datasets are downloaded by hag at
-their first use (JapaneseVowels, FSDD, SPEECHCOMMANDS, Canary, the aeon ones); the forecasting ones are generated.
+audio and already spectral datasets (MFCC_DATASETS), "stft" for the others. Some datasets are downloaded into
+bachue/datasets/datasets at their first use (JapaneseVowels, FSDD, SPEECHCOMMANDS, Canary, the aeon ones); the forecasting ones are generated.
 
 The classification datasets as rows of a readout: instance_data (the last state of the reservoirs on each instance).
 

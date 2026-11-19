@@ -15,7 +15,7 @@
 #   [SIZES="500 1000"] [LEAKS="0 1"] [DATASETS="marron1"] [N_TRIALS=400] [MAX_EPOCHS=3000] [BEGIN=20:00] \
 #   [MAX_RUNNING=30] bash slurm/submit_hpo_rules.sh
 # DATASETS: "marron1" (the next phrase of the canary songs) and classification datasets of hag ("JapaneseVowels": the
-# last state of each instance; its data in bachue/datasets/JapaneseVowels, downloaded before, the compute nodes having
+# last state of each instance; its data in bachue/datasets/datasets/JapaneseVowels, downloaded before, the compute nodes having
 # no internet; no final evaluation submitted for them). After the studies, their parts are merged into the databases
 # of the datasets (slurm/merge_studies.sh), then the final evaluations are submitted.
 # Each job: a whole node (CPUS=all, sbatch --exclusive) of the CPU nodes CONSTRAINT (default zonda, suroit and bora, no
@@ -43,12 +43,12 @@ cd "$(dirname "$0")/.."
 mkdir -p slurm/logs slurm/tasks
 for dataset in "${DATASETS[@]}"; do
     if [ "$dataset" = marron1 ]; then
-        if [ -z "$(find bachue/datasets/marron1/audio -name "*.wav" -print -quit)" ] || [ ! -f bachue/datasets/marron1/boundary_features_44100_no_floor.pkl ]; then
-            echo "bachue/datasets/marron1: audio or MFCC cache missing (the compute nodes have no internet)" >&2
+        if [ -z "$(find bachue/datasets/datasets/marron1/audio -name "*.wav" -print -quit)" ] || [ ! -f bachue/datasets/datasets/marron1/boundary_features_44100_no_floor.pkl ]; then
+            echo "bachue/datasets/datasets/marron1: audio or MFCC cache missing (the compute nodes have no internet)" >&2
             exit 1
         fi
-    elif [ -z "$(ls -A "bachue/datasets/$dataset" 2>/dev/null)" ]; then
-        echo "bachue/datasets/$dataset: missing (download it before: the compute nodes have no internet)" >&2
+    elif [ -z "$(ls -A "bachue/datasets/datasets/$dataset" 2>/dev/null)" ]; then
+        echo "bachue/datasets/datasets/$dataset: missing (download it before: the compute nodes have no internet)" >&2
         exit 1
     fi
 done

@@ -54,7 +54,7 @@ the test songs for each seed (paired comparisons with "ridge"). Rules: HAG_CANAR
 default all the rules on the states), their configurations trained in HAG_CANARY_RULES_JOBS processes (default 1),
 for at most HAG_CANARY_RULES_MAX_EPOCHS epochs (default the last of EPOCHS).
 These comparisons read reservoirs optimized for the ridge readout: they favor it (CLAUDE.md, fair comparisons). For a
-fair comparison, each rule with its own studies: HAG_CANARY_HPO_RULE=<rule> (bachue.hpo.learning_rules_study, partial_order2_study,
+fair comparison, each rule with its own studies: HAG_CANARY_HPO_RULE=<rule> (bachue.hpo.learning_rules_study;
 reservoirs optimized for the rule, slurm/submit_hpo_rules.sh), then its evaluation here with the same variable: the
 reservoirs of its studies, that rule alone, its rate, noise and alpha of the study (the hybrids, without study: those
 of the grid), its number of epochs (and normalization of RLS, coefficient of ridge:<n>) chosen by the cross-validation.
@@ -85,9 +85,8 @@ from bachue.performances.readout_window_evaluation import NAME, all_conditions
 from bachue.settings import HPO_RULE, SELECTION, STUDY_PREFIX, TAIL_HPO, TAIL_SEPARATE
 from bachue.tasks.next_phrase import BASE_READOUT, metrics, prepare, readout_of, song_data
 
-KIND = "partial_order2" if SELECTION else "learning_rules"  # (the kind of the studies of the rule)
-OUTPUTS = OUTPUTS_DIR / KIND / "performances"
-ANALYSIS = OUTPUTS_DIR / KIND / "analysis"  # (the paired comparisons)
+OUTPUTS = OUTPUTS_DIR / "learning_rules" / "performances"
+ANALYSIS = OUTPUTS_DIR / "learning_rules" / "analysis"  # (the paired comparisons)
 READOUT_WINDOW_OUTPUTS = OUTPUTS_DIR / "readout_window" / "performances"  # (the readouts of the studies of HAG_CANARY_TAIL_HPO)
 
 RULES = os.environ.get("HAG_CANARY_READOUT_RULES", "ridge,rls,lms,eh,eh_np,eh_np_local").split(",")
@@ -164,6 +163,9 @@ def run(todo, nb_seeds):
 
 
 if __name__ == "__main__":
+    if SELECTION and sys.argv[1:2] != ["list"]:  # (the conditions, listed here for slurm/submit_readout_rules.sh)
+        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: the studies of a selection of products are evaluated by "
+                         "python -m bachue.performances.partial_order2_evaluation studies")
     if TAIL_SEPARATE:
         raise RuntimeError("HAG_CANARY_TAIL_HPO=0 (studies of the reservoirs) or 1 (studies of the readout) is needed")
     command = sys.argv[1] if len(sys.argv) > 1 else ""
