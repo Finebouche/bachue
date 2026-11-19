@@ -16,8 +16,9 @@
 #   [MAX_RUNNING=30] bash slurm/submit_hpo_rules.sh
 # DATASETS: "marron1" (the next phrase of the canary songs) and classification datasets of hag ("JapaneseVowels": the
 # last state of each instance; its data in bachue/datasets/datasets/JapaneseVowels, downloaded before, the compute nodes having
-# no internet; no final evaluation submitted for them). After the studies, their parts are merged into the databases
-# of the datasets (slurm/merge_studies.sh), then the final evaluations are submitted.
+# no internet; their final evaluations: those of the rules on selected products "<rule>:<selection>" only). After the
+# studies, their parts are merged into the databases of the datasets (slurm/merge_studies.sh), then the final
+# evaluations are submitted.
 # Each job: a whole node (CPUS=all, sbatch --exclusive) of the CPU nodes CONSTRAINT (default zonda, suroit and bora, no
 # GPU nor big memory), WORKERS processes optimizing the study (default auto: as many as the cores, 2 threads each, and
 # the memory, 11 GB each, 14 for the rules on the monomials, allow), or CPUS cores and MEM memory; time limit TIME
@@ -79,19 +80,20 @@ echo "studies: job array $array ($n studies, $MAX_RUNNING at once, from $BEGIN; 
 
 SIZE_LIST=$(IFS=,; echo "${SIZES[*]}")
 EVALUATIONS="bash slurm/merge_studies.sh; "
-case " ${DATASETS[*]} " in *" marron1 "*) ;; *) RULES=() ;; esac  # (the final evaluations: those of marron1 only)
-for leak in "${LEAKS[@]}"; do for rule in "${RULES[@]}"; do
-    if [ "$rule" = ridge ]; then
+for dataset in "${DATASETS[@]}"; do for leak in "${LEAKS[@]}"; do for rule in "${RULES[@]}"; do
+    if [ "$rule" = ridge ]; then  # (the linear ridge readout: on the songs only, slurm/submit_next_phrase.sh)
+        [ "$dataset" = marron1 ] || continue
         EVALUATIONS+="HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_LEAK=$leak MAX_RUNNING=2"
         EVALUATIONS+=" SBATCH_BEGIN=$BEGIN bash slurm/submit_next_phrase.sh $SIZE_LIST 10; "
         continue
     fi
-    EVALUATIONS+="HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_LEAK=$leak"
-    EVALUATIONS+=" HAG_CANARY_HPO_RULE=$rule HAG_CANARY_RULES_MAX_EPOCHS=$MAX_EPOCHS CPUS=16 MEM=96G MAX_RUNNING=2"
-    EVALUATIONS+=" SBATCH_BEGIN=$BEGIN bash slurm/submit_readout_rules.sh $SIZE_LIST 10; "
-done; done
+    case "$rule" in *:*[!0-9]*) ;; *) [ "$dataset" = marron1 ] || continue ;; esac  # (classification: the selections)
+    EVALUATIONS+="HAG_CANARY_DATASET=$dataset HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0"
+    EVALUATIONS+=" HAG_CANARY_LEAK=$leak HAG_CANARY_HPO_RULE=$rule HAG_CANARY_RULES_MAX_EPOCHS=$MAX_EPOCHS CPUS=16"
+    EVALUATIONS+=" MEM=96G MAX_RUNNING=2 SBATCH_BEGIN=$BEGIN bash slurm/submit_readout_rules.sh $SIZE_LIST 10; "
+done; done; done
 evaluation=$(sbatch --parsable --constraint="$CONSTRAINT" --cpus-per-task=1 --mem=4G --time=02:00:00 \
     --dependency=afterany:$array --job-name=submit-rule-evaluations --output=slurm/logs/%x-%j.out \
     --wrap="$EVALUATIONS")
-echo "merge of the studies, then final evaluations of marron1 (one submit_readout_rules.sh or submit_next_phrase.sh per" \
+echo "merge of the studies, then final evaluations (one submit_readout_rules.sh or submit_next_phrase.sh per dataset," \
     "rule and leak): job $evaluation, after $array"

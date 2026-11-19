@@ -69,7 +69,7 @@ from bachue.models.product_selection import COMPONENT_KINDS, RIDGES_STD, SIZES, 
 from bachue.models.readout_rules.training import rule_inputs as label_inputs, selected_rows, trained
 from bachue.models.reservoirs import build
 from bachue.performances.readout_window_evaluation import all_conditions
-from bachue.settings import HPO_RULE, N_FOLDS, SELECTION, STUDY_PREFIX
+from bachue.settings import DATASET, HPO_RULE, N_FOLDS, SELECTION, SONGS, STUDY_PREFIX
 from bachue.tasks.next_phrase import BASE_READOUT, metrics, prepare, reservoir_data, song_data, stacked
 
 
@@ -388,6 +388,40 @@ def run_studies(todo, nb_seeds):
     return pd.DataFrame(rows), pd.concat(curves, ignore_index=True)
 
 
+def run_studies_on_instances(todo, nb_seeds):
+    """run_studies on a classification dataset of hag (HAG_CANARY_DATASET): the last state of each instance, the
+    hyperparameters of the rule chosen by bachue.hpo.learning_rules_study.choose_on_instances on the train instances
+    (with the rate, noise and alpha of the study), then the rule trained on all the train instances and scored on the
+    test instances for each seed (the protocol of bachue.performances.hag_benchmarks_evaluation)."""
+    from bachue.datasets.benchmarks import instance_data, load
+    from bachue.hpo.learning_rules_study import choose_on_instances
+    from bachue.performances.hag_benchmarks_evaluation import seed_scores
+    data = load(DATASET)
+    true = np.asarray(data.Y_test).argmax(axis=1)
+    rows, curves = [], []
+    for condition, model, params, _, size in todo:
+        print(f"{condition} ({size}): {HPO_RULE}", flush=True)
+        chosen, curve = choose_on_instances(model, params, size, data, [HPO_RULE], params.get("readout:rate"),
+                                            STUDY_MAX_EPOCHS, params.get("readout:noise"), params.get("readout:alpha"))
+        curves.append(curve.assign(condition=condition, network_size=size))
+        hyper, cv_accuracy = chosen[HPO_RULE]
+        print(f"  {hyper}, cross-validation accuracy {100 * cv_accuracy:.2f} %", flush=True)
+        seed_data = []
+        for seed in range(nb_seeds):
+            np.random.seed(seed)
+            reservoirs = build(model, params, size, data.pretrain)
+            train_states, train_rows = instance_data(reservoirs, data.train, data.Y_train)
+            test_states, _ = instance_data(reservoirs, data.test, data.Y_test)
+            seed_data.append((train_rows, train_states, test_states))
+        results = Parallel(n_jobs=min(RULE_JOBS, nb_seeds))(
+            delayed(seed_scores)(HPO_RULE, hyper, *seed_data[seed], true, seed) for seed in range(nb_seeds))
+        for seed, result in enumerate(results):
+            rows.append(dict(dataset=DATASET, condition=condition, network_size=size, seed=seed, rule=HPO_RULE,
+                             order=1, selection=label_inputs(HPO_RULE)[2], **hyper, cv_accuracy=cv_accuracy, **result))
+            print(f"  seed {seed}: {100 * result['accuracy']:.1f} %", flush=True)
+    return pd.DataFrame(rows), pd.concat(curves, ignore_index=True)
+
+
 def studies_command(arguments):
     """The command "studies": run <condition> <size> [nb_seeds], merge."""
     if not SELECTION:
@@ -400,7 +434,7 @@ def studies_command(arguments):
         if not todo:
             raise ValueError(f"Unknown condition {condition} ({size})")
         STUDIES_PARTS.mkdir(parents=True, exist_ok=True)
-        results, curves = run_studies(todo, nb_seeds)
+        results, curves = (run_studies if SONGS else run_studies_on_instances)(todo, nb_seeds)
         results.to_csv(STUDIES_PARTS / f"{condition}_{size}.csv", index=False)
         curves.to_csv(STUDIES_PARTS / f"{condition}_{size}_cv.csv", index=False)
     elif command == "merge":

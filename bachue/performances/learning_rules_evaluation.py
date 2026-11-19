@@ -171,7 +171,8 @@ if __name__ == "__main__":
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "list":
         for condition, _, _, _, size in all_conditions([int(s) for s in sys.argv[2].split(",")]):
-            if not condition.endswith("_proj"):
+            # (the studies of a selection: on the reservoirs only, the MFCC having too few dimensions for "pca:64")
+            if not condition.endswith("_proj") and not (SELECTION and condition == "mfcc"):
                 print(condition, size)
     elif command == "run":
         condition, size = sys.argv[2], int(sys.argv[3])

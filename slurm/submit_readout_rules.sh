@@ -29,7 +29,8 @@ export MAMBA_ROOT_PREFIX=$HOME/micromamba
 eval "$(micromamba shell hook -s bash)"
 micromamba activate hag_env
 set -u
-TASKS=slurm/tasks/readout_rules_$(date +%Y%m%d_%H%M%S)_${HAG_CANARY_LEAK:-0}${HAG_CANARY_RULES_SUFFIX:-}.txt
+rule=${HAG_CANARY_HPO_RULE:-}
+TASKS=slurm/tasks/readout_rules_$(date +%Y%m%d_%H%M%S)_${HAG_CANARY_DATASET:-marron1}_${HAG_CANARY_LEAK:-0}${rule:+_${rule//:/-}}${HAG_CANARY_RULES_SUFFIX:-}.txt
 PYTHONPATH=$PWD:${HAG_DIR:-$HOME/hag_core} \
     python -m bachue.performances.learning_rules_evaluation list "$SIZES" 2>/dev/null | grep -E "^[^ ]+ [0-9]+$" > "$TASKS"
 n=$(wc -l < "$TASKS")
