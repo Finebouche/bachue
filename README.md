@@ -14,7 +14,8 @@ evaluations and the analyses are separate.
 - `bachue/datasets/`: the canary songs (`load_categorical_forecasting.py`) and the benchmarks of HAG's evaluations
   (`benchmarks.py`: `load("JapaneseVowels")`, ...), with the loaders and the preparation copied from `hag.datasets`
   (`load_*.py`, `pipeline.py`, `preprocessing.py`, `spectral_decomposition.py` with the MFCC of `mfcc_configs.py`;
-  without `peak_centered_decomposition.py` and its representation "custom"). All the data are in
+  without `peak_centered_decomposition.py` and its representation "custom"), and three audio datasets of the wingbeats
+  of insects from timeseriesclassification.com (`FruitFlies`, `InsectSound`, `MosquitoSound`). All the data are in
   `bachue/datasets/datasets/` (not tracked): downloaded at their first use (the audio of marron1 from Zenodo, the
   datasets of hag), except the corrected annotations of marron1, not published yet, to copy by hand into
   `bachue/datasets/datasets/marron1/annotations/` (from our computer to PlaFRIM, for instance).

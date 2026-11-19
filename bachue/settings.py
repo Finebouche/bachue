@@ -44,7 +44,8 @@ def rule_tag(label):
 
 
 # prefix of the studies and of the results of the next-phrase prediction
-DATASET_NAME = re.sub(r"(?<!^)(?=[A-Z])", "_", DATASET).lower()  # ("JapaneseVowels": "japanese_vowels")
+# ("JapaneseVowels": "japanese_vowels", "FSDD": "fsdd", "marron1": "marron1")
+DATASET_NAME = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", DATASET).lower()
 STUDY_PREFIX = (f"{DATASET_NAME}_" + "leak_" * LEAK + (f"{rule_tag(HPO_RULE)}_" if HPO_RULE else "")
                 if TASK == "classification" else
                 f"{TASK}_" + "calls_" * CALLS + "reset_" * RESET + "leak_" * LEAK + "tail_" * (TAIL_HPO and not TAIL_SEPARATE)

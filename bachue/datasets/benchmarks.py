@@ -6,7 +6,8 @@ the univariate data, MinMax scaling fitted on the train set, pretraining instanc
 Three kinds of tasks (bachue.datasets.load_data):
   - "forecasting": a time series and its value step_ahead steps later (MackeyGlass, Lorenz, Henon, NARMA,
     Sunspot_daily); train and test are arrays (T, features), Y_train and Y_test arrays (T, outputs);
-  - "classification": a label for each instance (JapaneseVowels, FSDD, SPEECHCOMMANDS, SpokenArabicDigits, CatsDogs);
+  - "classification": a label for each instance (JapaneseVowels, FSDD, SPEECHCOMMANDS, SpokenArabicDigits, CatsDogs,
+    and the wingbeats of insects FruitFlies, InsectSound and MosquitoSound);
     train and test are lists of arrays (T_i, features), Y_train and Y_test one-hot labels;
   - "categorical_forecasting": the category of the next element of a sequence, handled as a classification (Canary:
     the audio of a phrase and the label of the next one).
@@ -37,7 +38,7 @@ KINDS = {**{name: "forecasting" for name in FORECASTING_DATASETS},
          **{name: "categorical_forecasting" for name in CATEGORICAL_FORECASTING_DATASETS}}
 # datasets read through their MFCC in HAG's test evaluations (SPECTRAL_DATASETS of hag.performances.run_test_evaluation,
 # not imported: that module loads the recurrent networks of the comparisons)
-MFCC_DATASETS = {"CatsDogs", "JapaneseVowels", "FSDD", "SpokenArabicDigits", "SPEECHCOMMANDS", "Canary"}
+MFCC_DATASETS = {"CatsDogs", "JapaneseVowels", "FSDD", "SpokenArabicDigits", "SPEECHCOMMANDS", "Canary", "FruitFlies", "InsectSound", "MosquitoSound"}
 SEED = 0  # (of the pretraining instances, as hag.performances.run_test_evaluation)
 
 

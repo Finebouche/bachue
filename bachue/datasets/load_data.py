@@ -3,7 +3,8 @@ from bachue.datasets.load_forecasting import load_dataset_forecasting
 from bachue.datasets.load_categorical_forecasting import load_dataset_categorical_forecasting
 
 FORECASTING_DATASETS = {"Lorenz", "MackeyGlass", "Sunspot_daily", "NARMA", "Henon"}
-CLASSIFICATION_DATASETS = {"CatsDogs", "FSDD", "JapaneseVowels", "SPEECHCOMMANDS", "SpokenArabicDigits"}
+CLASSIFICATION_DATASETS = {"CatsDogs", "FSDD", "FruitFlies", "InsectSound", "JapaneseVowels", "MosquitoSound",
+                           "SPEECHCOMMANDS", "SpokenArabicDigits"}
 CATEGORICAL_FORECASTING_DATASETS = {"Canary"}
 
 

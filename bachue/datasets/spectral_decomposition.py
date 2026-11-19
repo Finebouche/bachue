@@ -23,7 +23,7 @@ from bachue.datasets.load_categorical_forecasting import canary_mfcc_config
 # leave no mel band empty at 8 and 16 kHz, unlike librosa's default of 128 bands)
 N_MFCC = 13
 N_MELS = 32
-AUDIO_DATASETS = ("SPEECHCOMMANDS", "FSDD", "CatsDogs")
+AUDIO_DATASETS = ("SPEECHCOMMANDS", "FSDD", "CatsDogs", "FruitFlies", "InsectSound", "MosquitoSound")
 
 
 # ------------------------ Dataset-specific MFCC ----------------------

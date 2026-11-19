@@ -296,6 +296,7 @@ def load_aoen_dataset(dataset_name, seed=None):
     try:
         X_train_unprocessed, Y_train_raw, meta_data = load_classification(
             dataset_name,
+            extract_path=str(DATASETS_DIR),
             return_metadata=True,
             load_equal_length=False,
             load_no_missing=True,
@@ -303,6 +304,7 @@ def load_aoen_dataset(dataset_name, seed=None):
         )
         X_test_unprocessed, Y_test_raw, meta_data = load_classification(
             dataset_name,
+            extract_path=str(DATASETS_DIR),
             return_metadata=True,
             load_equal_length=False,
             load_no_missing=True,
@@ -350,13 +352,16 @@ def load_aoen_dataset(dataset_name, seed=None):
 
 
 # Sampling rate of the aeon datasets: CatsDogs is Kaggle's audio-cats-and-dogs (WAV at 16 kHz), truncated to its
-# shortest recording (14773 samples) without resampling as far as its description says; 10000 by default for the
-# others (SpokenArabicDigits is already MFCC: its sampling rate is not used)
-AEON_SAMPLING_RATES = {"CatsDogs": 16000}
+# shortest recording (14773 samples) without resampling as far as its description says; the wingbeats of insects
+# (the occlusion of an infrared beam by the wings, recorded as audio; descriptions of timeseriesclassification.com):
+# FruitFlies at 8 kHz (3 species of fruit fly, 5000 samples), InsectSound at 6 kHz (10 species and sexes of flies and
+# mosquitoes, 600 samples), MosquitoSound at 6 kHz (6 species of mosquito, 3750 samples), train and test halves of a
+# random partition; 10000 by default for the others (SpokenArabicDigits is already MFCC: its sampling rate is not used)
+AEON_SAMPLING_RATES = {"CatsDogs": 16000, "FruitFlies": 8000, "InsectSound": 6000, "MosquitoSound": 6000}
 
 
 def load_dataset_classification(name, visualize=True, seed=FSDD_SPLIT_SEED):
-    if name in ["SpokenArabicDigits", "CatsDogs", "LSST", "ECG5000", "AbnormalHeartbeat"]:
+    if name in ["SpokenArabicDigits", "CatsDogs", "LSST", "ECG5000", "AbnormalHeartbeat", "FruitFlies", "InsectSound", "MosquitoSound"]:
         X_train, Y_train, X_test, Y_test, groups, meta_data = load_aoen_dataset(name, seed)
         sampling_rate = AEON_SAMPLING_RATES.get(name, 10000)
 
