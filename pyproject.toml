@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bachue"
+version = "0.1.0"
+description = "Bioplausible Adaptation of Compact Higher-order Uniform Expansions: learning rules and partial readouts of order 2 for reservoirs, on the prediction of the next phrase of canary songs."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "Tanguy Cazalets" },
+]
+dependencies = [
+  # bachue.datasets (copied from hag.datasets): the aeon datasets, SPEECHCOMMANDS, the figures of the loaders
+  "aeon",
+  "matplotlib",
+  "torchaudio",
+  # HAG: reservoirs, HAG learning, JAX nodes (branch main)
+  "hag @ git+https://github.com/Finebouche/hag.git@main",
+  "jax",
+  "joblib",
+  "librosa",
+  "numpy",
+  "optuna",
+  "pandas",
+  # Ridge(solver=...) of the readouts: branch ridge-solvers of the fork (reservoirpy PR #261), until it is released;
+  # installed in editable mode, as for hag
+  "reservoirpy",
+  "scikit-learn",
+  "scipy",
+  "soundfile",
+]
+
+[project.urls]
+Repository = "https://github.com/Finebouche/bachue"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+  "bachue",
+  "bachue.*",
+]
+exclude = [
+  "outputs",
+  "outputs.*",
+]

@@ -1,0 +1,40 @@
+# Project
+**/__pycache__/
+*.py[cod]
+.DS_Store
+**/.DS_Store
+.idea/
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+CLAUDE.md
+
+# Dataset: audio of the Zenodo record and MFCC caches (the annotations, corrected, are tracked)
+/bachue/datasets/marron1/*
+!/bachue/datasets/marron1/annotations/
+
+# Datasets of hag (bachue.datasets.load_*): downloaded or linked at their first use
+/bachue/datasets/Canary
+/bachue/datasets/CatsDogs
+/bachue/datasets/JapaneseVowels
+/bachue/datasets/SpeechCommands
+/bachue/datasets/fsdd
+/bachue/datasets/FSDD
+/bachue/datasets/HAART
+
+# outputs/<study>/{hpo,performances,analysis}: the databases of the datasets (hpo/<dataset>_db.sqlite3) and the
+# result CSVs are tracked, not the parts
+# of the jobs (merged into the databases: bachue.hpo.studies) nor those of the evaluations
+/outputs/*/hpo/parts/
+# (the databases of canopy, one per study, copied from PlaFRIM on 2026-11-19: imported into the databases above)
+/outputs/_canopy_studies/
+/outputs/*/performances/*_parts/
+# (outputs/hag_benchmarks: the result CSVs of bachue.performances.hag_benchmarks_evaluation are tracked)
+
+# Slurm logs and task lists of the jobs
+/slurm/logs/
+/slurm/tasks/
+bachue/datasets/marron1/
