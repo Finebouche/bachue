@@ -17,7 +17,19 @@ p.note{font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 16p
 .pn p{font-size:12px;color:var(--text-secondary);margin:3px 0 0;line-height:1.35}
 .pn p.rf{color:var(--text-muted)}
 .pn p.rf a{color:var(--text-accent);text-decoration:none}
-.px{color:#D85A30;font-size:10px;letter-spacing:1px;margin:0 2px 0 4px;white-space:nowrap}
+.px{font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;margin:0 0 0 4px;white-space:nowrap;cursor:help}
+.px b{font-weight:500;color:#D85A30}.px i{font-style:normal;color:var(--text-muted);opacity:.45}.px u{text-decoration:none;color:var(--text-muted)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px;min-width:640px}
+th,td{padding:5px 6px;text-align:center;border-bottom:0.5px solid var(--border-strong)}
+th{font-weight:500;color:var(--text-secondary);vertical-align:bottom}
+th:first-child,td:first-child{text-align:left}td.sel{text-align:left;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)}
+td a{color:var(--text-accent);text-decoration:none}td.y{color:#D85A30}td.n{color:var(--text-muted);opacity:.45}td.q{color:var(--text-muted)}
+td.sc{font-variant-numeric:tabular-nums;font-weight:500}td.rd{color:var(--text-muted);white-space:nowrap}
+tr.grp td{text-align:left;font-weight:500;color:var(--text-primary);padding-top:12px;border-bottom:0.5px solid var(--text-muted)}
+tr.us td{background:var(--bg-neutral)}
+dl.cr{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;color:var(--text-secondary);line-height:1.45;margin:0 0 12px}
+dl.cr dt{font-family:var(--font-mono);font-weight:500;color:#D85A30}dl.cr dd{margin:0}
 .pn svg{width:100%;height:auto;display:block}
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-secondary);margin:0 0 10px}
 .lg span{display:flex;align-items:center;gap:5px}
@@ -30,18 +42,58 @@ code{font-family:var(--font-mono);font-size:12px}
 <main>
 <h1>Quels produits d'ordre 2 chaque sélection garde</h1>
 <p class="note">Entrées du readout pour chaque méthode de <code>bachue.models.product_selection</code> : la ligne du haut montre les neurones du réservoir gardés en entrée linéaire, le triangle les produits ajoutés. Chaque case du triangle est une paire i ≤ j. Illustration avec 16 neurones, m = 5, M = 15 et 5 sorties ; en réalité 507 ou 1 001 neurones et 29 sorties. Figure enregistrée le 19 novembre 2026.</p>
-<div class="lg"><span><b style="font-family:var(--font-mono);font-weight:500;color:#D85A30">nom</b>Antécédent publié, références en dessous</span><span><span class="px" style="margin:0">●●●○○</span>Proximité avec notre étude, de 1 à 5</span><span><i class="sw" style="background:#888780"></i>Neurone du réservoir gardé en entrée linéaire (ligne du haut)</span><span><i class="sw" style="background:#185FA5;border-radius:50%"></i>Sortie du readout linéaire (ligne du dessous)</span><span><i class="sw" style="background:#1D9E75"></i>Produit de deux neurones</span><span><i class="sw" style="background:#378ADD"></i>Produit de deux sorties</span><span><i class="sw" style="background:#7F77DD"></i>Produit de deux composantes ou projections, ou mélange de produits</span><span><i class="sw" style="background:var(--bg-neutral);border:0.5px solid var(--border-strong)"></i>Écarté</span></div>
+<div class="lg"><span><b style="font-family:var(--font-mono);font-weight:500;color:#D85A30">nom</b>Antécédent publié, références en dessous</span><span><span class="px" style="margin:0"><b>R</b><b>2</b><b>X</b><b>P</b><i>D</i><i>L</i></span>Critères partagés avec notre étude (lettre orange : partagé), détail en bas de page</span><span><i class="sw" style="background:#888780"></i>Neurone du réservoir gardé en entrée linéaire (ligne du haut)</span><span><i class="sw" style="background:#185FA5;border-radius:50%"></i>Sortie du readout linéaire (ligne du dessous)</span><span><i class="sw" style="background:#1D9E75"></i>Produit de deux neurones</span><span><i class="sw" style="background:#378ADD"></i>Produit de deux sorties</span><span><i class="sw" style="background:#7F77DD"></i>Produit de deux composantes ou projections, ou mélange de produits</span><span><i class="sw" style="background:var(--bg-neutral);border:0.5px solid var(--border-strong)"></i>Écarté</span></div>
 <div class="gt" style="margin-top:0">Readouts de référence</div>
 <div class="pg" id="g0"></div>
 <div class="gt">Sélections de canopy</div>
 <div class="pg" id="g1"></div>
 <div class="gt">Alternatives ajoutées pour la comparaison</div>
 <div class="pg" id="g2"></div>
-<p class="note" style="margin-top:14px">Les positions de <code>residual</code> et d'<code>ofr</code> et les scores de <code>leverage</code> sont inventés pour l'exemple. L'indice de proximité compte un point par caractéristique partagée avec notre étude : (1) un readout de réservoir récurrent ; (2) des produits d'ordre 2 ; (3) une partie seulement de ces produits ; (4) un apprentissage en ligne du readout ou une sélection supervisée des produits ; (5) des réservoirs de plusieurs centaines de neurones ou plus. Cet indice est une appréciation : la taille des réservoirs de Jaeger 2002, Boccato et al. et Butcher et al. n'a pas été vérifiée. Les références des sélections de canopy viennent du rapport de littérature (<code>reports/Readout quadratique partiel des réservoirs.md</code> dans canopy) et n'ont pas toutes été lues en texte intégral.</p>
+<p class="note" style="margin-top:14px">Les positions de <code>residual</code> et d'<code>ofr</code> et les scores de <code>leverage</code> sont inventés pour l'exemple.</p>
+<h1 style="margin-top:28px">Proximité des publications avec notre étude</h1>
+<p class="note">Notre étude entraîne en ligne le readout d'un réservoir récurrent sur ses états et sur une partie des produits x<sub>i</sub> x<sub>j</sub>, choisie à partir des données ou au hasard. Chaque publication est comparée à cette description sur six critères. Le score compte les critères partagés, sur 6. Le tableau sépare les travaux sur des réservoirs des autres, parce que le critère R pèse plus que les autres pour notre étude : une méthode de statistique sans réservoir peut atteindre 4 sur 6 sans porter sur le même objet.</p>
+<dl class="cr">
+<dt>R</dt><dd>La méthode porte sur le readout d'un réservoir récurrent.</dd>
+<dt>2</dt><dd>Le readout reçoit des termes d'ordre 2 explicites : des carrés ou des produits (ou le noyau polynomial de degré 2).</dd>
+<dt>X</dt><dd>Ces termes contiennent des produits croisés entre deux unités différentes, et pas seulement des carrés.</dd>
+<dt>P</dt><dd>Une partie seulement des termes d'ordre 2 possibles est gardée, ou une expansion compacte les remplace.</dd>
+<dt>D</dt><dd>Les termes gardés sont choisis à partir des données (poids, résidu, ACP, levier), et non fixés d'avance ou tirés au hasard.</dd>
+<dt>L</dt><dd>Le readout est appris en ligne (LMS, RLS ou règle locale), et non par une régression en une fois.</dd>
+</dl>
+<div class="tw"><table id="tb"></table></div>
+<p class="note" style="margin-top:12px">Un « ? » marque un critère qui n'a pas pu être vérifié, et il compte pour zéro. La colonne « Lecture » donne la source de chaque ligne : texte lu, résumé seul, source secondaire, ou mémoire quand la publication n'a pas été relue pour ce tableau. Les lectures viennent du rapport de littérature (<code>reports/Readout quadratique partiel des réservoirs.md</code> dans canopy). L'indice précédent comptait cinq caractéristiques, dont la taille des réservoirs, qui n'était pas vérifiée, et une caractéristique qui réunissait l'apprentissage en ligne et la sélection supervisée : elles sont maintenant séparées (D et L), et les carrés sont distingués des produits croisés (2 et X).</p>
 </main>
 <script>
 const T = '#1D9E75', P = '#7F77DD', G = '#888780', B = '#378ADD', BD = '#185FA5';
-const A = (t, u, k) => `<a href="${u}">${t}</a>` + (k ? `<span class="px" title="Proximité avec notre étude : ${k}/5">${'●'.repeat(k)}${'○'.repeat(5 - k)}</span>` : '');
+const CR = [['R', 'réservoir récurrent'], ['2', 'termes d\'ordre 2'], ['X', 'produits croisés'], ['P', 'partie des termes seulement'], ['D', 'choix à partir des données'], ['L', 'readout appris en ligne']];
+const PUBS = {
+ ohkubo: ['Ohkubo & Inubushi 2024', 'https://arxiv.org/abs/2405.14885', 'R2X', '', 'lu'],
+ lupascu: ['Lupascu & Coca 2026', 'https://doi.org/10.1038/s41598-026-42971-5', 'R2XPD', 'L', 'lu en partie'],
+ boccato11: ['Boccato et al. 2011', 'https://doi.org/10.1109/IJCNN.2011.6033273', 'R2XPD', 'L', 'résumé'],
+ boccato12: ['2012', 'https://doi.org/10.1016/j.neunet.2012.02.028', 'R2XPD', 'L', 'résumé', 'boccato11'],
+ chatto: ['Chattopadhyay et al. 2020', 'https://doi.org/10.5194/npg-27-373-2020', 'R2XP', '', 'lu'],
+ jaeger: ['Jaeger 2002', 'https://papers.neurips.cc/paper_files/paper/2002/file/426f990b332ef8193a61cc90516c1245-Paper.pdf', 'R2PL', '', 'lu'],
+ pathak18: ['Pathak et al. 2018', 'https://link.aps.org/accepted/10.1103/PhysRevLett.120.024102', 'R2P', '', 'lu (manuscrit accepté)'],
+ pathak17: ['Pathak et al. 2017', 'https://doi.org/10.1063/1.5010300', 'R2P', '', 'lu'],
+ butcher: ['Butcher et al. 2013', 'https://research.aston.ac.uk/en/publications/reservoir-computing-and-extreme-learning-machines-for-non-linear-/', 'R', '', 'résumé'],
+ chen17: ['Chen et al. 2017', 'https://doi.org/10.1587/transinf.2017EDP7089', '2XPD', 'L', 'résumé'],
+ hiernet: ['hierNet', 'https://arxiv.org/abs/1205.5050', '2XPD', '', 'résumé'],
+ glinternet: ['glinternet', 'https://arxiv.org/abs/1308.2719', '2XPD', '', 'lu'],
+ hao: ['Hao, Feng & Zhang', 'https://arxiv.org/abs/1501.00049', '2XPD', '', 'résumé'],
+ iform: ['iFORM', 'https://ideas.repec.org/a/taf/jnlasa/v109y2014i507p1285-1301.html', '2XPD', '', 'secondaire'],
+ sprinter: ['sprinter, Yu, Bien & Tibshirani', 'https://arxiv.org/abs/1907.08414', '2XPD', '', 'lu'],
+ chen89: ['Chen, Billings & Luo 1989', 'https://doi.org/10.1080/00207178908953472', '2XPD', '', 'mémoire'],
+ woodruff: ['Woodruff & Zandieh 2020', 'https://proceedings.mlr.press/v119/woodruff20a.html', '2XPD', '', 'lu en partie'],
+ kar: ['Kar & Karnick 2012', 'https://proceedings.mlr.press/v22/kar12.html', '2XP', '', 'lu'],
+ alaoui: ['El Alaoui & Mahoney 2015', 'https://arxiv.org/abs/1411.0306', 'PD', '', 'lu'],
+ nystrom: ['Williams & Seeger 2001', 'https://papers.nips.cc/paper/1866-using-the-nystrom-method-to-speed-up-kernel-machines', 'P', '', 'mémoire']};
+const link = id => `<a href="${PUBS[id][1]}">${PUBS[id][0]}</a>`;
+const score = id => PUBS[id][2].length;
+function profile(id) { const [, , yes, unknown] = PUBS[id];
+  const shared = CR.filter(([c]) => yes.includes(c)).map(c => c[1]), open = CR.filter(([c]) => unknown.includes(c)).map(c => c[1]);
+  const title = `Partagé avec notre étude : ${shared.join(', ') || 'rien'}` + (open.length ? `. Non vérifié : ${open.join(', ')}` : '') + `. Score ${score(id)}/6.`;
+  return `<span class="px" title="${title}">` + CR.map(([c]) => yes.includes(c) ? `<b>${c}</b>` : unknown.includes(c) ? '<u>?</u>' : `<i>${c}</i>`).join('') + '</span>'; }
+const A = (...ids) => ids.map(id => link(id) + (PUBS[id][5] ? '' : profile(id))).join(', ');
 function lcg(s) { return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296; }
 const all16 = [...Array(16).keys()];
 const block = u => { const m = new Map(); u.forEach(a => u.forEach(b => { if (a <= b) m.set(a + ',' + b, 1); })); return m; };
@@ -55,39 +107,48 @@ const ofr = list(['2,9', '5,5', '0,12', '7,13', '3,6', '9,14', '1,4', '10,10', '
 const r = lcg(11), hot = {3: 0.5, 9: 0.35, 12: 0.45}, lev = new Map(), pool = [];
 for (let i = 0; i < 16; i++) for (let j = i; j < 16; j++) { const s = 0.06 + 0.12 * r() + (hot[i] || 0) * 0.5 + (hot[j] || 0) * 0.5; lev.set(i + ',' + j, Math.min(0.42, s * 0.8)); pool.push([i + ',' + j, s]); }
 const r2 = lcg(5); for (let d = 0; d < 15; d++) { const tot = pool.reduce((a, p) => a + p[1], 0); let u = r2() * tot, k = 0; while (u > pool[k][1]) { u -= pool[k][1]; k++; } lev.set(pool[k][0], 1); pool.splice(k, 1); }
-const boccato = A('Boccato et al. 2011', 'https://doi.org/10.1109/IJCNN.2011.6033273', 3) + ', ' + A('2012', 'https://doi.org/10.1016/j.neunet.2012.02.028') + ' ; ' + A('Chen et al. 2017', 'https://doi.org/10.1587/transinf.2017EDP7089', 2);
-const ohkubo = A('Ohkubo & Inubushi 2024', 'https://arxiv.org/abs/2405.14885', 2);
+const boccato = ['boccato11', 'boccato12', 'chen17'];
+const ohkubo = ['ohkubo'];
 const refs = [
- ['linear', 16, new Map(), T, all16, 'Les états seuls, aucun produit.', ''],
+ ['linear', 16, new Map(), T, all16, 'Les états seuls, aucun produit.', []],
  ['full', 16, full(16, 1), T, all16, 'Readout généralisé d\'ordre 2 : tous les produits des états bruts x.', ohkubo],
  ['full_std', 16, full(16, 1), T, all16, 'Le même readout sur les états standardisés z : la limite de toutes les sélections.', ohkubo]];
 const ours = [
- ['weights_high:m', 16, block([0, 1, 2, 3, 4]), T, all16, 'Les m neurones de plus grands poids linéaires.', A('hierNet', 'https://arxiv.org/abs/1205.5050', 3) + ', ' + A('glinternet', 'https://arxiv.org/abs/1308.2719', 3) + ', ' + A('Hao, Feng & Zhang', 'https://arxiv.org/abs/1501.00049', 3) + ', ' + A('iFORM', 'https://ideas.repec.org/a/taf/jnlasa/v109y2014i507p1285-1301.html', 3)],
- ['weights_low:m', 16, block([11, 12, 13, 14, 15]), T, all16, 'Les m neurones de plus petits poids linéaires.', ''],
- ['random:m', 16, block([1, 4, 7, 10, 14]), T, all16, 'm neurones tirés au hasard.', ''],
- ['random_pairs:M', 16, randomPairs(16, 15, 7), T, all16, 'M paires tirées au hasard.', ''],
- ['residual:M', 16, residual, T, all16, 'Les M paires les plus corrélées au résidu linéaire.', A('sprinter, Yu, Bien & Tibshirani', 'https://arxiv.org/abs/1907.08414', 3)],
+ ['weights_high:m', 16, block([0, 1, 2, 3, 4]), T, all16, 'Les m neurones de plus grands poids linéaires.', ['hiernet', 'glinternet', 'hao', 'iform']],
+ ['weights_low:m', 16, block([11, 12, 13, 14, 15]), T, all16, 'Les m neurones de plus petits poids linéaires.', []],
+ ['random:m', 16, block([1, 4, 7, 10, 14]), T, all16, 'm neurones tirés au hasard.', []],
+ ['random_pairs:M', 16, randomPairs(16, 15, 7), T, all16, 'M paires tirées au hasard.', []],
+ ['residual:M', 16, residual, T, all16, 'Les M paires les plus corrélées au résidu linéaire.', ['sprinter']],
  ['pca:m', 16, block([0, 1, 2, 3, 4]), P, all16, 'Les m premières composantes principales, fin de phrase.', boccato],
  ['pca_frames:m', 16, block([0, 1, 2, 3, 4]), P, all16, 'Les m premières composantes principales, toutes les trames.', boccato],
- ['scores', 5, full(5, 1), B, all16, 'Toutes les paires des sorties du readout linéaire : 5 sorties ici, 29 en réalité (435 produits).', '', 9, 5]];
+ ['scores', 5, full(5, 1), B, all16, 'Toutes les paires des sorties du readout linéaire : 5 sorties ici, 29 en réalité (435 produits).', [], 9, 5]];
 const others = [
- ['squares', 16, diag(all16), T, all16, 'Tous les carrés.', A('Jaeger 2002', 'https://papers.neurips.cc/paper_files/paper/2002/file/426f990b332ef8193a61cc90516c1245-Paper.pdf', 4) + ', ' + A('Pathak et al. 2018', 'https://link.aps.org/accepted/10.1103/PhysRevLett.120.024102', 4)],
- ['half_squares', 16, diag([1, 3, 5, 7, 9, 11, 13, 15]), T, [0, 2, 4, 6, 8, 10, 12, 14], 'Un neurone sur deux remplacé par son carré.', A('Pathak et al. 2017', 'https://doi.org/10.1063/1.5010300', 4)],
- ['neighbors_t2', 16, list(t2.map(j => (j - 2) + ',' + (j - 1))), T, all16.filter(j => !t2.includes(j)), 'Un sur deux remplacé par le produit des deux voisins précédents.', A('Chattopadhyay et al. 2020', 'https://doi.org/10.5194/npg-27-373-2020', 4)],
- ['neighbors_t3', 16, list(t3.map(j => (j - 1) + ',' + (j + 1))), T, all16.filter(j => !t3.includes(j)), 'Un sur deux remplacé par le produit des voisins de chaque côté.', A('Chattopadhyay et al. 2020', 'https://doi.org/10.5194/npg-27-373-2020', 4)],
- ['ofr:M', 16, ofr, T, all16, 'M paires choisies une à une, la plus foncée en premier.', A('Chen, Billings & Luo 1989', 'https://doi.org/10.1080/00207178908953472', 3) + ', ' + A('Lupascu & Coca 2026', 'https://doi.org/10.1038/s41598-026-42971-5', 4)],
- ['leverage:M', 16, lev, T, all16, 'M paires tirées selon leur score de levier (teinte pâle).', A('El Alaoui & Mahoney 2015', 'https://arxiv.org/abs/1411.0306', 1) + ', ' + A('Woodruff & Zandieh 2020', 'https://proceedings.mlr.press/v119/woodruff20a.html', 2)],
- ['maclaurin:M', 30, list(all16.slice(0, 15).map(a => a + ',' + (15 + a))), P, all16, 'M produits de deux projections aléatoires, parmi 2M projections.', A('Kar & Karnick 2012', 'https://proceedings.mlr.press/v22/kar12.html', 2)],
- ['nystrom:M', 16, full(16, 0.3), P, all16, 'Chaque caractéristique mélange tous les produits.', A('Williams & Seeger 2001', 'https://papers.nips.cc/paper/1866-using-the-nystrom-method-to-speed-up-kernel-machines', 1)],
- ['r2sp:M', 16, new Map(), P, all16, 'Aucun produit : M unités tanh aléatoires.', A('Butcher et al. 2013', 'https://research.aston.ac.uk/en/publications/reservoir-computing-and-extreme-learning-machines-for-non-linear-/', 1)]];
+ ['squares', 16, diag(all16), T, all16, 'Tous les carrés.', ['jaeger', 'pathak18']],
+ ['half_squares', 16, diag([1, 3, 5, 7, 9, 11, 13, 15]), T, [0, 2, 4, 6, 8, 10, 12, 14], 'Un neurone sur deux remplacé par son carré.', ['pathak17']],
+ ['neighbors_t2', 16, list(t2.map(j => (j - 2) + ',' + (j - 1))), T, all16.filter(j => !t2.includes(j)), 'Un sur deux remplacé par le produit des deux voisins précédents.', ['chatto']],
+ ['neighbors_t3', 16, list(t3.map(j => (j - 1) + ',' + (j + 1))), T, all16.filter(j => !t3.includes(j)), 'Un sur deux remplacé par le produit des voisins de chaque côté.', ['chatto']],
+ ['ofr:M', 16, ofr, T, all16, 'M paires choisies une à une, la plus foncée en premier.', ['chen89', 'lupascu']],
+ ['leverage:M', 16, lev, T, all16, 'M paires tirées selon leur score de levier (teinte pâle).', ['alaoui', 'woodruff']],
+ ['maclaurin:M', 30, list(all16.slice(0, 15).map(a => a + ',' + (15 + a))), P, all16, 'M produits de deux projections aléatoires, parmi 2M projections.', ['kar']],
+ ['nystrom:M', 16, full(16, 0.3), P, all16, 'Chaque caractéristique mélange tous les produits.', ['nystrom']],
+ ['r2sp:M', 16, new Map(), P, all16, 'Aucun produit : M unités tanh aléatoires.', ['butcher']]];
 function draw(id, panels) { document.getElementById(id).innerHTML = panels.map(([name, n, keep, color, kept, text, ref, cell, outputs]) => {
   const c = cell || 144 / n, top = outputs ? 30 : 16; let cells = '';
   for (let j = 0; j < 16; j++) cells += `<rect x="${j * 9 + 0.5}" y="0.5" width="8" height="8" rx="1" fill="${kept.includes(j) ? G : 'var(--bg-neutral)'}"/>`;
   for (let j = 0; j < (outputs || 0); j++) cells += `<circle cx="${j * 9 + 4.5}" cy="18.5" r="4" fill="${BD}"/>`;
   for (let i = 0; i < n; i++) for (let j = i; j < n; j++) { const v = keep.get(i + ',' + j);
     cells += `<rect x="${(j * c + 0.5).toFixed(2)}" y="${(top + i * c + 0.5).toFixed(2)}" width="${(c - 1).toFixed(2)}" height="${(c - 1).toFixed(2)}" rx="1" fill="${v ? color : 'var(--bg-neutral)'}"${v && v < 1 ? ` fill-opacity="${v.toFixed(2)}"` : ''}/>`; }
-  return `<div class="pn"><h3${ref ? ' class="pub"' : ''}>${name}</h3><svg viewBox="0 0 144 160" role="img" aria-label="${text}">${cells}</svg><p>${text}</p>${ref ? `<p class="rf">${ref}</p>` : ''}</div>`; }).join(''); }
+  return `<div class="pn"><h3${ref.length ? ' class="pub"' : ''}>${name}</h3><svg viewBox="0 0 144 160" role="img" aria-label="${text}">${cells}</svg><p>${text}</p>${ref.length ? `<p class="rf">${A(...ref)}</p>` : ''}</div>`; }).join(''); }
 draw('g0', refs); draw('g1', ours); draw('g2', others);
+const used = {}; [...refs, ...ours, ...others].forEach(p => p[6].forEach(id => (used[PUBS[id][5] || id] ||= new Set()).add(p[0])));
+const cells = (yes, unknown) => CR.map(([c]) => yes.includes(c) ? '<td class="y">●</td>' : unknown.includes(c) ? '<td class="q">?</td>' : '<td class="n">·</td>').join('');
+const row = id => { const [, , yes, unknown, read] = PUBS[id], twins = Object.keys(PUBS).filter(k => PUBS[k][5] === id);
+  return `<tr><td>${[id, ...twins].map(link).join(', ')}</td><td class="sel">${[...(used[id] || [])].join(', ')}</td>${cells(yes, unknown)}<td class="sc">${score(id)}/6</td><td class="rd">${read}</td></tr>`; };
+const ids = Object.keys(PUBS).filter(id => !PUBS[id][5]), by = (a, b) => score(b) - score(a);
+const group = (title, list) => `<tr class="grp"><td colspan="10">${title}</td></tr>` + list.sort(by).map(row).join('');
+document.getElementById('tb').innerHTML = '<tr><th>Publication</th><th style="text-align:left">Sélection illustrée</th>' + CR.map(([c, d]) => `<th title="${d}">${c}</th>`).join('') + '<th>Score</th><th>Lecture</th></tr>'
+  + `<tr class="us"><td>Notre étude</td><td class="sel">nlms:pca:m, eh_np_local:random_pairs:M…</td>${cells('R2XPDL', '')}<td class="sc">6/6</td><td class="rd"></td></tr>`
+  + group('Readouts de réservoirs récurrents', ids.filter(id => PUBS[id][2].includes('R'))) + group('Hors réservoir : statistique, noyaux, autres réseaux', ids.filter(id => !PUBS[id][2].includes('R')));
 </script>
 </body>
 </html>

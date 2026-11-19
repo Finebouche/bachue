@@ -272,6 +272,32 @@ def load_haart_dataset(train_path: Path, test_path: Path):
     return sampling_rate, X_train, Y_train, X_test, Y_test
 
 
+def load_arff_split(path):
+    """(X (instances, 1, T) float32, labels (instances,) of strings) of a univariate ARFF file of
+    timeseriesclassification.com (one instance per line after "@data": its T values then its label), for the datasets
+    published without .ts files (MosquitoSound: 139 883 instances of 3750 samples in each split, 4.9 GB of text).
+    Parsed once: saved next to the file as <name>.npz and read from there afterwards."""
+    path = Path(path)
+    cache = path.with_suffix(".npz")
+    if cache.exists():
+        saved = np.load(cache)
+        return saved["X"], saved["y"]
+    rows, labels = [], []
+    with open(path) as file:
+        for line in file:
+            if line.strip().lower() == "@data":
+                break
+        for line in file:
+            line = line.strip()
+            if line and not line.startswith("%"):
+                values, label = line.rsplit(",", 1)
+                rows.append(np.array(values.split(","), dtype=np.float32))
+                labels.append(label)
+    X, y = np.stack(rows)[:, None, :], np.array(labels)
+    np.savez(cache, X=X, y=y)
+    return X, y
+
+
 def load_aoen_dataset(dataset_name, seed=None):
     dataset_dir = DATASETS_DIR / dataset_name
 
@@ -281,10 +307,12 @@ def load_aoen_dataset(dataset_name, seed=None):
         train_files = glob.glob(str(dataset_dir / "**" / f"{dataset_name}_TRAIN.ts"), recursive=True)
         test_files = glob.glob(str(dataset_dir / "**" / f"{dataset_name}_TEST.ts"), recursive=True)
 
-        if not train_files or not test_files:
-            raise FileNotFoundError(
-                f"Could not find .ts files for {dataset_name} in {dataset_dir}"
-            )
+        if not train_files or not test_files:  # (no .ts files: the ARFF ones)
+            train_files = glob.glob(str(dataset_dir / "**" / f"{dataset_name}_TRAIN.arff"), recursive=True)
+            test_files = glob.glob(str(dataset_dir / "**" / f"{dataset_name}_TEST.arff"), recursive=True)
+            if not train_files or not test_files:
+                raise FileNotFoundError(f"Could not find .ts nor .arff files for {dataset_name} in {dataset_dir}")
+            return *load_arff_split(train_files[0]), *load_arff_split(test_files[0]), None
 
         X_train_unprocessed, Y_train_raw = load_from_ts_file(train_files[0])
         X_test_unprocessed, Y_test_raw = load_from_ts_file(test_files[0])
