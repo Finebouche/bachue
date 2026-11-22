@@ -1,6 +1,6 @@
 #!/bin/bash
 # Optimization of the reservoirs of the next-phrase prediction for each learning rule of the readout "last" -> "last"
-# (bachue.hpo.learning_rules_study, bachue.hpo.partial_order2_study for "<rule>:<selection>", with HAG_CANARY_HPO_RULE, the hyperparameters of the rule in the search: rate of
+# (bachue.hpo.learning_rules_study, bachue.hpo.partial_order2_study for "<rule>:<selection>", with BACHUE_STUDY_RULE, the hyperparameters of the rule in the search: rate of
 # LMS, NLMS and EH, noise of EH, alpha of RLS; studies next_phrase_calls_[leak_]<rule>_<model>_<size>, "<rule>-order<n>"
 # for the rules on the monomials "<rule>:<n>", "<rule>-<selection>" for the rules on selected products
 # "<rule>:<selection>", e.g. RULES="nlms:pca:64 eh_np_local:scores ridge:random_pairs:2080"), so that the rules are
@@ -23,8 +23,9 @@
 # GPU nor big memory), WORKERS processes optimizing the study (default auto: as many as the cores, 2 threads each, and
 # the memory, 11 GB each, 14 for the rules on the monomials, allow), or CPUS cores and MEM memory; time limit TIME
 # (default 3 days, the limit outside the weekends). The studies resume where they stopped if resubmitted. MAX_EPOCHS:
-# the number of epochs of the online rules chosen up to this one (HAG_CANARY_HPO_RULE_MAX_EPOCHS).
+# the number of epochs of the online rules chosen up to this one (BACHUE_STUDY_MAX_EPOCHS).
 set -euo pipefail
+source "$(dirname "$0")/env_names.sh"  # (the former names HAG_CANARY_*, until the jobs that use them are done)
 read -r -a RULES <<< "${RULES:-ridge lms eh_np_local rls nlms neh ridge:2 nlms:2 neh:2}"
 read -r -a PURE <<< "${PURE:-mean_hag var_hag random_ee random_ei}"
 read -r -a SIZES <<< "${SIZES:-500 1000}"
@@ -54,27 +55,27 @@ for dataset in "${DATASETS[@]}"; do
     fi
 done
 
-# one line per study: "<model> <size> HAG_CANARY_HPO_RULE=<rule> HAG_CANARY_LEAK=<leak> HAG_CANARY_DATASET=<dataset>
-# [HAG_CANARY_WORKER_MEM=14]" (slurm/canary.sbatch), the rules on the monomials first, then the largest sizes
+# one line per study: "<model> <size> BACHUE_STUDY_RULE=<rule> BACHUE_LEAKY_RESERVOIRS=<leak> BACHUE_DATASET=<dataset>
+# [BACHUE_WORKER_MEM_GB=14]" (slurm/canary.sbatch), the rules on the monomials first, then the largest sizes
 TASKS=slurm/tasks/hpo_rules_$(date +%Y%m%d_%H%M%S).txt
 for dataset in "${DATASETS[@]}"; do
 for order in 2 1; do for size in $(printf '%s\n' "${SIZES[@]}" | sort -rn); do for leak in "${LEAKS[@]}"; do
     for rule in "${RULES[@]}"; do
-        case "$rule" in *:*) [ "$order" = 2 ] || continue; memory=" HAG_CANARY_WORKER_MEM=14" ;;
+        case "$rule" in *:*) [ "$order" = 2 ] || continue; memory=" BACHUE_WORKER_MEM_GB=14" ;;
                         *) [ "$order" = 1 ] || continue; memory="" ;; esac
-        assignment="HAG_CANARY_HPO_RULE=$rule "
+        assignment="BACHUE_STUDY_RULE=$rule "
         [ "$rule" = ridge ] && assignment=""  # (the studies of the linear ridge readout)
         for model in "${PURE[@]}"; do
-            echo "$model $size ${assignment}HAG_CANARY_LEAK=$leak HAG_CANARY_DATASET=$dataset$memory"
+            echo "$model $size ${assignment}BACHUE_LEAKY_RESERVOIRS=$leak BACHUE_DATASET=$dataset$memory"
         done
     done
 done; done; done
 done > "$TASKS"
 n=$(wc -l < "$TASKS")
-array=$(HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_N_TRIALS=$N_TRIALS \
-    HAG_CANARY_HPO_RULE_MAX_EPOCHS=$MAX_EPOCHS \
+array=$(BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0 BACHUE_N_TRIALS=$N_TRIALS \
+    BACHUE_STUDY_MAX_EPOCHS=$MAX_EPOCHS \
     sbatch --parsable --constraint="$CONSTRAINT" --begin="$BEGIN" --array=0-$((n - 1))%$MAX_RUNNING "${RESOURCES[@]}" \
-    --time=$TIME --job-name=hpo-rules --export=ALL,HAG_CANARY_TASKS="$TASKS",HAG_CANARY_WORKERS=$WORKERS \
+    --time=$TIME --job-name=hpo-rules --export=ALL,BACHUE_TASK_FILE="$TASKS",BACHUE_WORKERS=$WORKERS \
     slurm/canary.sbatch)
 echo "studies: job array $array ($n studies, $MAX_RUNNING at once, from $BEGIN; $TASKS)"
 
@@ -83,13 +84,13 @@ EVALUATIONS="bash slurm/merge_studies.sh; "
 for dataset in "${DATASETS[@]}"; do for leak in "${LEAKS[@]}"; do for rule in "${RULES[@]}"; do
     if [ "$rule" = ridge ]; then  # (the linear ridge readout: on the songs only, slurm/submit_next_phrase.sh)
         [ "$dataset" = marron1 ] || continue
-        EVALUATIONS+="HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_LEAK=$leak MAX_RUNNING=2"
+        EVALUATIONS+="BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_LEAKY_RESERVOIRS=$leak MAX_RUNNING=2"
         EVALUATIONS+=" SBATCH_BEGIN=$BEGIN bash slurm/submit_next_phrase.sh $SIZE_LIST 10; "
         continue
     fi
     case "$rule" in *:*[!0-9]*) ;; *) [ "$dataset" = marron1 ] || continue ;; esac  # (classification: the selections)
-    EVALUATIONS+="HAG_CANARY_DATASET=$dataset HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0"
-    EVALUATIONS+=" HAG_CANARY_LEAK=$leak HAG_CANARY_HPO_RULE=$rule HAG_CANARY_RULES_MAX_EPOCHS=$MAX_EPOCHS CPUS=16"
+    EVALUATIONS+="BACHUE_DATASET=$dataset BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0"
+    EVALUATIONS+=" BACHUE_LEAKY_RESERVOIRS=$leak BACHUE_STUDY_RULE=$rule BACHUE_ONLINE_MAX_EPOCHS=$MAX_EPOCHS CPUS=16"
     EVALUATIONS+=" MEM=96G MAX_RUNNING=2 SBATCH_BEGIN=$BEGIN bash slurm/submit_readout_rules.sh $SIZE_LIST 10; "
 done; done; done
 evaluation=$(sbatch --parsable --constraint="$CONSTRAINT" --cpus-per-task=1 --mem=4G --time=02:00:00 \

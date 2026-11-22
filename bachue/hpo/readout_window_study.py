@@ -3,7 +3,7 @@ Study 1: the readout of the reservoirs, how its training rows and its decision r
 prediction point (bachue.tasks.next_phrase.readout_of). One study per readout, so that the readouts are compared on
 reservoirs optimized for each of them (results: bachue.performances.readout_window_evaluation with the same variables).
 
-Readout of the study: HAG_CANARY_HPO_READOUT=<points>:<decision>[:<tail>] (studies
+Readout of the study: BACHUE_STUDY_READOUT=<points>:<decision>[:<tail>] (studies
 "next_phrase_calls_[leak_]readout-<points>-<decision>[-<tail>]_<model>_<size>"; e.g. "tail_mean:tail_mean:10",
 "mean:mean", "all:last", "tail:tail_mean:5"), or, without it, "last" -> "last" (the last state of each point for the
 training and the decision: the studies "next_phrase_calls_[leak_]<model>_<size>", the reservoirs of the linear ridge
@@ -17,7 +17,7 @@ the out-of-fold accuracy of the next phrase in the 3-fold cross-validation by so
 coefficient of the readout chosen in this cross-validation (bachue.hpo.readout_window_study.choose_ridges; user attribute "ridge" of
 the trial), not in the search.
 
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 [HAG_CANARY_LEAK=1] [HAG_CANARY_HPO_READOUT=...]):
+Usage (BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 [BACHUE_LEAKY_RESERVOIRS=1] [BACHUE_STUDY_READOUT=...]):
   python -m bachue.hpo.readout_window_study <model> <size>     (slurm/submit_hpo_readouts.sh: all the readouts)
 """
 import sys
@@ -61,7 +61,7 @@ def choose_ridges(model, params, size, songs, train_songs, frame, classes, reado
 
 # ---- readouts study
 def objective_of(model, size, songs, train_songs, frame, classes, length):  # (the data of next_phrase_data)
-    readout = READOUTS[0]  # (that of HAG_CANARY_HPO_READOUT, or "last" -> "last")
+    readout = READOUTS[0]  # (that of BACHUE_STUDY_READOUT, or "last" -> "last")
 
     def objective(trial):
         params = reservoir_parameters(trial, model, length)
@@ -73,5 +73,6 @@ def objective_of(model, size, songs, train_songs, frame, classes, length):  # (t
 
 if __name__ == "__main__":
     if HPO_RULE:
-        raise ValueError("HAG_CANARY_HPO_RULE: a study of a rule, bachue.hpo.learning_rules_study or bachue.hpo.partial_order2_study")
+        raise ValueError("BACHUE_STUDY_RULE: a study of a rule, bachue.hpo.learning_rules_study or "
+                         "bachue.hpo.partial_order2_study")
     run_study(sys.argv[1], int(sys.argv[2]), objective_of, lambda trial: f"ridge {trial.user_attrs['ridge']:.0e}")

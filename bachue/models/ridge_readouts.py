@@ -1,16 +1,16 @@
 """
-Ridge readouts fitted on rows and their labels: reservoirpy's Ridge (solver HAG_CANARY_RIDGE_SOLVER, default "svd":
+Ridge readouts fitted on rows and their labels: reservoirpy's Ridge (solver BACHUE_RIDGE_SOLVER, default "svd":
 the singular value decomposition of the centered states, stable with the smallest coefficients) or, with
-HAG_CANARY_READOUT_ORDER=n (n >= 2), the generalized readout of order n (bachue.models.generalized_readout).
+BACHUE_READOUT_ORDER=n (n >= 2), the generalized readout of order n (bachue.models.generalized_readout).
 """
-import os
 
 from reservoirpy.nodes import Ridge
 
 from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.settings import env
 
-READOUT_ORDER = int(os.environ.get("HAG_CANARY_READOUT_ORDER", "1"))  # 1: linear ridge readout, n: generalized readout
-RIDGE_SOLVER = os.environ.get("HAG_CANARY_RIDGE_SOLVER", "svd")  # (of reservoirpy.nodes.Ridge, linear readout)
+READOUT_ORDER = int(env("BACHUE_READOUT_ORDER", "1"))  # 1: linear ridge readout, n: generalized readout
+RIDGE_SOLVER = env("BACHUE_RIDGE_SOLVER", "svd")  # (of reservoirpy.nodes.Ridge, linear readout)
 
 
 def fitted_readouts(data, ridges, order=None):

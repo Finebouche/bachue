@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coût de calcul des sélections</title>
+<style>
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--panel:#f1efe8;--border:#c3c2b7;--track:#e1e0d9;--error:#b42f2f;--font-mono:ui-monospace,Menlo,Consolas,monospace;--font-sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* shades of the bars by group (references, random draws, data-driven, published, kernels of the inputs): each at least 3:1 against the panel */
+  --b0:#113b7f;--b1:#085192;--b2:#0167a5;--b3:#047cb3;--b4:#0f90c1;--o0:#862722;--o1:#9f361a;--o2:#b24b11;--o3:#bd600b;--o4:#c17412}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--panel:#222220;--border:#4a4a46;--track:#383835;--error:#f07070;
+  --b0:#1f79cc;--b1:#2d93e2;--b2:#4fadf0;--b3:#7dc6fa;--b4:#afddfe;--o0:#cf5637;--o1:#e8713a;--o2:#f7914b;--o3:#feb473;--o4:#fed6ac}}
+body{background:var(--bg);color:var(--text-primary);font-family:var(--font-sans);margin:0;padding:24px 16px;line-height:1.5}
+main{max-width:1040px;margin:0 auto}
+h1{font-size:20px;font-weight:500;margin:0 0 6px}
+h2{font-size:16px;font-weight:500;margin:28px 0 8px}
+p,li{font-size:14px;color:var(--text-secondary);margin:0 0 8px}
+p.note{font-size:13px}
+ul{margin:0 0 8px;padding-left:20px}
+table{border-collapse:collapse;font-size:13px;width:100%;margin:6px 0 10px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--track);vertical-align:top}
+th{font-weight:500;color:var(--text-secondary)}
+td.f{font-family:var(--font-mono);font-size:12px}
+td.d{min-width:170px}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n small{display:block;color:var(--text-secondary);font-size:11px}
+tr.g td{font-weight:500;color:var(--text-secondary);background:var(--panel);border-bottom:none;padding-top:7px}
+code{font-family:var(--font-mono);font-size:12px}
+.binom{display:inline-flex;flex-direction:column;text-align:center;line-height:1.1;vertical-align:middle;font-size:11px}
+.panel{background:var(--panel);border-radius:12px;padding:16px 20px;margin:8px 0}
+.ct{display:flex;flex-wrap:wrap;gap:12px 16px;margin:0 0 10px;align-items:flex-end}
+.ct label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--text-secondary)}
+input,select,button{font:inherit;font-size:14px;color:var(--text-primary);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px}
+input{width:92px}
+button{cursor:pointer}
+.lg{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:15px;color:var(--text-primary);margin:4px 0 10px}
+.lg span{display:flex;align-items:center;gap:7px}
+.lg .br{flex-basis:100%;height:0}
+.key{display:inline-block;width:15px;height:15px;border-radius:3px;flex:none}
+details{margin:4px 0}
+summary{cursor:pointer;font-size:14px;color:var(--text-primary)}
+details p{margin:6px 0 6px 18px}
+.wide{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>Coût de calcul des sélections de produits et des règles du readout</h1>
+<p>Chaque coût est dérivé du code (<code>bachue/models/product_selection.py</code>, <code>generalized_readout.py</code>, <code>readout_rules/</code>, <code>reservoirs.py</code>). Il compte les multiplications des termes dominants, à un facteur constant près. Un produit d'une matrice n × k par une matrice k × m compte n k m multiplications, même quand NumPy n'en calcule que la moitié pour un produit symétrique A A<sup>⊤</sup>. Un facteur 2 dans une formule signale deux produits de cette taille. Une décomposition en valeurs propres d'une matrice de côté n compte n³, alors qu'elle en coûte plutôt 4 à 9 n³. Ces comptes donnent l'ordre de grandeur et la façon dont le coût croît, pas des durées. Un produit de matrices, une décomposition en valeurs propres et une boucle compilée par JAX n'ont pas le même débit.</p>
+
+<h2>Ce que les comptes montrent</h2>
+<p class="note">Sur un fold de marron1 (N = 507, T ≈ 7 130, K = 29), avec M = 2 080 produits et E = 3 000 époques :</p>
+<ul>
+<li><b>Avec <em>nlms</em>, une sélection économise peu à l'entraînement.</b> <code>random_pairs:2080</code> coûte au total 3,2 × 10¹², contre 4,5 × 10¹² pour l'ordre 2 complet en forme duale (<code>nlms:2</code>, noyau compris), soit 1,4 fois moins. Ce rapport vaut à peu près T / (2 D). Sur un fold, il va de 0,4 pour M = 8 256, où la sélection coûte plus, à 3,5 pour M = 528. Sur tout l'entraînement, il va de 0,6 à 5,2.</li>
+<li><b>Avec <em>ridge</em>, le gain est plus grand mais dépend de la convention.</b> <code>random_pairs:2080</code> coûte au total 6,5 × 10¹⁰, contre 4,1 × 10¹¹ pour <code>ridge:2</code> en forme duale, soit 6,4 fois moins. Selon M, ce rapport va de 0,5 à 47 sur un fold. Il repose sur la convention n³ pour une décomposition en valeurs propres. À 4 à 9 n³, il passe à 13 à 16 pour M = 2 080. La forme duale décompose en effet une matrice de côté T, et la sélection une matrice de côté D.</li>
+<li><b>Une sélection de paires gagne surtout à l'inférence.</b> La sortie d'un nouvel état coûte M + D K = 7,7 × 10⁴ multiplications avec <code>random_pairs:2080</code>, contre 2 T N + T K = 7,4 × 10⁶ en forme duale, soit 96 fois moins. Ce gain ne vaut que pour les sélections de paires. Les entrées d'un nouvel état coûtent 2,1 × 10⁶ pour <code>maclaurin</code>, 1,05 × 10⁶ pour <code>r2sp</code> et 6,4 × 10⁶ pour <code>nystrom</code>.</li>
+<li><b>Une sélection garde aussi moins de nombres.</b> Son readout garde D K = 7,5 × 10⁴ poids. La prédiction en forme duale garde les T états d'entraînement et leurs T K coefficients, soit T (N + K) = 3,8 × 10⁶ nombres. Le noyau T × T ne sert qu'à l'entraînement.</li>
+<li><b>La formule du noyau rend l'ordre 2 complet calculable.</b> Le même noyau, calculé depuis les monômes explicites, coûterait T P + T² (N + P) = 6,6 × 10¹². C'est 128 fois plus que la formule pour le noyau seul, soit (N + P) / (2 N), et 17 fois plus pour les totaux avec <em>ridge</em>. Les monômes occuperaient 7,4 Go en float64. La forme primale décomposerait une matrice de 129 285 de côté : 2,3 × 10¹⁵ multiplications et au moins 134 Go en float64.</li>
+<li><b>Avec <em>ridge</em>, <code>leverage</code> et <code>ofr</code> coûtent plus cher que l'ordre 2 complet en forme duale</b> : 1,4 × 10¹³ et 5,0 × 10¹² au total, contre 4,1 × 10¹¹. Leur coût ne vient pas de la notation des P produits candidats : <code>residual</code> les note aussi, pour un choix 61 à 168 fois moins cher (8,0 × 10¹⁰). <code>ofr</code> refait à chacun de ses M pas une matrice Z<sup>⊤</sup> diag(v) Z de T N² multiplications : ces M T N² font 77 % de son compte. <code>leverage</code> forme le noyau d'ordre 2 bloc par bloc depuis les produits explicites, sans la formule du noyau, puis projette chaque bloc sur les vecteurs propres : ces 2 T² P font 97 % de son compte.</li>
+<li><b>Le réservoir domine les sélections légères.</b> Ses états coûtent 2,5 × 10¹¹ par fold (T<sub>f,tout</sub> (N² + N C), sur 955 028 trames), soit 3,9 fois le total de <code>random_pairs:2080</code> avec <em>ridge</em>.</li>
+</ul>
+
+<h2>Ce qu'est une sélection</h2>
+<p>Le readout d'ordre 2 complet lit l'état (N valeurs : les états bruts x pour <code>ridge:2</code>, les états standardisés z pour <code>nlms:2</code>, <code>neh:2</code> et les sélections) et tous ses produits z<sub>i</sub> z<sub>j</sub>, soit P = N (N + 1) / 2 produits : 128 778 pour N = 507. Une <em>sélection</em> est la règle qui choisit, avant l'entraînement du readout, les entrées ajoutées à z à la place de ces P produits. Le readout lit alors D entrées, et il reste linéaire en ses poids. La sélection est calculée sur les lignes d'entraînement du fold seulement.</p>
+<ul>
+<li>Le plus souvent, les entrées ajoutées sont des produits z<sub>i</sub> z<sub>j</sub> de deux unités. Ce sont M paires (i, j) choisies une à une (<code>random_pairs</code>, <code>residual</code>, <code>ofr</code>, <code>leverage</code>), ou tous les m (m + 1) / 2 produits de m unités choisies (<code>random</code>, <code>weights_high</code>, <code>weights_low</code>).</li>
+<li>Pour <code>pca</code>, <code>pca_frames</code>, <code>scores</code> et <code>maclaurin</code>, ce sont des produits de deux combinaisons linéaires de z : des composantes principales, des sorties du readout linéaire ou des projections aléatoires.</li>
+<li>Pour <code>nystrom</code> et <code>r2sp</code>, ce sont M caractéristiques non linéaires de z qui ne sont pas des produits. Elles servent de point de comparaison.</li>
+</ul>
+
+<h2>Notations</h2>
+<div class="wide"><table>
+<tr><th>Symbole</th><th>Sens</th><th style="text-align:right">marron1, un fold</th><th style="text-align:right">JapaneseVowels, un fold</th></tr>
+<tr><td class="f">N</td><td>dimension de l'état z lu par le readout : 500 neurones arrondis au multiple de C au-dessus</td><td class="n">507</td><td class="n">504</td></tr>
+<tr><td class="f">T</td><td>nombre de lignes d'entraînement du readout : les points de prédiction des chants du fold (la fin de chaque phrase, cris compris, et le point avant la première), ou les instances du fold</td><td class="n">≈ 7 130 (7 044 à 7 179)</td><td class="n">180</td></tr>
+<tr><td class="f">K</td><td>nombre de sorties (classes)</td><td class="n">29</td><td class="n">9</td></tr>
+<tr><td class="f">M</td><td>nombre de produits ou de caractéristiques ajoutés à z</td><td class="n">2 080</td><td class="n">2 080</td></tr>
+<tr><td class="f">m</td><td>nombre d'unités ou de composantes dont on prend tous les produits : l'entier le plus proche de la solution de m (m + 1) / 2 = M. Ces sélections ajoutent m (m + 1) / 2 produits, égal à M seulement pour M = 528, 2 080, 8 256…</td><td class="n">64</td><td class="n">64</td></tr>
+<tr><td class="f">P</td><td>nombre de tous les produits z<sub>i</sub> z<sub>j</sub>, P = N (N + 1) / 2</td><td class="n">128 778</td><td class="n">127 260</td></tr>
+<tr><td class="f">D</td><td>nombre d'entrées du readout (N + M pour la plupart des sélections)</td><td class="n">2 587</td><td class="n">2 584</td></tr>
+<tr><td class="f">E</td><td>nombre d'époques d'une règle en ligne : l'entraînement va jusqu'à 3 000 époques, évaluées en chemin</td><td class="n">3 000</td><td class="n">3 000</td></tr>
+<tr><td class="f">F</td><td>nombre de folds internes du readout linéaire des sélections (<code>INNER_FOLDS</code>)</td><td class="n">3</td><td class="n">3</td></tr>
+<tr><td class="f">T<sub>f</sub></td><td>nombre de trames des fenêtres des points des chants du fold (les phrases, et ce qui précède la première), pour <code>pca_frames</code> seulement</td><td class="n">≈ 511 000 (506 057 à 513 291)</td><td class="n">0</td></tr>
+<tr><td class="f">T<sub>f,tout</sub></td><td>nombre de trames de tous les chants (ou de toutes les instances) d'entraînement, sur lesquelles le réservoir tourne à chaque fold</td><td class="n">955 028</td><td class="n">4 274</td></tr>
+<tr><td class="f">W</td><td>nombre de trames de l'historique lu par un noyau des entrées, sans réservoir (la fenêtre)</td><td class="n">600</td><td class="n">32</td></tr>
+<tr><td class="f">C</td><td>nombre de coefficients d'une trame (MFCC pour marron1, cepstre LPC pour JapaneseVowels)</td><td class="n">13</td><td class="n">12</td></tr>
+<tr><td class="f">S</td><td>niveau de troncature de la signature (noyau Sig(S))</td><td class="n">3</td><td class="n">3</td></tr>
+<tr><td class="f">q</td><td>degré du noyau polynomial Poly(q)</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td class="f">λ</td><td>ordre de raffinement de la grille du noyau Sig-PDE</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td class="f">L</td><td>coût d'un readout ridge linéaire sur z, en forme primale : L = T N² + N³ (matrice de Gram, puis valeurs propres)</td><td class="n">2,0 × 10⁹</td><td class="n">1,7 × 10⁸</td></tr>
+</table></div>
+
+<h2>Choix de la sélection et calcul des entrées</h2>
+<p class="note">La colonne « Choix » donne le coût payé une fois par fold, sur les T lignes. La colonne « Entrées des T lignes » donne le coût du calcul des D entrées de ces lignes. La colonne « Par ligne » donne le coût des entrées d'un nouvel état, à l'inférence. La colonne « Mémoire » donne le plus grand tableau de travail de la sélection, sans compter les T × D entrées. Les trois dernières colonnes donnent les comptes pour les tailles et la règle choisies plus bas. Ce sont le choix et les entrées, l'entraînement du readout sur ces entrées, et leur somme.</p>
+<div class="wide"><table id="selections"></table></div>
+
+<h2>Entraînement du readout sur D entrées</h2>
+<div class="wide"><table id="rules"></table></div>
+
+<h2>Calcul pour des tailles données</h2>
+<div class="panel">
+<div class="ct">
+<label>N<input id="N" type="number" min="2" step="1"></label>
+<label>T<input id="T" type="number" min="2" step="1"></label>
+<label>K<input id="K" type="number" min="1" step="1"></label>
+<label>M<input id="M" type="number" min="1" step="1"></label>
+<label>E<input id="E" type="number" min="1" step="1"></label>
+<label><span>T<sub>f</sub></span><input id="Tf" type="number" min="0" step="1"></label>
+<label><span>T<sub>f,tout</sub></span><input id="Tr" type="number" min="1" step="1"></label>
+<label>W<input id="W" type="number" min="1" step="1"></label>
+<label>C<input id="C" type="number" min="1" step="1"></label>
+<label>S<input id="S" type="number" min="1" step="1"></label>
+<label>Règle du readout<select id="rule"></select></label>
+</div>
+<div class="ct" id="presets"></div>
+<p class="note" id="error" style="color:var(--error);margin:0"></p>
+<div class="lg" id="legend"></div>
+<p class="note" id="dual"></p>
+<div style="position:relative" id="frame"><canvas id="chart" role="img" aria-label="Nombre de multiplications dominantes de chaque sélection et de l'entraînement du readout, en barres sur une échelle logarithmique, par groupe"></canvas></div>
+<p class="note">Échelle logarithmique : un cran vaut un facteur 10. Seule l'extrémité droite d'une barre se lit, car sa longueur dépend du début de l'axe. Les lignes sont triées par total à l'intérieur de chaque groupe. Un essai d'une étude répète ces coûts sur les 3 folds de la validation croisée. À chaque fold, le réservoir est reconstruit (et HAG réapprend), ses états sont recalculés, puis la sélection est refaite sur les lignes du fold.</p>
+</div>
+
+<h2>D'où viennent ces coûts</h2>
+<div id="details"></div>
+
+<h2>Durées mesurées sur PlaFRIM, pour comparaison</h2>
+<p class="note">Durée moyenne d'un essai d'étude (3 folds, chacun avec son réservoir et sa sélection) sur marron1 à 500 neurones, relevée dans les journaux des 19 et 20 novembre 2026. Un nœud suroit a 48 cœurs et un nœud bora 36. Le compte d'un essai est celui de la page, réservoir compris, pour 3 folds de T = 7 130 lignes.</p>
+<div class="wide"><table>
+<tr><th>Étude</th><th>Nœud</th><th style="text-align:right">Processus</th><th style="text-align:right">Cœurs par processus</th><th style="text-align:right">Durée d'un essai</th><th style="text-align:right">Compte d'un essai</th></tr>
+<tr><td><em>ridge</em>, sélections sans calcul lourd (<code>random_pairs</code>, <code>pca</code>, <code>weights_high</code>, …)</td><td>suroit</td><td class="n">24</td><td class="n">2</td><td class="n">≈ 2,4 min</td><td class="n">9,5 × 10¹¹<small>random_pairs:2080</small></td></tr>
+<tr><td><em>ridge</em>, <code>ofr:2080</code></td><td>bora</td><td class="n">18</td><td class="n">2</td><td class="n">≈ 18 min</td><td class="n">1,6 × 10¹³</td></tr>
+<tr><td><em>ridge</em>, <code>leverage:2080</code></td><td>bora</td><td class="n">18</td><td class="n">2</td><td class="n">26 à 36 min</td><td class="n">4,1 × 10¹³</td></tr>
+<tr><td><em>nlms</em> ou <em>eh_np_local</em>, <code>random_pairs:2080</code> ou <code>pca:64</code></td><td>suroit</td><td class="n">24</td><td class="n">2</td><td class="n">47 à 50 min</td><td class="n">1,0 × 10¹³</td></tr>
+<tr><td><em>nlms</em> ou <em>eh_np_local</em>, les mêmes sélections</td><td>bora</td><td class="n">13</td><td class="n">≈ 2,8</td><td class="n">≈ 87 min</td><td class="n">1,0 × 10¹³</td></tr>
+</table></div>
+<p class="note">Seules les durées d'un même nœud se comparent. Sur bora, avec <em>ridge</em>, l'ordre suit les comptes : <code>leverage</code> dure 1,4 à 2,0 fois <code>ofr</code>, et les comptes donnent 2,6 fois. Entre règles, il ne les suit pas. Sur bora, <em>nlms</em> dure 4,8 fois <code>ofr</code> et 2,4 à 3,3 fois <code>leverage</code>, alors que ses comptes valent 0,66 fois ceux d'<code>ofr</code> et 0,25 fois ceux de <code>leverage</code>, avec plus de cœurs par processus (2,8 contre 2). Sur suroit, <em>nlms</em> dure environ 20 fois les sélections légères avec <em>ridge</em>, pour 11 fois dans les comptes. Une hypothèse expliquerait cet écart : une règle en ligne enchaîne dans un <code>lax.scan</code> T petits produits D × K par époque, dont le débit est bien plus faible que celui des grands produits de matrices d'<code>ofr</code> et de <code>leverage</code>.</p>
+<p class="note">Les comptes sans réservoir écartaient trop les sélections. Le choix d'<code>ofr</code> coûte seul 4,9 × 10¹² par fold, et 5,0 × 10¹² avec <em>ridge</em>, soit 77 fois le total de <code>random_pairs:2080</code> avec <em>ridge</em>. Avec le réservoir, l'écart tombe à 17 fois par essai. En durée, <code>ofr</code> dure 7,5 fois plus que les sélections légères, sur deux nœuds différents à 2 cœurs par processus. Le réservoir, qui manquait aux comptes, explique donc l'essentiel de l'écart. Pour les sélections légères avec <em>ridge</em>, il est le goulot : 2,5 × 10¹¹ par fold, contre 6,5 × 10¹⁰ pour la sélection et <em>ridge</em>.</p>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// MODEL START
+// Costs in dominant multiplications. p: N, T, K, M, E, Tf, Tr, W, C, S, and the derived P, m, Mm, L (see the table of
+// notations). Each row: its label, the formulas shown (choice, inputs of the T rows, inputs of a new row, memory), the
+// number of inputs D of the readout and the same costs as functions of p (choice + inputs: the blue bar).
+const F = 3;
+const BINOM = '(<span class="binom"><span>W C + q</span><span>q</span></span>)';
+const THEORY = '<em>Théorique, non exécuté.</em> ';
+const SELECTIONS = [
+  {group: 'Références'},
+  {name: 'états du réservoir (par fold)', label: 'états du réservoir sur toutes les trames des chants (ou des instances) d\'entraînement, recalculés à chaque fold par un réservoir reconstruit ; sans readout', choice: '—', rows: 'T<sub>f,tout</sub> (N² + N C)', row: 'N² + N C par trame', memory: 'N²', d: '—', cost: p => p.Tr * (p.N ** 2 + p.N * p.C), noReadout: true},
+  {name: 'linear', code: true, label: 'z seul ; ridge en forme primale, imposée par le code, donc L même quand N > T', choice: '0', rows: 'T N', row: 'N', memory: '—', D: p => p.N, d: 'N', cost: p => p.T * p.N, ridge: p => p.L},
+  {name: 'order2, forme duale', code: true, label: 'ordre 2 complet par le noyau des T lignes (<code>ridge:2</code>, <code>nlms:2</code>, <code>neh:2</code>)', choice: '0', rows: 'noyau : 2 T² N', row: '2 T N', memory: 'T²', D: p => p.N + p.P, d: 'N + P', cost: p => 2 * p.T ** 2 * p.N, dual: true},
+  {name: ['order2, forme duale', 'par les monômes'], code: true, label: 'le même noyau, calculé depuis les N + P monômes explicites au lieu de la formule', choice: '0', rows: 'T P + T² (N + P)', row: 'P + T (N + P)', memory: 'T (N + P)', D: p => p.N + p.P, d: 'N + P', cost: p => p.T * p.P + p.T ** 2 * (p.N + p.P), dual: true},
+  {name: 'order2, forme primale', code: true, label: 'ordre 2 complet sur les N + P monômes eux-mêmes, la forme du papier « à 10 neurones » (Ohkubo et Inubushi 2024)', choice: '0', rows: 'monômes : T P', row: 'P', memory: 'T (N + P)', D: p => p.N + p.P, d: 'N + P', cost: p => p.T * p.P, primal: true},
+  {group: 'Tirages au hasard'},
+  {name: 'random_pairs:M', code: true, label: 'M produits tirés au hasard', choice: 'M', rows: 'T M', row: 'M', memory: 'M', D: p => p.N + p.M, d: 'N + M', cost: p => p.M + p.T * p.M},
+  {name: 'random:m', code: true, label: 'tous les produits de m unités tirées au hasard', choice: 'm', rows: 'T m (m + 1) / 2', row: 'm (m + 1) / 2', memory: 'm (m + 1) / 2', D: p => p.N + p.Mm, d: 'N + m (m + 1) / 2', cost: p => p.m + p.T * p.Mm},
+  {group: 'Sélections tirées des données'},
+  {name: ['weights_high:m,', 'weights_low:m'], code: true, label: 'produits des m unités de plus grand (ou de plus petit) poids dans le readout linéaire', choice: '(F + 1) L', rows: 'T m (m + 1) / 2', row: 'm (m + 1) / 2', memory: 'N²', D: p => p.N + p.Mm, d: 'N + m (m + 1) / 2', cost: p => (F + 1) * p.L + p.T * p.Mm},
+  {name: 'residual:M', code: true, label: 'produits les plus corrélés au résidu du readout linéaire', choice: 'F (F + 1) L + (K + 2) T N²', rows: 'T M', row: 'M', memory: 'N²', D: p => p.N + p.M, d: 'N + M', cost: p => F * (F + 1) * p.L + (p.K + 2) * p.T * p.N ** 2 + p.T * p.M},
+  {name: 'scores', code: true, label: 'produits des K sorties du readout linéaire', choice: '(F + 1)² L', rows: 'T N K + T K (K + 1) / 2', row: 'N K + K (K + 1) / 2', memory: 'N²', D: p => p.N + p.K * (p.K + 1) / 2, d: 'N + K (K + 1) / 2', cost: p => (F + 1) ** 2 * p.L + p.T * p.N * p.K + p.T * p.K * (p.K + 1) / 2},
+  {name: 'pca:m', code: true, label: 'produits des m premières composantes principales de z', choice: 'L', rows: 'T N m + T m (m + 1) / 2', row: 'N m + m (m + 1) / 2', memory: 'N²', D: p => p.N + p.Mm, d: 'N + m (m + 1) / 2', cost: p => p.L + p.T * p.N * p.m + p.T * p.Mm},
+  {name: 'pca_frames:m', code: true, label: 'produits des m premières composantes principales des états des T<sub>f</sub> trames des fenêtres', choice: 'T<sub>f</sub> N² + N³', rows: 'T N m + T m (m + 1) / 2', row: 'N m + m (m + 1) / 2', memory: 'N²', D: p => p.N + p.Mm, d: 'N + m (m + 1) / 2', cost: p => p.Tf * p.N ** 2 + p.N ** 3 + p.T * p.N * p.m + p.T * p.Mm, undefined: p => p.Tf > 0 ? null : 'non défini sur les jeux d\'instances (T<sub>f</sub> = 0)'},
+  {group: 'Alternatives publiées'},
+  {name: 'squares', code: true, label: 'z et tous les carrés z<sub>i</sub>²', choice: '0', rows: 'T N', row: 'N', memory: '—', D: p => 2 * p.N, d: '2 N', cost: p => p.T * p.N},
+  {name: ['half_squares,', 'neighbors_t2, neighbors_t3'], code: true, label: 'une unité sur deux remplacée par un produit', choice: '0', rows: 'T N', row: 'N', memory: '—', D: p => p.N, d: 'N', cost: p => p.T * p.N},
+  {name: 'ofr:M', code: true, label: 'régression orthogonale pas à pas', choice: '(N + 5 + K + M) T N² + 4 T M (N + 1) + 2 T M² + 3 M K N²', rows: 'T M', row: 'M', memory: 'max(64, K) N² + T (N + M)', D: p => p.N + p.M, d: 'N + M', cost: p => (p.N + 5 + p.K + p.M) * p.T * p.N ** 2 + 4 * p.T * p.M * (p.N + 1) + 2 * p.T * p.M ** 2 + 3 * p.M * p.K * p.N ** 2 + p.T * p.M, undefined: p => p.T > p.N + 1 ? null : 'non défini quand T ≤ N + 1'},
+  {name: 'leverage:M', code: true, label: 'tirage selon les scores de levier ridge', choice: 'T² N + 2 T² P + T³', rows: 'T M', row: 'M', memory: '2 T² + N²', D: p => p.N + p.M, d: 'N + M', cost: p => p.T ** 2 * p.N + 2 * p.T ** 2 * p.P + p.T ** 3 + p.T * p.M},
+  {name: 'maclaurin:M', code: true, label: 'produits de deux projections aléatoires', choice: '2 N M (tirage)', rows: '2 T N M', row: '2 N M', memory: 'N M', D: p => p.N + p.M, d: 'N + M', cost: p => 2 * p.N * p.M + 2 * p.T * p.N * p.M},
+  {name: 'nystrom:M', code: true, label: 'caractéristiques de Nyström du noyau des produits', choice: '2 M² N + M³', rows: '2 T M N + T M²', row: '2 M N + M²', memory: 'M² + T M', D: p => p.N + Math.min(p.M, p.T), d: 'N + min(M, T)', cost: p => { const M = Math.min(p.M, p.T); return 2 * M ** 2 * p.N + M ** 3 + 2 * p.T * M * p.N + p.T * M ** 2; }},
+  {name: 'r2sp:M', code: true, label: 'M unités aléatoires tanh(w · z + b)', choice: 'N M (tirage)', rows: 'T N M', row: 'N M', memory: 'N M', D: p => p.N + p.M, d: 'N + M', cost: p => p.N * p.M + p.T * p.N * p.M},
+  {group: 'Noyaux des entrées, sans réservoir (Gonon et al. 2022)', short: ['Noyaux des entrées, sans réservoir', '(Gonon et al. 2022)']},
+  {name: 'linéaire', theory: true, label: THEORY + 'produit scalaire des historiques de W trames de C coefficients, mises bout à bout', choice: '0', rows: 'noyau : T² W C', row: 'T W C', memory: 'T² + T W C', d: 'W C', cost: p => p.T ** 2 * p.W * p.C, dual: true},
+  {name: 'RBF', theory: true, label: THEORY + 'noyau gaussien sur les mêmes vecteurs de W C nombres', choice: '0', rows: 'noyau : T² W C', row: 'T W C', memory: 'T² + T W C', d: '∞', cost: p => p.T ** 2 * p.W * p.C, dual: true},
+  {name: 'Poly(q)', theory: true, label: THEORY + 'noyau polynomial de degré q sur les mêmes vecteurs', choice: '0', rows: 'noyau : T² W C', row: 'T W C', memory: 'T² + T W C', d: BINOM, cost: p => p.T ** 2 * p.W * p.C, dual: true},
+  {name: 'sigmoïde', theory: true, label: THEORY + 'tanh(γ ⟨h, h′⟩ + c<sub>0</sub>) sur les mêmes vecteurs h et h′ ; pas toujours semi-défini positif', choice: '0', rows: 'noyau : T² W C', row: 'T W C', memory: 'T² + T W C', d: '—', cost: p => p.T ** 2 * p.W * p.C, dual: true},
+  {name: 'GAK', theory: true, label: THEORY + 'alignement global de deux historiques (Cuturi 2011) : W² cases, chacune avec le noyau local en C, une exponentielle et un logarithme', choice: '0', rows: 'noyau : T² W² C', row: 'T W² C', memory: 'T² + T W C', d: '∞', cost: p => p.T ** 2 * p.W ** 2 * p.C, dual: true},
+  {name: 'Sig(S)', theory: true, label: THEORY + 'signature tronquée au niveau S (Király et Oberhauser 2019) : W² C pour la matrice des produits des accroissements, puis S W² par programmation dynamique', choice: '0', rows: 'noyau : T² W² (C + S)', row: 'T W² (C + S)', memory: 'T² + T W C', d: '(C<sup>S+1</sup> − 1) / (C − 1)', cost: p => p.T ** 2 * p.W ** 2 * (p.C + p.S), dual: true},
+  {name: 'Sig-PDE', theory: true, label: THEORY + 'signature complète par l\'EDP de Goursat (Salvi et al. 2021) : W² C pour les produits des accroissements, une seule fois, puis 4<sup>λ</sup> W² sur la grille raffinée à l\'ordre λ (λ = 0 ici)', choice: '0', rows: 'noyau : T² (W² C + 4<sup>λ</sup> W²)', row: 'T (W² C + 4<sup>λ</sup> W²)', memory: 'T² + T W C', d: '∞', cost: p => p.T ** 2 * p.W ** 2 * (p.C + 1), dual: true},
+  {name: 'Volterra', label: 'noyau de Volterra (Gonon et al. 2022) : une récurrence sur les W retards, C par retard ; le seul noyau exécuté (<code>kernel_study</code>)', choice: '0', rows: 'noyau : T² W C', row: 'T W C', memory: 'T² + T W C', d: '∞', cost: p => p.T ** 2 * p.W * p.C, dual: true, kernel: true},
+];
+// Each rule: the formulas shown and its training cost on D inputs (dual: on a kernel of the T rows; dualName, dualTag:
+// the readout of the full order 2 in dual form with this rule; kernelName, kernelTag: that of the kernels of the inputs).
+const RULES = [
+  {name: 'ridge', train: 'D ≤ T : T D² + D³ ; sinon T² D + T³', epoch: 'une seule résolution, puis D² K par coefficient ridge', memory: 'min(D, T)²', row: 'D K',
+   cost: (p, D) => D <= p.T ? p.T * D ** 2 + D ** 3 : p.T ** 2 * D + p.T ** 3, dual: p => p.T ** 3, primal: (p, D) => p.T * D ** 2 + D ** 3, dualName: 'ridge:2', dualTag: 'ridge:2', kernelName: 'ridge sur le noyau (KernelRidge)', kernelTag: 'ridge'},
+  {name: 'nlms', train: '2 E T D K', epoch: '2 T D K par époque', memory: 'D K', row: 'D K', cost: (p, D) => 2 * p.E * p.T * D * p.K, dual: p => p.E * p.T ** 2 * p.K, dualName: 'nlms:2', dualTag: 'nlms:2', kernelName: 'nlms sur le noyau, hypothétique', kernelTag: 'hypothétique'},
+  {name: 'eh_np_local', train: '2 E T D K', epoch: '2 T D K par époque', memory: 'D K', row: 'D K', cost: (p, D) => 2 * p.E * p.T * D * p.K, dual: p => p.E * p.T ** 2 * p.K, dualName: 'neh:2, la version normalisée de EH, car eh_np_local n\'a pas de forme duale', dualTag: 'neh:2', kernelName: 'neh sur le noyau, hypothétique', kernelTag: 'hypothétique'},
+  {name: 'rls', train: '5 T (D + 1)² + 3 T (D + 1) K', epoch: 'une seule époque', memory: '(D + 1)²', row: 'D K', cost: (p, D) => 5 * p.T * (D + 1) ** 2 + 3 * p.T * (D + 1) * p.K, dualName: 'ridge:2, car rls n\'a pas de forme duale', dualTag: 'ridge:2', kernelName: 'ridge sur le noyau, car rls n\'a pas de forme duale', kernelTag: 'ridge'},
+  {name: 'ridge:2, forme duale', train: '2 T² N + T³', epoch: 'noyau de tous les monômes, puis T² K par coefficient ridge', memory: 'T²', row: '2 T N + T K'},
+  {name: 'ridge:2, forme primale', train: 'T (N + P)² + (N + P)³', epoch: 'les mêmes poids, sur les monômes eux-mêmes', memory: '(N + P)²', row: '(N + P) K'},
+  {name: 'nlms:2, neh:2, forme duale', train: '2 T² N + E T² K', epoch: 'T² K par époque', memory: 'T² + T K', row: '2 T N + T K'},
+  {name: 'nlms:2, neh:2, forme primale', train: '2 E T (N + P) K', epoch: 'les mêmes poids, sur les monômes eux-mêmes', memory: '(N + P) K', row: '(N + P) K'},
+];
+const PRESETS = [
+  ['marron1, un fold', {N: 507, T: 7130, K: 29, M: 2080, E: 3000, Tf: 510814, Tr: 955028, W: 600, C: 13, S: 3}],
+  ['marron1, tout l\'entraînement', {N: 507, T: 10698, K: 29, M: 2080, E: 3000, Tf: 766221, Tr: 955028, W: 600, C: 13, S: 3}],
+  ['JapaneseVowels, un fold', {N: 504, T: 180, K: 9, M: 2080, E: 3000, Tf: 0, Tr: 4274, W: 32, C: 12, S: 3}],
+];
+const KEYS = ['N', 'T', 'K', 'M', 'E', 'Tf', 'Tr', 'W', 'C', 'S'];
+function derived(values) {  // (the derived sizes: P, m, Mm = m (m + 1) / 2, L)
+  const p = {...values};
+  p.P = p.N * (p.N + 1) / 2;
+  p.M = Math.min(p.M, p.P);  // (no more products than candidates)
+  p.m = Math.max(1, Math.round((Math.sqrt(8 * p.M + 1) - 1) / 2));
+  p.Mm = p.m * (p.m + 1) / 2;
+  p.L = p.T * p.N ** 2 + p.N ** 3;
+  return p;
+}
+function readoutCost(s, p, rule) {  // (the orange bar: null without readout)
+  if (s.noReadout) return null;
+  if (s.dual) return (rule.dual || RULES[0].dual)(p);
+  if (s.primal && rule.primal) return rule.primal(p, s.D(p));
+  if (s.ridge && rule.name === 'ridge') return s.ridge(p);
+  return rule.cost(p, s.D(p));
+}
+function counts(p, rule) {  // ({why, blue, orange, total} of each row of SELECTIONS, null for a group)
+  return SELECTIONS.map(s => {
+    if (s.group) return null;
+    const why = s.undefined ? s.undefined(p) : null;
+    if (why) return {why, blue: null, orange: null, total: null};
+    const blue = s.cost(p), orange = readoutCost(s, p, rule);
+    return {why: null, blue, orange, total: blue + (orange || 0)};
+  });
+}
+const SUPERSCRIPTS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const superscript = n => String(n).split('').map(d => SUPERSCRIPTS[+d]).join('');
+function power(x) {  // ("4,5 × 10¹²"; the mantissa rounded before the exponent is chosen)
+  if (x === null || x === undefined) return 'non défini';
+  if (x < 1000) return String(Math.round(x));
+  let exponent = Math.floor(Math.log10(x)), mantissa = Math.round(x / 10 ** exponent * 10) / 10;
+  if (mantissa >= 10) { mantissa = 1; exponent += 1; }
+  return `${mantissa.toFixed(1).replace('.', ',')} × 10${superscript(exponent)}`;
+}
+// MODEL END
+const DETAILS = [
+  ['Readout linéaire des sélections, coût L', ['Les sélections <code>weights</code>, <code>residual</code> et <code>scores</code> entraînent un readout ridge linéaire sur z, et le code lui impose la forme primale (<code>solver="primal"</code>). Chaque entraînement forme la matrice de Gram Z<sup>⊤</sup> Z, où Z est la matrice T × N des états standardisés (T N²), et calcule ses valeurs propres (N³). Il résout ensuite chaque coefficient ridge pour N² K. Le coefficient est choisi par validation croisée sur F folds internes (<code>chosen_ridge</code>), ce qui fait F entraînements de plus. D\'où (F + 1) L pour <code>weights</code>.', '<code>residual</code> et <code>scores</code> lisent les sorties hors fold des lignes d\'entraînement (<code>cross_scores</code>) : F folds, chacun avec son propre choix de coefficient, soit F (F + 1) entraînements. <code>scores</code> entraîne aussi le readout sur toutes les lignes pour l\'inférence, d\'où (F + 1)² L. Ses entrées sont les produits deux à deux des K sorties : T N K pour les sorties hors fold, puis T K (K + 1) / 2 produits (<code>np.triu_indices</code>).']],
+  ['residual', ['Après les sorties hors fold, le score de chaque produit est la somme sur les K sorties de Cov(z<sub>i</sub> z<sub>j</sub>, r<sub>k</sub>)² / Var(z<sub>i</sub> z<sub>j</sub>), où r<sub>k</sub> est le résidu de la sortie k. Chaque sortie demande une matrice Z<sup>⊤</sup> diag(r<sub>k</sub>) Z, soit T N². La variance des produits demande deux matrices de plus : (K + 2) T N² en tout (<code>residual_scores</code>, <code>pair_variance</code>).']],
+  ['pca et pca_frames', ['<code>pca</code> calcule la matrice de corrélation de z (T N²) et ses vecteurs propres (N³), soit L. Il projette ensuite chaque ligne sur m axes (N m par ligne). <code>pca_frames</code> lit la matrice de Gram des états des T<sub>f</sub> trames des fenêtres des points, accumulée pendant le calcul des états (T<sub>f</sub> N²), puis ses vecteurs propres (N³). Elle n\'est pas définie sur les jeux d\'instances : le code la refuse (<code>check_no_frames</code>).', 'Ces sélections, comme <code>random:m</code> et <code>weights</code>, ajoutent m (m + 1) / 2 produits. Quand M n\'est pas de cette forme, m est l\'entier le plus proche, et la page compte m (m + 1) / 2 produits, pas M.']],
+  ['ofr', ['OFR part des normes de tous les produits candidats, orthogonalisés contre la constante et z (<code>ofr_pairs</code>, <code>product_correlations</code>). Il faut une matrice Z<sup>⊤</sup> diag(v) Z par colonne v de la base, soit (N + 1) T N², par blocs de 64 colonnes. Les statistiques des produits en demandent 3 T N² (<code>pair_variance</code> et leur moyenne), et la décomposition QR de la matrice T × (N + 1) environ T N². Les corrélations avec le résidu demandent K T N².', 'Chacun des M pas choisit un produit et l\'orthogonalise contre la base, en deux passages Q (Q<sup>⊤</sup> v) : 4 T (N + 1 + s) au pas s, soit 4 T M (N + 1) + 2 T M² en tout. Il met ensuite à jour les normes et les corrélations de tous les candidats avec une nouvelle matrice Z<sup>⊤</sup> diag(v) Z (T N²), et calcule leurs scores (environ 3 K N²). Le total est (N + 5 + K + M) T N² + 4 T M (N + 1) + 2 T M² + 3 M K N². Les M T N² des pas en font 77 % sur un fold de marron1. La mémoire est celle de max(64, K) matrices N × N et de la base Q, T (N + M).', 'Quand T ≤ N + 1, les états reproduisent exactement les cibles. Le résidu est alors nul et aucun produit n\'est choisi : c\'est le cas de JapaneseVowels, où les études d\'<code>ofr</code> échouent.']],
+  ['leverage', ['Les scores de levier demandent le spectre du noyau des T lignes pour la matrice de z et de tous les produits standardisés. Le noyau part de Z Z<sup>⊤</sup> (T² N), puis il est accumulé unité par unité (<code>product_spectrum</code>). Le bloc des produits de l\'unité i a N − i colonnes, et son produit par sa transposée coûte T² (N − i), soit T² P au total. La décomposition du noyau coûte T³. Le score de chaque produit demande ensuite la projection de chaque bloc sur les vecteurs propres, encore T² P (<code>leverage_scores</code>).', 'Ce noyau d\'ordre 2 est donc formé depuis les produits explicites, sans la formule du noyau (2 T² N) : les 2 T² P font 97 % du compte. C\'est la seule sélection dont le coût croît plus vite que T : en T² P, puis en T³.']],
+  ['maclaurin, r2sp et nystrom', ['<code>maclaurin</code> projette z sur 2 M directions de signes aléatoires (2 N M par ligne) et multiplie les projections deux à deux. <code>r2sp</code> projette z sur M directions (N M par ligne) et applique tanh. <code>nystrom</code> calcule le noyau des produits entre M lignes tirées au hasard (2 M² N) et ses vecteurs propres (M³). Pour chaque ligne, il calcule ensuite son noyau avec ces M lignes (2 M N) et sa projection (M²).']],
+  ['ridge', ['Le readout forme la matrice de Gram des D entrées (T D²) et calcule ses valeurs propres (D³). Chaque coefficient ridge se résout ensuite depuis ce spectre pour D² K, donc la recherche du coefficient ne recalcule rien. Quand D dépasse T, la forme duale travaille sur le noyau T × T (<code>GeneralizedRidge</code>, solveur « auto »). La ligne <code>linear</code> fait exception : le code impose la forme primale, donc son coût est L même quand N > T, comme pour JapaneseVowels.']],
+  ['nlms et eh_np_local', ['Chaque ligne calcule les K sorties (D K) et met à jour la matrice des poids par un produit extérieur (D K). Une époque coûte 2 T D K, et la règle répète E époques. EH calcule en plus la sortie sans bruit d\'exploration, ce qui change le facteur constant, pas l\'ordre (<code>lms_epoch</code>, <code>eh_epoch</code>). L\'ordre 2 complet en forme duale lit avec ces règles <code>nlms:2</code> et <code>neh:2</code> : <code>eh_np_local</code> n\'a pas de forme duale, et <code>neh</code> est la version normalisée de EH.']],
+  ['rls', ['Le nœud RLS de reservoirpy lit D + 1 entrées, l\'entrée constante comprise (<code>reservoirpy/nodes/rls.py</code>, <code>_learning_step</code>). Chaque ligne met à jour la matrice P de taille (D + 1) × (D + 1) : le produit P x, le produit extérieur, sa division, la division par le facteur d\'oubli et le produit de la nouvelle matrice par x, soit 5 (D + 1)². Elle met aussi à jour les poids : la sortie, le produit extérieur et la sortie après la mise à jour, soit 3 (D + 1) K. Une seule époque suffit : après un passage, les poids sont ceux de la régression ridge. RLS n\'a pas de forme duale : avec rls, les lignes en forme duale de la page gardent <code>ridge:2</code>.']],
+  ['Ordre 2 complet', ['Les N + P monômes ne sont jamais calculés. Leur noyau entre deux états se déduit des sommes de puissances des produits de leurs coordonnées, soit 2 N multiplications par paire de lignes et 2 T² N pour les T lignes (<code>monomial_kernel</code>). <code>ridge:2</code> décompose ce noyau (T³) : la matrice décomposée est le noyau T × T des lignes, pas la matrice de Gram des N + P monômes.', 'Les deux formes donnent les mêmes poids β = Φ<sup>⊤</sup> (Φ Φ<sup>⊤</sup> + ρ I)<sup>−1</sup> Y = (Φ<sup>⊤</sup> Φ + ρ I)<sup>−1</sup> Φ<sup>⊤</sup> Y pour ρ > 0. Ici Φ est la matrice T × (N + P) des monômes centrés, Y la matrice T × K des cibles centrées et ρ le coefficient ridge. La seconde forme coûterait T (N + P)² + (N + P)³, soit 2,3 × 10¹⁵ sur un fold de marron1, et 134 Go en float64.', '<code>nlms:2</code> et <code>neh:2</code> mettent à jour le coefficient dual de la ligne courante, après un produit de la ligne du noyau par les coefficients (T K) : T² K par époque. À l\'inférence, chaque nouvel état demande son noyau avec les T lignes d\'entraînement (2 T N). Le coût par ligne croît donc avec le jeu d\'entraînement.']],
+  ['Réservoir', ['À chaque fold, <code>choose</code> (<code>bachue/hpo/learning_rules_study.py</code>, l. 140 à 145) reconstruit le réservoir avec la graine CV_SEED + k. Il calcule ensuite ses états sur toutes les trames des chants d\'entraînement, ceux du fold et ceux de validation : T<sub>f,tout</sub> = 955 028 trames pour marron1. Pour JapaneseVowels, <code>choose_on_instances</code> fait de même sur les 270 instances d\'entraînement (4 274 trames).', 'Le nœud JAX du réservoir garde W en matrice dense : hag (<code>classic_parameters</code>) convertit les matrices creuses. Chaque trame coûte donc N² pour W x et N C pour W<sub>in</sub> u, quelle que soit la connectivité. Les lots de 32 chants sont complétés par des zéros jusqu\'à un multiple de 64 trames (<code>run_batched</code>). Cela fait 1 161 216 pas au lieu de 955 028 pour marron1, soit 22 % de plus, et environ 4 fois plus de pas pour les instances courtes de JapaneseVowels.', 'Pour <code>mean_hag</code> et <code>var_hag</code>, l\'apprentissage HAG s\'ajoute à chaque fold. Il tourne sur 500 phrases tirées des chants du fold, environ 35 000 trames pour marron1. Chaque trame demande un pas du réservoir et, au plus, sa part d\'une matrice de covariance N × N : environ 2 × 35 000 × N² = 1,8 × 10¹⁰, plus le remplissage des fenêtres.']],
+  ['Noyaux des entrées (Gonon et al. 2022, tableau II)', ['Ces noyaux lisent l\'historique des W dernières trames de C coefficients, sans réservoir, et s\'entraînent en forme duale. Leur barre bleue est le noyau des T lignes (T² fois le coût d\'une paire), et leur barre orange la règle sur ce noyau. Seul Volterra est exécuté (<code>bachue/hpo/kernel_study.py</code>, <code>KERNELS = ("volterra",)</code>) : les sept autres lignes sont théoriques. <code>kernel_study</code> calcule le noyau une seule fois par essai, sur toutes les lignes d\'entraînement : 10 698 pour marron1, le préréglage « tout l\'entraînement ». Il résout ensuite 3 <code>KernelRidge</code>, un par fold, sur ses sous-matrices. Les barres orange de <em>nlms</em> et <em>eh_np_local</em> sur ces noyaux sont donc hypothétiques, et <em>rls</em>, sans forme duale, y est remplacé par <em>ridge</em>.', 'La page compte T² cases de C multiplications par retard. <code>volterra_gram</code> ne calcule que les blocs au-dessus de la diagonale, environ 0,6 T² cases pour 10 698 lignes et des blocs de 2 048 lignes. Il fait en revanche 3 opérations de plus par retard (C + 3) : 6,5 × 10¹¹ au lieu de 8,9 × 10¹¹. Pour JapaneseVowels, une trame a 12 coefficients du cepstre LPC, et les instances de 7 à 29 trames sont complétées par des zéros jusqu\'à W = 32 (<code>lagged_instances</code>).', 'Le tableau II de Gonon, Grigoryeva et Ortega donne le coût d\'une case de la matrice de Gram, écrit ici avec W pour la longueur des séries et C pour leur dimension. Il convient aux noyaux statiques, à GAK et à Volterra. Une case de GAK évalue aussi une exponentielle et un logarithme. Pour Sig(S), le tableau donne O(W² S C), comme la remarque 6.3 de Király et Oberhauser (2019) : le coût d\'une évaluation du noyau statique y multiplie le reste. Leur remarque 6.7 compte S W² pour la programmation dynamique, sans la matrice des produits des accroissements. Cette matrice coûte W² C une seule fois, d\'où W² (C + S) ici.', 'Pour Sig-PDE, le tableau donne O(W² C) sur la grille de départ (Salvi et al. 2021, section 3.1.1). La page compte W² C pour les produits des accroissements, calculés une seule fois, puis 4<sup>λ</sup> W² pour la grille raffinée à l\'ordre λ. L\'article de Gonon et al. ne dit pas comment les noyaux statiques lisent une série : la page suppose l\'historique entier mis bout à bout. Le noyau sigmoïde n\'est pas toujours semi-défini positif : ce n\'est donc pas toujours un vrai noyau, et il n\'a pas de dimension D.', 'Les durées du tableau II, de 2,47 s à 38 818 s, portent sur un autre problème : des covariances BEKK en dimension 10, sur 120 cœurs. Ce sont celles de toute la validation croisée de 100 jeux d\'hyperparamètres, pas d\'une évaluation du noyau. Elles ne se comparent donc pas aux comptes de cette page.']],
+];
+const element = id => document.getElementById(id);
+const GROUPS = SELECTIONS.filter(s => s.group);
+const groupOf = (() => { let g = -1; return SELECTIONS.map(s => s.group ? ++g : g); })();
+const text = html => html.replace(/<sub>(.*?)<\/sub>/g, '_$1').replace(/<[^>]+>/g, '');
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const shade = (hue, g) => css(`--${hue}${g}`);
+const MONO = 'ui-monospace, Menlo, Consolas, monospace', SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+const isPower = v => Math.abs(Math.log10(v) - Math.round(Math.log10(v))) < 1e-9;
+const tickLabel = v => { const e = Math.round(Math.log10(v)); return e === 0 ? '1' : e === 1 ? '10' : '10' + superscript(e); };
+function parameters() {
+  const invalid = KEYS.filter(id => !(+element(id).value >= (id === 'Tf' ? 0 : 1)));
+  element('error').textContent = invalid.length ? `Valeur manquante ou invalide pour ${invalid.join(', ')} : remplacée par ${invalid.includes('Tf') && invalid.length === 1 ? 0 : 1}.` : '';
+  const values = {};
+  KEYS.forEach(id => { values[id] = Math.max(id === 'Tf' ? 0 : 1, Math.round(+element(id).value) || 0); });
+  return derived(values);
+}
+element('selections').innerHTML = '<tr><th>Sélection</th><th>Ce qu\'elle fait</th><th>Choix</th><th>Entrées des T lignes</th><th>Par ligne</th><th>Mémoire</th><th>D</th><th style="text-align:right">Choix + entrées</th><th id="count" style="text-align:right"></th><th style="text-align:right">Total</th></tr>'
+  + SELECTIONS.map((s, i) => s.group ? `<tr class="g"><td colspan="10">${s.group}</td></tr>` : `<tr><td class="${s.code ? 'f' : ''}">${[].concat(s.name).join(' ').replaceAll(', ', ',<br>')}</td><td class="d">${s.label}</td><td class="f">${s.choice}</td><td class="f">${s.rows}</td><td class="f">${s.row}</td><td class="f">${s.memory}</td><td class="f">${s.d}</td><td class="n" id="s${i}"></td><td class="n" id="r${i}"></td><td class="n" id="t${i}"></td></tr>`).join('');
+element('rules').innerHTML = '<tr><th>Règle</th><th>Entraînement</th><th>Détail</th><th>Mémoire</th><th>Sortie d\'une ligne</th></tr>'
+  + RULES.map(r => `<tr><td class="f">${r.name.replaceAll(', forme', ',<br>forme')}</td><td class="f">${r.train}</td><td>${r.epoch}${r.dualName ? `<br>forme duale : <code>${r.dualName}</code>` : ''}</td><td class="f">${r.memory}</td><td class="f">${r.row}</td></tr>`).join('');
+element('details').innerHTML = DETAILS.map(([title, paragraphs]) => `<details><summary>${title}</summary>${paragraphs.map(t => `<p>${t}</p>`).join('')}</details>`).join('');
+element('rule').innerHTML = RULES.filter(r => r.cost).map(r => `<option>${r.name}</option>`).join('');
+element('presets').innerHTML = PRESETS.map(([name], i) => `<button type="button" data-preset="${i}">${name}</button>`).join('');
+const key = background => `<i class="key" style="background:${background}"></i>`;
+const gradient = hue => `linear-gradient(90deg, ${[0, 1, 2, 3, 4].map(g => `var(--${hue}${g})`).join(', ')})`;
+let chart = null, narrowLabels = null;
+function draw() {
+  const p = parameters(), rule = RULES.find(r => r.name === element('rule').value), all = counts(p, rule);
+  // (the tables: the three counts of each row; the readout of the rows in dual form)
+  SELECTIONS.forEach((s, i) => {
+    if (s.group) return;
+    const c = all[i], tag = s.dual ? `<small>${s.kernel || s.theory ? rule.kernelTag : rule.dualTag}</small>` : '';
+    element('s' + i).innerHTML = c.why || power(c.blue);
+    element('r' + i).innerHTML = c.why || c.orange === null ? '—' : power(c.orange) + tag;
+    element('t' + i).textContent = c.why ? '—' : power(c.total);
+  });
+  element('count').textContent = `Readout (${rule.name})`;
+  element('legend').innerHTML = `<span>${key(gradient('b'))}bleu : choix de la sélection et entrées des T lignes, états du réservoir, ou noyau des T lignes</span><span>${key(gradient('o'))}orange : entraînement du readout (${rule.name})</span><span>${key('var(--text-muted)')}gris : non défini</span>`
+    + '<span class="br"></span>' + GROUPS.map((s, g) => `<span>${key(`var(--b${g})`)}${key(`var(--o${g})`)}${s.group}</span>`).join('');
+  element('dual').innerHTML = `Ordre 2 complet en forme duale : readout <code>${rule.dualName}</code>. Noyaux des entrées : readout ${rule.kernelName}.`;
+  // (rows of the chart: the title of each group, then its rows sorted by total, the undefined ones last)
+  const rows = [];
+  SELECTIONS.forEach((s, i) => { if (s.group) rows.push({header: true, s, g: groupOf[i]}); });
+  const shown = rows.flatMap(h => [h, ...SELECTIONS.map((s, i) => ({s, i, g: groupOf[i], c: all[i]}))
+    .filter(r => !r.s.group && r.g === h.g).sort((a, b) => (b.c.total ?? -1) - (a.c.total ?? -1))]);
+  const values = all.filter(Boolean).flatMap(c => [c.blue, c.orange]).filter(x => x !== null && x > 0);
+  const start = 10 ** Math.floor(Math.log10(Math.min(...values))), end = 10 ** Math.ceil(Math.log10(Math.max(...values)));
+  // (labels on several lines; on a narrow screen, lines of at most 16 characters, cut at the spaces)
+  const narrow = narrowLabels = element('frame').clientWidth < 600;
+  const wrap = line => { if (!narrow) return [line]; const out = [];
+    line.split(' ').forEach(word => { const last = out.length - 1;
+      if (last >= 0 && (out[last] + ' ' + word).length <= 16) out[last] += ' ' + word; else out.push(word); });
+    return out; };
+  const label = r => (r.header ? [].concat(r.s.short || r.s.group) : [].concat(r.s.name).map((line, k, lines) =>
+    k < lines.length - 1 ? line : line + (r.s.theory ? ' (théorique)' : '') + (r.c.why ? ' (non défini)' : ''))).flatMap(wrap);
+  const muted = css('--text-muted'), secondary = css('--text-secondary'), border = css('--border');
+  const blueName = r => r.s.noReadout ? 'états du réservoir' : r.s.dual ? 'noyau des T lignes' : 'choix de la sélection et entrées';
+  const orangeName = r => r.s.kernel || r.s.theory ? `readout ${rule.kernelName}` : r.s.dual ? `readout ${rule.dualName}` : `entraînement du readout (${rule.name})`;
+  const data = {labels: shown.map(label), datasets: [
+    {data: shown.map(r => r.header ? null : r.c.why ? start * 2.5 : r.c.blue),
+     backgroundColor: shown.map(r => r.header ? 'transparent' : r.c.why ? muted : shade('b', r.g))},
+    {data: shown.map(r => r.header || r.c.why ? null : r.c.orange),
+     backgroundColor: shown.map(r => r.header ? 'transparent' : shade('o', r.g))}].map(d => ({...d,
+       borderRadius: {topRight: 3, bottomRight: 3}, borderSkipped: false, barThickness: 10, categoryPercentage: 0.8, barPercentage: 0.9}))};
+  const axis = position => ({type: 'logarithmic', position, min: start, max: end,
+    afterBuildTicks: scale => { scale.ticks = scale.ticks.filter(t => isPower(t.value)); },
+    ticks: {color: secondary, maxRotation: 0, minRotation: 0, font: {size: 12, family: SANS}, callback: v => isPower(v) ? tickLabel(v) : ''},
+    grid: {display: position === 'bottom', color: border, drawTicks: false}, border: {display: false}});
+  const x = axis('bottom');
+  x.title = {display: true, text: 'multiplications dominantes (échelle logarithmique)', color: secondary, font: {size: 13, family: SANS}};
+  if (chart) chart.destroy();
+  element('frame').style.height = `${shown.reduce((h, r) => h + Math.max(30, 14 * label(r).length + 8), 0) + 90}px`;
+  chart = new Chart(element('chart'), {type: 'bar', data,
+    options: {indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: {legend: {display: false}, tooltip: {filter: item => item.raw !== null, callbacks: {
+        title: items => [].concat(label(shown[items[0].dataIndex])).join(' '),
+        label: item => { const r = shown[item.dataIndex];
+          if (item.datasetIndex === 0) return r.c.why ? text(r.c.why) : `${blueName(r)} : ${power(r.c.blue)}`;
+          return `${orangeName(r)} : ${power(r.c.orange)}`; },
+        footer: items => { const r = shown[items[0].dataIndex]; return r.c && !r.c.why ? `total : ${power(r.c.total)}` : ''; }}}},
+      scales: {x, x2: axis('top'),
+        y: {ticks: {autoSkip: false, color: secondary,
+              font: context => { const r = shown[context.index]; return r && r.header ? {family: SANS, size: narrow ? 12 : 13, weight: 'bold'} : {family: r && r.s.code ? MONO : SANS, size: narrow ? 11 : 12}; }},
+            grid: {drawTicks: false, color: context => shown[context.index] && shown[context.index].header && context.index > 0 ? border : 'transparent',
+                   lineWidth: context => shown[context.index] && shown[context.index].header ? 1.5 : 0},
+            border: {display: false}}}}});
+}
+function preset(values) { Object.entries(values).forEach(([id, value]) => { element(id).value = value; }); draw(); }
+element('presets').addEventListener('click', event => { if (event.target.dataset.preset) preset(PRESETS[+event.target.dataset.preset][1]); });
+[...KEYS, 'rule'].forEach(id => element(id).addEventListener('input', draw));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);  // (the shades of the other mode)
+addEventListener('resize', () => { if ((element('frame').clientWidth < 600) !== narrowLabels) draw(); });  // (the cut of the labels)
+preset(PRESETS[0][1]);
+</script>
+</body>
+</html>

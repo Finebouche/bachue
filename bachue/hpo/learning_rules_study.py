@@ -3,14 +3,15 @@ Study 2: the learning rule of the readout "last" -> "last" (bachue.models.readou
 for their description): one study per rule, so that the rules are compared on reservoirs optimized for each of them
 (results: bachue.performances.learning_rules_evaluation with the same variables).
 
-Rule of the study: HAG_CANARY_HPO_RULE (studies "next_phrase_calls_[leak_]<rule>_<model>_<size>",
+Rule of the study: BACHUE_STUDY_RULE (studies "next_phrase_calls_[leak_]<rule>_<model>_<size>",
 "<rule>-order2" for the rules on all the monomials of degree 2), on the states:
   - "lms" (LMS), "nlms" (normalized LMS), "rls" (recursive least squares);
   - the versions of the exploratory Hebbian rule: "eh" (Hoerzer et al. 2014), "eh_np", "eh_np_local", "neh";
   - or on the state and all its monomials of degree 2 (the generalized readout of Ohkubo & Inubushi 2024): "ridge:2"
     (ridge regression), "nlms:2" and "neh:2" (in dual form).
-(The linear ridge readout, "ridge": the studies of "last" -> "last", bachue.hpo.readout_window_study. The rules on selected
-products: bachue.hpo.partial_order2_study, with its own objective and the same ranges.)
+(The linear ridge readout, "ridge": on the songs, the studies of "last" -> "last", bachue.hpo.readout_window_study; on
+the instances of a classification dataset, which have no such study, a study of this kind, "<dataset>_[leak_]ridge_<model>_<size>".
+The rules on selected products: bachue.hpo.partial_order2_study, with its own objective and the same ranges.)
 
 Search: the parameters of the reservoirs (bachue.hpo.studies.reservoir_parameters, 400 trials by default) and those of
 the rule: its normalized learning rate (LMS, NLMS and EH: "readout:rate", log-uniform in RULE_RATES; one training per
@@ -21,10 +22,9 @@ hyperparameters of the rule (number of epochs, up to HPO_MAX_EPOCHS; normalizati
 coefficient of "ridge:2") are chosen in this cross-validation (bachue.hpo.learning_rules_study.choose; user attribute
 "readout_rule" of the trial).
 
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_HPO_RULE=<rule> [HAG_CANARY_LEAK=1]):
+Usage (BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0 BACHUE_STUDY_RULE=<rule> [BACHUE_LEAKY_RESERVOIRS=1]):
   python -m bachue.hpo.learning_rules_study <model> <size>     (slurm/submit_hpo_rules.sh: all the rules)
 """
-import os
 import sys
 
 import numpy as np
@@ -38,7 +38,7 @@ from bachue.hpo.studies import CV_SEED, FOLD_SEED, reservoir_parameters, run_stu
 from bachue.models.product_selection import RIDGES_STD
 from bachue.models.readout_rules.training import normalized, rule_inputs, rule_order, selected_rows, trained
 from bachue.models.reservoirs import build
-from bachue.settings import HPO_RULE, N_FOLDS
+from bachue.settings import HPO_RULE, N_FOLDS, TASK, env
 from bachue.tasks.next_phrase import BASE_READOUT, song_data
 
 
@@ -46,7 +46,7 @@ from bachue.tasks.next_phrase import BASE_READOUT, song_data
 # 3-fold cross-validation by song on the train songs: the grids of each rule (configurations), the training and the
 # scores of a configuration on a fold (configuration_counts) and the choice of the best configuration and number of
 # epochs of each rule (choose). Used by the objective of the studies of a rule (bachue.hpo.learning_rules_study and
-# partial_order2_study, HAG_CANARY_HPO_RULE) and by the final evaluation (bachue.performances.learning_rules_evaluation, which
+# partial_order2_study, BACHUE_STUDY_RULE) and by the final evaluation (bachue.performances.learning_rules_evaluation, which
 # describes the rules and the protocol).
 NORMALIZATIONS = ["center", "standardize"]  # (inputs of RLS; LMS and EH: "standardize", better in all the conditions)
 RLS_ALPHAS = 10.0 ** np.arange(-10, -2)  # (ridge coefficient of the standardized inputs)
@@ -56,10 +56,10 @@ EH_NOISE = 0.5  # (the paper's)
 NLMS_RATES = [0.03, 0.1, 0.3]  # (normalized per row: c / (||x||^2 + 1))
 NEH_RATES = [0.01, 0.03, 0.1]
 NEH_NOISES = [0.5, 1.5]
-JOBS = int(os.environ.get("HAG_CANARY_RULES_JOBS", "1"))  # processes training the configurations
+JOBS = int(env("BACHUE_RULE_PROCESSES", "1"))  # processes training the configurations
 EPOCHS = [1, 3, 10, 30, 100, 300, 1000, 3000]  # (scores of the online rules after these numbers of epochs, the same run)
 RLS_EPOCHS = [1]
-MAX_EPOCHS = int(os.environ.get("HAG_CANARY_RULES_MAX_EPOCHS", EPOCHS[-1]))  # (of the online rules, at most: those of
+MAX_EPOCHS = int(env("BACHUE_ONLINE_MAX_EPOCHS", EPOCHS[-1]))  # (of the online rules, at most: those of
 
 
 # EPOCHS up to it)
@@ -101,7 +101,7 @@ def configurations(rule, rate=None, max_epochs=None, noise=None, alpha=None, sel
 
 
 def label_configurations(label, rate=None, max_epochs=None, noise=None, alpha=None):
-    """configurations of the rule of a label of HAG_CANARY_READOUT_RULES."""
+    """configurations of the rule of a label of BACHUE_EVAL_RULES."""
     rule, _, selection = rule_inputs(label)
     return configurations(rule, rate, max_epochs, noise, alpha, selection)
 
@@ -133,7 +133,7 @@ def configuration_counts(tasks, all_rows, all_states, fit, val, true, classes, f
 def choose(model, params, size, songs, train_songs, frame, classes, readout, rules, rate=None, max_epochs=None,
            noise=None, alpha=None):
     """({rule: (hyperparameters with "epochs", out-of-fold accuracy)} of the best configuration of each rule (labels of
-    HAG_CANARY_READOUT_RULES), out-of-fold accuracy of each configuration and number of epochs), in the 3-fold
+    BACHUE_EVAL_RULES), out-of-fold accuracy of each configuration and number of epochs), in the 3-fold
     cross-validation by song of the studies on the train songs (the configurations of configurations(rule, rate,
     max_epochs, noise, alpha); all the rules on the same reservoirs, drawn with the seed CV_SEED + k for fold k)."""
     correct, total = {}, 0
@@ -180,9 +180,9 @@ RULE_NOISES = {"eh": (0.05, 4.0), "eh_np": (0.05, 4.0), "eh_np_local": (0.05, 4.
 # 1e-8 the recursion loses its precision (float64; bachue.models.readout_rules.rls). (Until 2026-11-19: 1e-14 to 1e-3,
 # with the bias of reservoirpy's node, the lower bound reached: those studies are not comparable.)
 RULE_ALPHAS = {"rls": (1e-8, 1.0)}
-# number of epochs of the online rules chosen up to this one (HAG_CANARY_HPO_RULE_MAX_EPOCHS; 1000, the cap of the
+# number of epochs of the online rules chosen up to this one (BACHUE_STUDY_MAX_EPOCHS; 1000, the cap of the
 # first studies, was always chosen by LMS and EH)
-HPO_MAX_EPOCHS = int(os.environ.get("HAG_CANARY_HPO_RULE_MAX_EPOCHS", 3000))
+HPO_MAX_EPOCHS = int(env("BACHUE_STUDY_MAX_EPOCHS", 3000))
 
 
 # ---- the instances of the classification datasets (bachue.datasets.benchmarks)
@@ -253,8 +253,12 @@ def objective_of_rule(rule):
 
 
 if __name__ == "__main__":
-    if HPO_RULE not in RULES:
-        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: one of {RULES} (on selected products: "
-                         "bachue.hpo.partial_order2_study; the linear ridge readout: bachue.hpo.readout_window_study)")
+    # ("ridge", the linear ridge readout: only on the instances of a classification dataset; on the songs it is the
+    # readout of bachue.hpo.readout_window_study)
+    rules = RULES + (("ridge",) if TASK == "classification" else ())
+    if HPO_RULE not in rules:
+        raise ValueError(f"BACHUE_STUDY_RULE={HPO_RULE}: one of {rules} (on selected products: "
+                         "bachue.hpo.partial_order2_study; the linear ridge readout on the songs: "
+                         "bachue.hpo.readout_window_study)")
     run_study(sys.argv[1], int(sys.argv[2]), objective_of_rule(HPO_RULE),
               lambda trial: f"readout {trial.user_attrs['readout_rule']}", tasks=("next_phrase", "classification"))

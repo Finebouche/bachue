@@ -1,6 +1,6 @@
 #!/bin/bash
 # Optimization of the reservoirs of the next-phrase prediction for each readout (bachue.hpo.readout_window_study with
-# HAG_CANARY_HPO_READOUT: the readout fixed, studies next_phrase_calls_[leak_]readout-<points>-<decision>[-<tail>]_
+# BACHUE_STUDY_READOUT: the readout fixed, studies next_phrase_calls_[leak_]readout-<points>-<decision>[-<tail>]_
 # <model>_<size>), so that the readouts are compared on reservoirs optimized for each of them, then their final
 # evaluation (slurm/submit_next_phrase.sh for each readout and leak, 10 seeds, the hybrids from the parts, one job at
 # a time for each, from the next BEGIN) once all the studies are done. A single job array of all the studies (one per job, MAX_RUNNING at once). Run from the root of a
@@ -15,6 +15,7 @@
 # (default 3 days). The studies resume where they stopped if resubmitted. BEGIN: start time of the jobs (sbatch
 # --begin, the big campaigns at night).
 set -euo pipefail
+source "$(dirname "$0")/env_names.sh"  # (the former names HAG_CANARY_*, until the jobs that use them are done)
 DEFAULT_READOUTS="last:mean last:tail_mean:5 last:tail_mean:10"
 for points in mean all; do DEFAULT_READOUTS+=" $points:last $points:mean $points:tail_mean:5 $points:tail_mean:10"; done
 for points in tail tail_mean; do for tail in 5 10; do
@@ -46,16 +47,16 @@ for size in $(printf '%s\n' "${SIZES[@]}" | sort -rn); do for leak in "${LEAKS[@
     for readout in "${READOUTS[@]}"; do for model in "${PURE[@]}"; do echo "$model $size $readout $leak"; done; done
 done; done > "$TASKS"
 n=$(wc -l < "$TASKS")
-array=$(HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_N_TRIALS=$N_TRIALS \
+array=$(BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_N_TRIALS=$N_TRIALS \
     sbatch --parsable --constraint="$CONSTRAINT" --begin="$BEGIN" --array=0-$((n - 1))%$MAX_RUNNING "${RESOURCES[@]}" \
-    --time=$TIME --job-name=hpo-readouts --export=ALL,HAG_CANARY_TASKS="$TASKS",HAG_CANARY_WORKERS=$WORKERS \
+    --time=$TIME --job-name=hpo-readouts --export=ALL,BACHUE_TASK_FILE="$TASKS",BACHUE_WORKERS=$WORKERS \
     slurm/canary.sbatch)
 echo "studies: job array $array ($n studies, $MAX_RUNNING at once, from $BEGIN; $TASKS)"
 
 SIZE_LIST=$(IFS=,; echo "${SIZES[*]}")
 EVALUATIONS="bash slurm/merge_studies.sh; "
 for leak in "${LEAKS[@]}"; do for readout in "${READOUTS[@]}"; do
-    EVALUATIONS+="HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_LEAK=$leak HAG_CANARY_HPO_READOUT=$readout"
+    EVALUATIONS+="BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_LEAKY_RESERVOIRS=$leak BACHUE_STUDY_READOUT=$readout"
     EVALUATIONS+=" MAX_RUNNING=1 SBATCH_BEGIN=$BEGIN bash slurm/submit_next_phrase.sh $SIZE_LIST 10; "
 done; done
 evaluation=$(sbatch --parsable --constraint="$CONSTRAINT" --cpus-per-task=1 --mem=4G --time=02:00:00 \

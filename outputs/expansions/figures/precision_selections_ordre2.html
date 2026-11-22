@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Précision des sélections d'ordre 2</title>
+<style>
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--border:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--border:#383835}}
+body{background:var(--bg);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px}
+main{max-width:760px;margin:0 auto}
+h1{font-size:20px;font-weight:500;margin:0 0 6px}
+p.note{font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 14px}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-secondary);margin:0 0 8px}
+.lg span{display:flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.ct{display:flex;gap:16px;align-items:center;margin:0 0 6px;font-size:13px;color:var(--text-secondary)}
+code{font-family:var(--font-mono);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>Précision des readouts sur des produits d'ordre 2 sélectionnés</h1>
+<p class="note">Précision au test de la prédiction de la phrase suivante, moyenne de 4 réservoirs purs de 500 neurones (mean_hag, var_hag, random_ee, random_ei), 10 graines chacun. <strong>Exploratoire :</strong> toutes les méthodes lisent les réservoirs optimisés pour <code>ridge:2</code> (études HPO de 400 essais), ce qui avantage <code>ridge:2</code> ; aucune méthode n'a sa propre HPO, donc pas de classement équitable. Le coefficient ridge de chaque méthode est choisi par validation croisée à 3 folds sur les chants d'entraînement.</p>
+<p class="note">Sources : <code>outputs/expansions/performances/marron1/next_phrase_calls[_leak]_ridge-order2_monomial_selection_alternatives.csv</code> (campagne du 19 novembre 2026, jobs PlaFRIM 4997099) et, pour <code>ridge:2</code> (méthode <code>full</code>), <code>scores</code>, <code>weights_high</code>, <code>weights_low</code>, <code>random</code>, <code>residual</code> et <code>pca_frames</code>, <code>next_phrase_calls[_leak]_ridge-order2_monomial_selection.csv</code> (mêmes réservoirs et mêmes graines : les méthodes communes aux deux fichiers ont les mêmes précisions). Figure enregistrée le 19 novembre 2026, à mettre à jour.</p>
+<div class="lg"><span><i class="sw" style="background:#D85A30"></i>ridge:2 (tous les monômes de x)</span><span><i class="sw" style="background:#888780"></i>Références (linéaire, full_std)</span><span><i class="sw" style="background:#2a78d6"></i>Tirages au hasard (paires, unités)</span><span><i class="sw" style="background:#1baf7a"></i>Sélections et alternatives publiées</span></div>
+<div class="ct"><label><input type="radio" name="lk" value="none" checked> Sans fuite</label><label><input type="radio" name="lk" value="leak"> Avec fuite</label></div>
+<div style="position:relative;width:100%;height:1040px"><canvas id="c" role="img" aria-label="Précision au test par méthode, 4 réservoirs de 500 neurones, 10 graines"></canvas></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// [mean accuracy (%), standard error over the 4 reservoirs]
+const D = {"none": {"full_std": [83.84, 1.05], "half_squares": [80.26, 1.49], "leverage:2080": [83.77, 1.04], "leverage:528": [82.16, 1.35], "linear": [79.43, 1.19], "maclaurin:2080": [83.73, 1.02], "maclaurin:528": [82.21, 1.28], "neighbors_t2": [80.37, 1.58], "neighbors_t3": [80.38, 1.56], "nystrom:2080": [83.83, 0.9], "nystrom:528": [82.4, 1.22], "ofr:2080": [84.1, 1.04], "ofr:528": [83.36, 1.15], "pca:32": [82.55, 1.2], "pca:64": [83.82, 0.91], "pca_frames:32": [82.49, 1.23], "pca_frames:64": [83.76, 0.93], "r2sp:2080": [82.95, 1.13], "r2sp:528": [82.07, 1.38], "random:32": [82.06, 1.16], "random:64": [83.22, 1.12], "random_pairs:2080": [83.8, 1.08], "random_pairs:528": [82.19, 1.26], "random_pairs:n": [82.18, 1.23], "residual:2080": [82.85, 0.49], "residual:528": [81.36, 0.61], "scores": [82.32, 1.2], "squares": [81.6, 1.05], "weights_high:32": [81.68, 1.24], "weights_high:64": [83.0, 1.14], "weights_low:32": [81.82, 1.0], "weights_low:64": [83.31, 0.86], "ridge:2": [84.44, 0.81]}, "leak": {"full_std": [86.12, 0.04], "half_squares": [84.76, 0.04], "leverage:2080": [86.25, 0.06], "leverage:528": [85.66, 0.1], "linear": [84.19, 0.3], "maclaurin:2080": [86.1, 0.05], "maclaurin:528": [85.68, 0.12], "neighbors_t2": [84.79, 0.06], "neighbors_t3": [84.78, 0.07], "nystrom:2080": [86.13, 0.06], "nystrom:528": [85.69, 0.14], "ofr:2080": [86.24, 0.08], "ofr:528": [85.95, 0.04], "pca:32": [85.67, 0.19], "pca:64": [85.57, 0.09], "pca_frames:32": [85.64, 0.19], "pca_frames:64": [85.67, 0.06], "r2sp:2080": [85.28, 0.09], "r2sp:528": [85.63, 0.04], "random:32": [85.52, 0.15], "random:64": [85.88, 0.13], "random_pairs:2080": [86.15, 0.05], "random_pairs:528": [85.64, 0.1], "random_pairs:n": [85.61, 0.12], "residual:2080": [85.53, 0.39], "residual:528": [85.06, 0.43], "scores": [86.17, 0.09], "squares": [85.47, 0.15], "weights_high:32": [85.51, 0.15], "weights_high:64": [85.98, 0.04], "weights_low:32": [85.44, 0.26], "weights_low:64": [85.91, 0.08], "ridge:2": [86.21, 0.05]}};
+const INPUTS = {"ridge:2": "129 285", "full_std": "129 285", "linear": "507", "squares": "1 014", "random_pairs:n": "1 014", "half_squares": "507", "neighbors_t2": "507", "neighbors_t3": "507", "scores": "942"};
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+const grid = dark ? '#2c2c2a' : '#e1e0d9', ink = '#898781', txt = dark ? '#f0efec' : '#0b0b0b';
+const color = m => m === 'ridge:2' ? '#D85A30' : (m === 'linear' || m === 'full_std') ? '#888780' : m.startsWith('random') ? (dark ? '#3987e5' : '#2a78d6') : (dark ? '#199e70' : '#1baf7a');
+const inputs = m => INPUTS[m] || (m.endsWith(':528') || m.endsWith(':32') ? '1 035' : '2 587');
+let chart, leak = 'none';
+const vals = {id: 'vals', afterDatasetsDraw(c) { const g = c.ctx; g.save(); g.font = '11px sans-serif'; g.fillStyle = txt; g.textBaseline = 'middle';
+  c.getDatasetMeta(0).data.forEach((bar, k) => g.fillText(c.data.datasets[0].data[k].toFixed(1).replace('.', ',') + '  (' + inputs(c.data.labels[k]) + ' entrées)', bar.x + 6, bar.y)); g.restore(); }};
+function draw() {
+  const rows = Object.entries(D[leak]).sort((a, b) => b[1][0] - a[1][0]);
+  const data = {labels: rows.map(r => r[0]), datasets: [{data: rows.map(r => r[1][0]), backgroundColor: rows.map(r => color(r[0])), borderRadius: 3, barThickness: 18}]};
+  const min = leak === 'none' ? 78 : 83.5, max = 87.5;
+  if (chart) { chart.data = data; chart.options.scales.x.min = min; chart.options.scales.x.max = max; chart.update(); return; }
+  chart = new Chart(document.getElementById('c'), {type: 'bar', data,
+   options: {indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {legend: {display: false}, tooltip: {callbacks: {label: c => `${c.parsed.x.toFixed(2).replace('.', ',')} % ± ${D[leak][c.label][1].toFixed(2).replace('.', ',')} (erreur standard sur 4 réservoirs)`}}},
+    scales: {x: {min, max, title: {display: true, text: 'Précision au test (%), 4 réservoirs de 500 neurones, 10 graines', color: ink}, grid: {color: grid}, ticks: {color: ink}},
+             y: {grid: {display: false}, ticks: {color: ink, font: {family: 'monospace', size: 11}}}}}, plugins: [vals]});
+}
+document.querySelectorAll('input[name=lk]').forEach(r => r.onchange = () => { leak = r.value; draw(); });
+draw();
+</script>
+</body>
+</html>

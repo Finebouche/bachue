@@ -8,20 +8,19 @@ number of folds: bachue.settings.N_FOLDS).
 
 Storage, as in hag: all the studies of a kind and of a dataset in one SQLite database,
 outputs/<kind>/hpo/<dataset>_db.sqlite3 (bachue.settings.STUDY_KIND, DATABASE_NAME; e.g.
-outputs/partial_order2/hpo/marron1_db.sqlite3). Several jobs writing the same SQLite file would corrupt it: a job of a study
-(slurm/canary.sbatch) optimizes it in a database of its own, in HAG_CANARY_STUDIES (in /dev/shm during the job, copied
+outputs/expansions/hpo/marron1_db.sqlite3). Several jobs writing the same SQLite file would corrupt it: a job of a study
+(slurm/canary.sbatch) optimizes it in a database of its own, in BACHUE_JOB_STUDIES_DIR (in /dev/shm during the job, copied
 back to its part, outputs/<kind>/hpo/parts/<dataset>/<study>/: python -m bachue.hpo.studies part <model> <size>), started
 from the study of the database of the dataset if there is one; the parts are merged into the databases of the datasets
 afterwards (python -m bachue.hpo.studies merge [kind]). The databases of canopy (one file per study) are imported
 with python -m bachue.hpo.studies import <folder>.
 
 The search space of the reservoirs (the same ranges as hag.hpo.hpo_esn), for each part of the model (prefix "<part>:"
-in a hybrid): input scaling and bias scaling; with HAG_CANARY_LEAK=1, the leak rate (1 otherwise); the HAG learning
+in a hybrid): input scaling and bias scaling; with BACHUE_LEAKY_RESERVOIRS=1, the leak rate (1 otherwise); the HAG learning
 of "mean_hag" and "var_hag" (weight increment, instances, increments, target rate or variance and intrinsic
 plasticity); the connectivity and the spectral radius of the ESN. The hybrids are not optimized: they combine the
 parts optimized alone (bachue.performances.readout_window_evaluation.conditions).
 """
-import os
 import re
 import sys
 from pathlib import Path
@@ -34,15 +33,16 @@ from optuna.trial import TrialState
 
 from bachue.common import OUTPUTS_DIR, load_dataset
 from bachue.models.reservoirs import ESN_MODELS, HAG_MODELS, PURE_MODELS, parts
-from bachue.settings import DATABASE_NAME, DATASET, DATASET_NAME, LEAK, STUDY_KIND, STUDY_PREFIX, TAIL_HPO, TASK
+from bachue.settings import (DATABASE_NAME, DATASET, DATASET_NAME, KERNEL, LEAK, STUDY_KIND, STUDY_PREFIX, TAIL_HPO,
+                             TASK, env)
 
-# the database of the studies of the variables: that of the dataset (DATABASE), or that of a job (HAG_CANARY_STUDIES)
+# the database of the studies of the variables: that of the dataset (DATABASE), or that of a job (BACHUE_JOB_STUDIES_DIR)
 DATABASE = OUTPUTS_DIR / STUDY_KIND / "hpo" / DATABASE_NAME
-JOB_STUDIES = os.environ.get("HAG_CANARY_STUDIES")
+JOB_STUDIES = env("BACHUE_JOB_STUDIES_DIR")
 STUDIES_DATABASE = Path(JOB_STUDIES) / DATABASE_NAME if JOB_STUDIES else DATABASE
 FOLD_SEED = 0
 CV_SEED = 1000  # matrices of fold k drawn with np.random.seed(CV_SEED + k), the same for all the trials
-N_TRIALS = int(os.environ.get("HAG_CANARY_N_TRIALS", 400))
+N_TRIALS = int(env("BACHUE_N_TRIALS", 400))
 
 
 def storage(study_name=None, database=None):
@@ -66,9 +66,12 @@ def study_exists(study_name):
 
 
 def stop_after_failures(max_failures=10):
-    """Callback stopping the optimization after max_failures failed trials in a row (systematic error)."""
+    """Callback stopping the optimization after max_failures failed trials in a row (systematic error), among the
+    finished trials: the running trials of the other workers are among the last ones of the study, and with them the
+    last trials were never all failed (studies of "ofr" on JapaneseVowels, 2026-11-20: 50 000 failed trials)."""
     def callback(study, trial):
-        last = [t.state for t in study.get_trials(deepcopy=False)][-max_failures:]
+        finished = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE, TrialState.FAIL, TrialState.PRUNED))
+        last = [t.state for t in finished][-max_failures:]
         if len(last) == max_failures and all(state == TrialState.FAIL for state in last):
             study.stop()
     return callback
@@ -146,18 +149,18 @@ def _worker(model, size, objective_of, worker_index):
 
 
 def run_study(model, size, objective_of, readout_of_trial, tasks=("next_phrase",)):
-    """Optimizes the study of the model (N_TRIALS complete trials, HAG_CANARY_WORKERS processes, default 1, each with
+    """Optimizes the study of the model (N_TRIALS complete trials, BACHUE_WORKERS processes, default 1, each with
     its own TPE sampler) and prints its best trial. objective_of(model, size, *data): the objective of a study, data
     those of next_phrase_data (the task "next_phrase") or of instances_data ("classification"); readout_of_trial(trial):
-    the description of its readout; tasks: those of the study. In a job (HAG_CANARY_STUDIES), the study starts from
+    the description of its readout; tasks: those of the study. In a job (BACHUE_JOB_STUDIES_DIR), the study starts from
     that of the database of the dataset if it is there and not in the database of the job."""
     if TASK not in tasks or TAIL_HPO:
         raise ValueError(f"The task {TASK} (dataset {DATASET}): the studies of this kind are those of the tasks "
-                         f"{tasks} (HAG_CANARY_TASK, HAG_CANARY_DATASET), with a fixed readout (HAG_CANARY_TAIL_HPO=0)")
-    if model not in PURE_MODELS:
+                         f"{tasks} (BACHUE_TASK, BACHUE_DATASET), with a fixed readout (BACHUE_SEARCH_READOUT=0)")
+    if model not in PURE_MODELS and not (KERNEL and model == KERNEL):  # (a kernel study: model the kernel, size its window)
         raise ValueError(f"Unknown model {model}, expected one of {PURE_MODELS} (the hybrids <hag>+<esn> are not "
                          "optimized: they combine the parts optimized alone, see bachue.performances.readout_window_evaluation.conditions)")
-    n_workers = int(os.environ.get("HAG_CANARY_WORKERS", 1))
+    n_workers = int(env("BACHUE_WORKERS", 1))
     study_name = study_name_of(model, size)
     if JOB_STUDIES and study_name not in study_names() and study_name in study_names(DATABASE):
         optuna.copy_study(from_study_name=study_name, from_storage=storage(database=DATABASE), to_storage=storage())
@@ -190,14 +193,23 @@ def copy_into(name, source, target):
     return f"{name}: {completed(source_study)} completed trials copied into {target}"
 
 
+def kind_of_name(kind, name):
+    """Kind of the database of the study name found in the parts of the folder kind: "expansions" for the studies of
+    the former kinds partial_order2 and kernels, and for those of all the monomials of an order ("<rule>-order<n>")
+    found in learning_rules (parts made by an older checkout)."""
+    if kind in ("partial_order2", "kernels") or (kind == "learning_rules" and re.search(r"-order\d+_", name)):
+        return "expansions"
+    return kind
+
+
 def merge(kinds=None):
     """Merges the parts of the jobs (outputs/<kind>/hpo/parts/<dataset>/<study>/<dataset>_db.sqlite3) into the databases
-    of the datasets (outputs/<kind>/hpo/<dataset>_db.sqlite3)."""
+    of the datasets (outputs/<kind>/hpo/<dataset>_db.sqlite3; the parts of the former kinds into expansions)."""
     kinds = kinds or sorted(path.name for path in OUTPUTS_DIR.iterdir() if (path / "hpo" / "parts").is_dir())
     for kind in kinds:
         for part in sorted((OUTPUTS_DIR / kind / "hpo" / "parts").glob("*/*/*.sqlite3")):
             for name in sorted(study_names(part)):
-                print(copy_into(name, part, OUTPUTS_DIR / kind / "hpo" / part.name))
+                print(copy_into(name, part, OUTPUTS_DIR / kind_of_name(kind, name) / "hpo" / part.name))
 
 
 def kind_of(study_name):
@@ -208,8 +220,8 @@ def kind_of(study_name):
     if rest.startswith("readout-") or any(rest.startswith(f"{model}_") for model in PURE_MODELS):
         return "readout_window", "marron1"
     tag = rest.split("_", 1)[0] if "-" in rest.split("_", 1)[0] else re.split(r"_(?=" + "|".join(PURE_MODELS) + ")", rest)[0]
-    if "-" in tag and "-order" not in tag:
-        return "partial_order2", "marron1"
+    if "-" in tag:  # (selected products "<rule>-<selection>", or all the monomials of an order "<rule>-order<n>")
+        return "expansions", "marron1"
     return "learning_rules", "marron1"
 
 

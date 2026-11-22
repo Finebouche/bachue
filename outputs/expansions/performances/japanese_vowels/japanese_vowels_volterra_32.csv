@@ -1,0 +1,2 @@
+dataset,kernel,window,trial,theta,memory,tau,lam,ridge,cv_accuracy,n_train,n_test,accuracy
+japanese_vowels,volterra,32,196,0.3023990078632841,0.1116767221925957,0.14092782852940153,0.8467332529633637,0.01,0.9888888888888889,270,370,0.981081081081081

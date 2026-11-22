@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astuce du noyau</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--text-accent:#185FA5;--bg:#fcfcfb;--bg-neutral:#eceae3;--border-strong:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace;--primal:#1D9E75;--dual:#D4537E}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--text-accent:#85B7EB;--bg:#151515;--bg-neutral:#2c2c2a;--border-strong:#444441;--primal:#3FC79A;--dual:#EC7FA4}}
+/* (φ in the text drawn as the \varphi of the equations, not the straight φ of the system font, close to Φ) */
+@font-face{font-family:PhiMath;src:url(https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/fonts/KaTeX_Math-Italic.woff2) format('woff2');unicode-range:U+03C6}
+body{background:var(--bg);color:var(--text-primary);font-family:PhiMath,system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px}
+.layout{display:grid;grid-template-columns:200px minmax(0,760px);gap:28px;justify-content:center;align-items:start}
+main{min-width:0}
+#road{position:sticky;top:16px;margin-top:44px;font-size:12.5px;line-height:1.45;background:var(--bg-neutral);border-radius:8px;padding:10px 12px;max-height:calc(100vh - 32px);overflow-y:auto;box-sizing:border-box}
+#road .tt{font-size:11.5px;font-weight:500;color:var(--text-muted);margin-bottom:4px}
+#road .cur-t{display:none;color:var(--text-primary)}
+#road .ph{font-size:11.5px;font-weight:500;color:var(--text-muted);margin:8px 0 2px}
+#road ol{list-style:none;margin:0;padding:0}
+#road li{padding:2px 6px;border-radius:4px;color:var(--text-muted);cursor:pointer;overflow:hidden}
+#road li:hover{color:var(--text-primary)}
+#road li.done{color:var(--text-secondary)}
+#road li.done::before{content:"✓ "}
+#road li.cur{background:var(--bg);color:var(--text-primary);font-weight:500}
+#road li .rk{display:inline-block;vertical-align:middle;max-width:100%;font-weight:400;font-size:11.5px}
+#road li.cur .rk{display:block;color:var(--text-secondary)}
+#road .katex{font-size:1em}
+#road .card{margin-top:10px;border-top:0.5px solid var(--border-strong);padding-top:6px;font-size:11.5px;color:var(--text-secondary);line-height:1.5}
+#road .card b{font-weight:500;color:var(--text-muted)}
+@media (max-width:1150px){.layout{grid-template-columns:minmax(0,760px)}#road{position:static;margin:0 0 12px;max-height:none}#road .ph,#road ol{display:none}#road .tt{margin:0}#road .cur-t{display:inline}#road .card{margin-top:4px;padding-top:4px}#road .card br{display:none}}
+h1{font-size:20px;font-weight:500;margin:0 0 6px}
+p.note{font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 16px}
+.g{font-size:14px;color:var(--text-primary);line-height:1.5;--path:var(--text-accent)}
+.g[data-path=primal]{--path:var(--primal)}.g[data-path=dual]{--path:var(--dual)}.g[data-path=both]{--path:var(--primal)}
+.side{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;font:inherit;font-size:20px;border:0.5px solid var(--border-strong);background:var(--bg-neutral);color:var(--text-primary);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15);z-index:10}
+.side.prev{left:max(12px,calc(50% - 494px - 60px))}.side.next{right:max(12px,calc(50% - 494px - 60px))}
+@media (max-width:1150px){.side.prev{left:max(12px,calc(50% - 380px - 60px))}.side.next{right:max(12px,calc(50% - 380px - 60px))}}
+.side:disabled{opacity:.25;cursor:default}
+@media (max-width:700px){.side{top:auto;bottom:12px;transform:none}}
+.tline{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:4px 0 4px}
+.g h3{font-size:15px;font-weight:500;margin:0}
+.pill{font-size:11.5px;line-height:1.4;padding:1px 8px;border-radius:10px;border:1px solid currentColor;white-space:nowrap}
+.pill.primal{color:var(--primal)}.pill.dual{color:var(--dual)}.pill.both,.pill.same{color:var(--text-secondary)}
+.pill.both{border-color:var(--primal) var(--dual) var(--dual) var(--primal)}
+.g[data-path=both] .eq .r.key{border-left-color:var(--primal);border-image:linear-gradient(to bottom,var(--primal),var(--dual)) 1}
+.key .katex-display{margin:0}.key .katex-display>.katex{text-align:left}
+.g p.t{margin:0 0 8px;color:var(--text-secondary);font-size:13.5px}
+.ks{font-size:13px;color:var(--text-secondary);margin:0 0 6px}
+.ks select{font:inherit;font-size:13px;margin-left:6px}
+#plot{width:100%;height:auto;display:block;touch-action:none;user-select:none}
+.fig{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}.fig #plot{flex:1 1 420px;min-width:0}
+#schema{flex:0 0 170px;height:auto;display:block}
+#paths{flex:1 1 100%;min-width:0}
+#paths svg,.eq .sv svg{display:block;width:100%;max-width:760px;height:auto}
+#plot .drag{cursor:grab}#plot.dragging,#plot.dragging .drag{cursor:grabbing}
+.ex{font-size:12.5px;color:var(--text-secondary);margin-top:6px;line-height:1.55}
+.lab{font-size:12px;font-weight:500;color:var(--text-secondary);margin:12px 0 3px}
+.eq{background:var(--bg-neutral);border-radius:6px;padding:8px 14px;margin:2px 0 10px;overflow-x:auto}
+.eq.gen{background:transparent;border:0.5px solid var(--border-strong);border-left:3px solid #2a78d6}
+.eq .r{display:flex;flex-wrap:wrap;align-items:center;gap:0 18px;padding:4px 0}
+.eq .r.key{border-left:4px solid var(--path);margin-left:-11px;padding-left:7px}
+.eq .e{color:var(--text-primary);max-width:100%;padding:2px 0}
+.eq .e .katex{font-size:1.05em}
+.eq .e .katex-display{margin:0}
+.eq .e .katex-display>.katex{text-align:left}
+.eq .w{font-size:12px;color:var(--text-secondary);flex:1 1 180px}
+.eq .h{font-size:12.5px;font-weight:500;color:var(--text-primary);margin:8px 0 0}
+.eq .h:first-child{margin-top:0}
+.eq .sv{padding:6px 0}
+.eq .chk{border-top:1px dashed var(--border-strong);margin-top:6px;padding-top:2px}
+.eq .chk .cl{font-size:11px;color:var(--text-muted)}
+.eq details.fold{margin:8px 0 0;padding-top:4px;border-top:0.5px solid var(--border-strong)}
+.eq details.fold>summary{font-size:12.5px;font-weight:500;color:var(--text-accent);cursor:pointer}
+.eq details.fold.code>summary{font-family:var(--font-mono);font-size:12px}
+.eq details.more>summary{display:inline-block;font-size:11.5px;color:var(--text-accent);cursor:pointer;list-style:none;text-decoration:underline dotted}
+.eq details.more>summary::-webkit-details-marker{display:none}
+.eq details.more>div{margin-top:2px}
+.ex table.fm{border-collapse:collapse;font-size:12.5px;width:100%;margin:4px 0}
+.ex table.fm td,.ex table.fm th{white-space:normal;text-align:left;vertical-align:top;padding:6px 8px;border-bottom:0.5px solid var(--border-strong)}
+.ex table.fm th{font-weight:500}.ex th.p{color:var(--primal)}.ex th.d{color:var(--dual)}
+.ex table.fm td.no{color:var(--text-muted)}
+.ex table.fm .nm{font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap}
+.ex table.fm .nm .sep{color:var(--text-muted)}
+.ex table.fm tr.tot td{font-weight:500}
+.ex p.cap{margin:4px 0 2px;font-size:12px}
+.ex .tw{overflow-x:auto}
+.ex code{font-family:var(--font-mono);font-size:12px}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside id="road" aria-label="Où on en est"></aside>
+<main>
+<h1>L'astuce du noyau, de la forme primale à la forme duale</h1>
+<div class="g" id="g">
+<div class="tline"><h3 id="title"></h3><span id="pills"></span></div>
+<p class="t" id="txt"></p>
+<div class="ks" id="kbox" style="display:none">Noyau :<select id="ks"><option value="o2">ordre 2 : 1 + ab + a²b²</option><option value="o1">ordre 1 : 1 + ab</option><option value="g">gaussien : exp(−(a − b)² / 0,5)</option></select></div>
+<div class="fig"><svg id="plot" viewBox="0 0 640 300" role="img" aria-label="Les 5 exemples, déplaçables, et la sortie du readout"></svg>
+<svg id="schema" viewBox="0 0 215 300" role="img" aria-label="Le réservoir à un neurone x et son readout d'ordre 2 : f(x) = w₀ + w₁ x + w₂ x²">
+<defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L8,4L0,8z" fill="var(--text-secondary)"/></marker><marker id="arb" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L8,4L0,8z" fill="#2a78d6"/></marker></defs>
+<g font-size="11" fill="var(--text-secondary)">
+<text x="85" y="11" text-anchor="middle">entrée u</text>
+<rect x="22" y="42" width="126" height="76" rx="8" fill="none" stroke="var(--border-strong)" stroke-dasharray="4 3"/>
+<text x="155" y="84" fill="var(--text-muted)">réservoir</text>
+<line x1="85" y1="16" x2="85" y2="58" stroke="var(--text-secondary)" stroke-width="1.2" marker-end="url(#ar)"/>
+<path d="M104,72 C134,56 134,104 104,88" fill="none" stroke="var(--text-secondary)" stroke-width="1.2" marker-end="url(#ar)"/>
+<circle cx="85" cy="80" r="20" fill="var(--bg)" stroke="var(--text-primary)" stroke-width="1.5"/>
+<text x="85" y="85" text-anchor="middle" font-size="15" font-style="italic" fill="var(--text-primary)">x</text>
+<rect x="22" y="132" width="126" height="122" rx="8" fill="none" stroke="var(--border-strong)" stroke-dasharray="4 3"/>
+<text x="155" y="164" fill="var(--text-muted)">φ(x)</text>
+<text x="155" y="236" fill="var(--text-muted)">readout</text>
+<line x1="98" y1="96" x2="119" y2="148" stroke="var(--text-secondary)" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="85" y1="100" x2="85" y2="143" stroke="var(--text-secondary)" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="49" y1="172" x2="76" y2="221" stroke="#2a78d6" stroke-width="1.4"/>
+<line x1="85" y1="175" x2="85" y2="217" stroke="#2a78d6" stroke-width="1.4"/>
+<line x1="121" y1="172" x2="94" y2="221" stroke="#2a78d6" stroke-width="1.4"/>
+<text x="56" y="203" text-anchor="end" fill="#2a78d6">w₀</text><text x="90" y="200" fill="#2a78d6">w₁</text><text x="114" y="203" fill="#2a78d6">w₂</text>
+<circle cx="40" cy="160" r="15" fill="var(--bg)" stroke="var(--text-primary)"/><text x="40" y="165" text-anchor="middle" font-size="13" fill="var(--text-primary)">1</text>
+<circle cx="85" cy="160" r="15" fill="var(--bg)" stroke="var(--text-primary)"/><text x="85" y="165" text-anchor="middle" font-size="13" font-style="italic" fill="var(--text-primary)">x</text>
+<circle cx="130" cy="160" r="15" fill="var(--bg)" stroke="var(--text-primary)"/><text x="130" y="165" text-anchor="middle" font-size="13" font-style="italic" fill="var(--text-primary)">x²</text>
+<circle cx="85" cy="234" r="16" fill="var(--bg)" stroke="#2a78d6" stroke-width="1.5"/><text x="85" y="240" text-anchor="middle" font-size="15" fill="#2a78d6">Σ</text>
+<line x1="85" y1="250" x2="85" y2="276" stroke="#2a78d6" stroke-width="1.4" marker-end="url(#arb)"/>
+<text x="85" y="294" text-anchor="middle" font-size="13" fill="#2a78d6">f(x)</text>
+</g></svg>
+<div id="paths" style="display:none"></div></div>
+<div class="ex" id="extra"></div>
+</div>
+</main>
+</div>
+<button class="side prev" aria-label="Étape précédente" title="Étape précédente">←</button>
+<button class="side next" aria-label="Étape suivante" title="Étape suivante">→</button>
+<script>
+// the 5 training examples (xₜ, yₜ): moved with the mouse (drag), back to these values when the page is reloaded
+const X0 = [-1.6, -0.9, -0.15, 0.55, 0.85], Y0 = [2.0, 0.5, -0.3, 0.7, 1.9], RHO = 0.3;
+let X = [...X0], Y = [...Y0];
+// sums over the examples of x^p y^q (the coefficients of the equations of step 4)
+const S = (p, q = 0) => X.reduce((t, x, j) => t + x ** p * Y[j] ** q, 0);
+const KER = {
+  o2: {phi: x => [1, x, x * x], names: '1, x, x^2', k: (a, b) => 1 + a * b + a * a * b * b},
+  o1: {phi: x => [1, x], names: '1, x', k: (a, b) => 1 + a * b},
+  g: {phi: null, k: (a, b) => Math.exp(-((a - b) ** 2) / 0.5)}};
+const f = (v, d = 2) => (Math.abs(v) < 0.5 * 10 ** -d ? 0 : v).toFixed(d).replace('.', ',').replace(/^-/, '−');
+// numbers in TeX: decimal comma, minus sign
+const n = (v, d = 2) => f(v, d).replace('−', '-').replace(',', '{,}');
+const s = (v, d = 2) => (v < 0 ? '- ' : '+ ') + n(Math.abs(v), d);
+const vec = (a, d = 3) => `(${a.map(v => n(v, d)).join(';\\ ')})`;
+const mat = (M, d = 2) => `\\begin{pmatrix} ${M.map(r => r.map(v => n(v, d)).join(' & ')).join(' \\\\ ')} \\end{pmatrix}`;
+function solve(M, v) {
+  const m = v.length, A = M.map((r, i) => [...r, v[i]]);
+  for (let i = 0; i < m; i++) {
+    let p = i; for (let r = i + 1; r < m; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]];
+    for (let r = i + 1; r < m; r++) { const q = A[r][i] / A[i][i]; for (let c = i; c <= m; c++) A[r][c] -= q * A[i][c]; }
+  }
+  const x = Array(m).fill(0);
+  for (let i = m - 1; i >= 0; i--) { let t = A[i][m]; for (let c = i + 1; c < m; c++) t -= A[i][c] * x[c]; x[i] = t / A[i][i]; }
+  return x;
+}
+function fit(kn) {
+  const ker = KER[kn], K = X.map(a => X.map(b => ker.k(a, b)));
+  const A = solve(K.map((r, i) => r.map((v, j) => v + (i === j ? RHO : 0))), Y);
+  const out = {K, A, k: ker.k, out: x => X.reduce((t, xt, j) => t + A[j] * ker.k(xt, x), 0)};
+  if (ker.phi) {
+    const P = X.map(ker.phi), D = P[0].length, I = [...Array(D).keys()];
+    out.G = I.map(i => I.map(j => P.reduce((t, r) => t + r[i] * r[j], 0) + (i === j ? RHO : 0)));
+    out.b = I.map(i => P.reduce((t, r, j) => t + r[i] * Y[j], 0));
+    out.w = solve(out.G, out.b);
+    out.wA = I.map(i => P.reduce((t, r, j) => t + A[j] * r[i], 0));
+    out.names = ker.names;
+  }
+  return out;
+}
+const sx = x => 40 + (x + 2.2) / 4.4 * 580, sy = y => 270 - (y + 1.5) / 4.5 * 250;
+const path = g => { let d = ''; for (let i = 0; i <= 220; i++) { const x = -2.2 + 4.4 * i / 220; d += (i ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + sy(g(x)).toFixed(1); } return d; };
+const BLUE = '#2a78d6', PINK = 'var(--dual)', ERR = '#E24B4A';
+const sub = '₁₂₃₄₅';
+function plot(F, st) {
+  let t = '<defs><clipPath id="cp"><rect x="40" y="20" width="580" height="250"/></clipPath></defs>';
+  for (let x = -2; x <= 2; x++) t += `<line x1="${sx(x)}" x2="${sx(x)}" y1="20" y2="270" stroke="var(--border-strong)" stroke-width="0.5"/><text x="${sx(x)}" y="288" text-anchor="middle" font-size="11" fill="var(--text-muted)">${f(x, 0)}</text>`;
+  for (let y = -1; y <= 3; y++) t += `<line x1="40" x2="620" y1="${sy(y)}" y2="${sy(y)}" stroke="var(--border-strong)" stroke-width="0.5"/><text x="32" y="${sy(y) + 4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${f(y, 0)}</text>`;
+  let body = '';
+  if (st.parts) X.forEach((xt, j) => { body += `<path d="${path(x => F.A[j] * F.k(xt, x))}" fill="none" stroke="${PINK}" stroke-width="1.5" stroke-opacity="0.7" stroke-dasharray="4 3"/>`; });
+  body += `<path d="${path(F.out)}" fill="none" stroke="${BLUE}" stroke-width="2.5"/>`;
+  t += `<g clip-path="url(#cp)">${body}</g>`;
+  if (st.err) X.forEach((x, j) => { t += `<line x1="${sx(x)}" x2="${sx(x)}" y1="${sy(Y[j])}" y2="${sy(F.out(x))}" stroke="${ERR}" stroke-width="2"/>`; });
+  X.forEach((x, j) => { t += `<circle cx="${sx(x)}" cy="${sy(Y[j])}" r="5" fill="var(--text-primary)"/><text x="${sx(x) + 8}" y="${sy(Y[j]) - 7}" font-size="11" fill="var(--text-secondary)">x${sub[j]}</text>`; });
+  X.forEach((x, j) => { t += `<circle class="drag" data-t="${j}" cx="${sx(x)}" cy="${sy(Y[j])}" r="13" fill="transparent"/>`; });
+  let lg = `<circle cx="50" cy="12" r="4" fill="var(--text-primary)"/><text x="58" y="16" font-size="11" fill="var(--text-secondary)">exemple (xₜ, yₜ)</text><line x1="180" x2="200" y1="12" y2="12" stroke="${BLUE}" stroke-width="2.5"/><text x="206" y="16" font-size="11" fill="var(--text-secondary)">sortie f(x)</text>`;
+  if (st.err) lg += `<line x1="290" x2="290" y1="5" y2="19" stroke="${ERR}" stroke-width="2"/><text x="298" y="16" font-size="11" fill="var(--text-secondary)">écart f(xₜ) − yₜ</text>`;
+  if (st.parts) lg += `<line x1="420" x2="440" y1="12" y2="12" stroke="${PINK}" stroke-width="1.5" stroke-dasharray="4 3"/><text x="446" y="16" font-size="11" fill="var(--text-secondary)">Aₜ k(xₜ, x)</text>`;
+  document.getElementById('plot').innerHTML = t + lg;
+}
+// ---- the schemas (inline SVG, colors from the CSS variables) ----
+const T1 = 'var(--text-primary)', T2 = 'var(--text-secondary)', CP = 'var(--primal)', CD = 'var(--dual)';
+const st_ = (x, y, s, o = {}) => `<text x="${x}" y="${y}" text-anchor="${o.a || 'middle'}" font-size="${o.fs || 12}" fill="${o.c || T2}">${s}</text>`;
+const lo_ = (s, fs = 11) => `<tspan dy="3" font-size="${fs}">${s}</tspan>`, up_ = s => `<tspan dy="-3">${s}</tspan>`;
+// schema A: the shapes of the matrices (step 5)
+function matsSVG() {
+  const cs = 12, grid = (x, y, r, c, col) => {
+    let g = `<rect x="${x}" y="${y}" width="${c * cs}" height="${r * cs}" fill="${col}" fill-opacity="0.16" stroke="${col}" stroke-width="1.2"/>`;
+    for (let k = 1; k < r; k++) g += `<line x1="${x}" x2="${x + c * cs}" y1="${y + k * cs}" y2="${y + k * cs}" stroke="${col}" stroke-width="0.5"/>`;
+    for (let k = 1; k < c; k++) g += `<line x1="${x + k * cs}" x2="${x + k * cs}" y1="${y}" y2="${y + r * cs}" stroke="${col}" stroke-width="0.5"/>`;
+    return g; };
+  let t = st_(0, 14, '5 exemples : une case par coefficient', {a: 'start', c: T1});
+  t += grid(10, 30, 5, 3, T2) + st_(28, 108, 'Φ', {c: T1}) + st_(28, 122, '5 × 3');
+  t += grid(76, 42, 3, 5, T2) + st_(106, 108, 'Φᵀ', {c: T1}) + st_(106, 122, '3 × 5');
+  t += grid(166, 42, 3, 3, CP) + st_(184, 108, 'ΦᵀΦ', {c: T1}) + st_(184, 122, '3 × 3');
+  t += grid(232, 30, 5, 5, CD) + st_(262, 108, 'K = ΦΦᵀ', {c: T1}) + st_(262, 122, '5 × 5');
+  t += `<line x1="318" x2="318" y1="26" y2="126" stroke="var(--border-strong)" stroke-dasharray="2 3"/>`;
+  t += grid(336, 42, 3, 3, CP) + st_(378, 46, '−1', {a: 'start', fs: 11}) + st_(398, 66, '·', {fs: 16});
+  t += grid(406, 42, 3, 5, T2) + st_(482, 68, '=', {fs: 16, c: T1});
+  t += grid(498, 42, 3, 5, T2) + st_(566, 66, '·', {fs: 16});
+  t += grid(574, 30, 5, 5, CD) + st_(636, 36, '−1', {a: 'start', fs: 11});
+  t += st_(420, 108, '(ΦᵀΦ + ρI' + lo_('3') + up_(')') + '⁻¹ Φᵀ', {c: T1}) + st_(600, 108, 'Φᵀ (ΦΦᵀ + ρI' + lo_('5') + up_(')') + '⁻¹', {c: T1});
+  t += st_(510, 124, 'des deux côtés, une matrice 3 × 5');
+  t += st_(0, 156, 'marron1 : les côtés à l\'échelle, D ≈ 19 T', {a: 'start', c: T1});
+  const L = 140, l = L * 6700 / 129286;
+  t += `<rect x="10" y="168" width="${L}" height="${L}" fill="${CP}" fill-opacity="0.16" stroke="${CP}" stroke-width="1.2"/>`;
+  t += st_(80, 226, 'ΦᵀΦ', {c: T1, fs: 13}) + st_(80, 244, 'D × D') + st_(80, 260, '134 Go');
+  t += `<rect x="180" y="170" width="${l}" height="${l}" fill="${CD}" fill-opacity="0.4" stroke="${CD}" stroke-width="1.2"/>`;
+  t += st_(194, 179, 'K = ΦΦᵀ : T × T, 0,36 Go', {a: 'start', c: T1});
+  t += `<rect x="180" y="204" width="${L}" height="${l}" fill="${T2}" fill-opacity="0.16" stroke="${T2}" stroke-width="1.2"/>`;
+  t += st_(180, 230, 'Φ : T × D = 6 700 × 129 286', {a: 'start', c: T1});
+  t += st_(180, 270, 'les aires sont dans le rapport des mémoires :', {a: 'start'}) + st_(180, 286, '(D/T)² ≈ 370, soit 134 Go contre 0,36 Go', {a: 'start'});
+  return `<svg viewBox="0 0 700 316" role="img" aria-label="Les tailles des matrices : ΦᵀΦ est D × D, K est T × T">${t}</svg>`;
+}
+// schema B: the two paths of the ridge (hi: the path to bring forward, costs: the marron1 costs on the arrows)
+function pathsSVG(o = {}) {
+  const hi = o.hi || null, c = !!o.costs, H = c ? 256 : 236;
+  const op = p => hi && hi !== p ? ' opacity="0.3"' : '';
+  const mk = {[CP]: 'p', [CD]: 'd', [T2]: 'n'};
+  const box = (x, y, w, h, l1, l2, col, step) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="var(--bg)" stroke="${col}" stroke-width="1.5"/>`
+    + st_(x + w / 2, y + (l2 ? h / 2 - 3 : h / 2 + 5), l1, {c: T1, fs: 13})
+    + (l2 ? st_(x + w / 2, y + h / 2 + 13, l2, {fs: 11.5}) : '')
+    + (step ? `<circle cx="${x + w}" cy="${y}" r="8" fill="var(--bg-neutral)" stroke="${col}"/>` + st_(x + w, y + 4, step, {c: T1, fs: 11}) : '');
+  const ar = (d, col, dash) => `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.5"${dash ? ' stroke-dasharray="5 4"' : ''} marker-end="url(#pa-${mk[col]})"/>`;
+  const cost = (x, y, v, a) => c ? st_(x, y, v, {fs: 11, c: T1, a}) : '';
+  let defs = '<defs>' + [[CP, 'p'], [CD, 'd'], [T2, 'n']].map(([col, id]) => `<marker id="pa-${id}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L8,4L0,8z" fill="${col}"/></marker>`).join('') + '</defs>';
+  let t = box(0, 108, 84, 44, 'exemples', '𝐱₁ … 𝐱' + lo_('T') + up_(', Y'), T2);
+  t += `<g${op('primal')}>` + ar('M42,108 V50 H134', CP) + st_(90, 44, 'φ', {c: CP, fs: 13}) + cost(90, 64, '8,6 × 10⁸')
+    + box(136, 30, 56, 40, 'Φ', 'T × D', CP, '4') + ar('M192,50 H260', CP) + cost(226, 43, '1,1 × 10¹⁴')
+    + box(262, 30, 102, 40, 'ΦᵀΦ + ρI' + lo_('D'), 'D × D', CP, '4') + (c ? st_(313, 86, '134 Go', {c: CP, fs: 11.5}) : '')
+    + ar('M364,50 H442', CP) + st_(403, 43, 'résoudre', {fs: 11}) + cost(403, 64, '7,2 × 10¹⁴')
+    + box(444, 30, 56, 40, 'W', 'D × Q', CP, '4') + ar('M500,50 H528', CP)
+    + box(530, 30, 114, 40, 'Wᵀφ(𝐱)', '', CP, '1') + ar('M644,50 H716 V108', CP) + '</g>';
+  t += `<g${op('dual')}>` + ar('M164,70 L289,188', CD, true) + st_(236, 128, 'par Φ : K = ΦΦᵀ (étape 5)', {a: 'start', fs: 11}) + cost(236, 143, '5,8 × 10¹²', 'start')
+    + ar('M42,152 V210 H260', CD) + st_(151, 203, 'par la formule courte de k (étape 7)', {fs: 11}) + cost(151, 224, '4,6 × 10¹⁰')
+    + box(262, 190, 102, 40, 'K', 'T × T', CD, '5') + (c ? st_(313, 248, '0,36 Go', {c: CD, fs: 11.5}) : '')
+    + ar('M364,210 H442', CD) + st_(403, 203, 'résoudre', {fs: 11}) + cost(403, 224, '1,0 × 10¹¹')
+    + box(444, 190, 56, 40, 'A', 'T × Q', CD, '5') + ar('M500,210 H528', CD)
+    + box(530, 190, 114, 40, 'Σₜ Aₜ k(𝐱ₜ, 𝐱)', '', CD, '6') + ar('M644,210 H716 V152', CD) + '</g>';
+  t += `<line x1="472" y1="72" x2="472" y2="188" stroke="${T2}" stroke-width="1.2" stroke-dasharray="2 3"/>` + st_(478, 134, 'W = ΦᵀA (étape 5)', {a: 'start', fs: 11});
+  t += box(676, 110, 80, 40, 'même f', '', T2);
+  return `<svg viewBox="0 0 760 ${H}" role="img" aria-label="Les deux chemins de la ridge : primal par Φ et W, dual par K et A">${defs}${t}</svg>`;
+}
+// schema C: the factorization cᵀMc on grids, N = 5 (step 8)
+function gridsSVG() {
+  const cs = 16, P3 = [[1, 2], [3, 3], [2, 5]];
+  const panels = [
+    {x: 10, on: () => true, cap: ['toutes les paires ordonnées', 'M = 𝟏' + lo_('N') + up_('𝟏') + lo_('N') + up_('ᵀ, de rang 1'), '(Σᵢ cᵢ)² = p₁²', 'coût : N']},
+    {x: 250, on: (i, l) => i <= l, cap: ['les paires i ≤ l, diagonale comprise :', 'les monômes de l\'étape 7', '(p₁² + p₂)/2', 'coût : 2N']},
+    {x: 490, on: (i, l) => P3.some(([a, b]) => a === i && b === l), cap: ['S = {(1, 2), (3, 3), (2, 5)}', 'c₁c₂ + c₃² + c₂c₅', 'coût ≈ |S|']}];
+  let t = '';
+  panels.forEach(p => {
+    const x0 = p.x + 24, y0 = 30;
+    t += st_(p.x + 8, 24, 'i \\ l', {fs: 11});
+    for (let k = 1; k <= 5; k++) t += st_(x0 + (k - 0.5) * cs, 24, k, {fs: 11}) + st_(p.x + 14, y0 + (k - 0.5) * cs + 4, k, {fs: 11});
+    for (let i = 1; i <= 5; i++) for (let l = 1; l <= 5; l++) {
+      const on = p.on(i, l);
+      t += `<rect x="${x0 + (l - 1) * cs}" y="${y0 + (i - 1) * cs}" width="${cs}" height="${cs}" fill="${on ? 'var(--text-accent)' : 'none'}" fill-opacity="0.6" stroke="var(--border-strong)" stroke-width="1"/>`;
+    }
+    p.cap.forEach((s, k) => { t += st_(p.x + 8, 132 + 16 * k, s, {a: 'start', c: k ? T2 : T1}); });
+  });
+  t += st_(10, 210, '64 paires au hasard parmi 128 778 : sans structure, coût ≈ D', {a: 'start', c: T1});
+  return `<svg viewBox="0 0 720 220" role="img" aria-label="Trois matrices M de taille 5 × 5 : toutes les paires, les paires i ≤ l, trois paires choisies">${t}</svg>`;
+}
+// schema D: partial sums of the series of the gaussian kernel, a = x₃, b = x₄ (step 9)
+function seriesSVG(a, b) {
+  const s2 = 0.25, g = Math.exp(-(a * a + b * b) / (2 * s2)), z = a * b / s2, P = [];
+  let t = 0, u = 1;
+  for (let m = 0; m <= 7; m++) { t += u; u *= z / (m + 1); P.push(g * t); }
+  const ex = Math.exp(-((a - b) ** 2) / (2 * s2));
+  let lo = Math.min(0, ex, ...P), hi = Math.max(ex, ...P); const pad = (hi - lo) * 0.1 || 0.1; lo -= pad; hi += pad;
+  const x0 = 52, x1 = 340, y0 = 34, y1 = 140, px = m => x0 + m * (x1 - x0) / 7, py = v => y1 - (v - lo) / (hi - lo) * (y1 - y0);
+  let h = `<line x1="${x0}" x2="${x0}" y1="${y0}" y2="${y1}" stroke="var(--border-strong)"/><line x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" stroke="var(--border-strong)"/>`;
+  if (lo < 0) h += `<line x1="${x0}" x2="${x1}" y1="${py(0)}" y2="${py(0)}" stroke="var(--border-strong)" stroke-width="0.5"/>` + st_(x0 - 6, py(0) + 4, '0', {a: 'end', fs: 11});
+  h += st_(x0 - 6, py(ex) + 4, f(ex, 2), {a: 'end', fs: 11});
+  h += `<line x1="${x0}" x2="${x1}" y1="${py(ex)}" y2="${py(ex)}" stroke="${T2}" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+  for (let m = 0; m <= 7; m++) h += st_(px(m), y1 + 15, m, {fs: 11}) + `<circle cx="${px(m)}" cy="${py(P[m])}" r="4" fill="var(--text-accent)"/>`;
+  h += st_(x1 + 8, y1 + 15, 'M', {a: 'start', fs: 11});
+  h += `<circle cx="${x0 + 4}" cy="12" r="4" fill="var(--text-accent)"/>` + st_(x0 + 14, 16, 'somme des termes m = 0 … M', {a: 'start', fs: 11});
+  h += `<line x1="${x0 + 196}" x2="${x0 + 216}" y1="12" y2="12" stroke="${T2}" stroke-width="1.2" stroke-dasharray="5 4"/>` + st_(x0 + 222, 16, 'k(a, b) exact', {a: 'start', fs: 11});
+  return `<svg viewBox="0 0 380 162" style="max-width:420px" role="img" aria-label="Les sommes partielles de la série du noyau gaussien s'approchent de k(a, b)">${h}</svg>`;
+}
+// TeX, rendered by KaTeX once it is loaded (the raw TeX before)
+// (display style in the derivations: fractions and sums at full size; inline style in the table)
+// (\textcolor{#1D9E75} and \textcolor{#D4537E} become the --primal and --dual colors, light or dark)
+const tex = (t, display = true) => window.katex ? katex.renderToString(t, {throwOnError: false, displayMode: display}).replace(/color:\s*#1D9E75/gi, 'color:var(--primal)').replace(/color:\s*#D4537E/gi, 'color:var(--dual)') : `<code>${t}</code>`;
+// the folds (<details>): their open state is kept across the redraws (dragged points, kernel)
+let curF = null, foldN = 0;
+const openF = new Set();
+const det = (cls, sum, body) => { const id = `${i}-${foldN++}`; return `<details class="${cls}" data-f="${id}"${openF.has(id) ? ' open' : ''}><summary>${sum}</summary>${body}</details>`; };
+// a derivation: [TeX, why] or [TeX, why, {key, chk, more}] per line, {svg: F => '<svg…>'}, or a heading [text] or [text, {fold: true | 'code', rest}]
+const isHead = l => Array.isArray(l) && (l.length === 1 || (l.length === 2 && typeof l[1] === 'object'));
+function line(l) {
+  if (l.h) return `<div class="h">${l.h}</div>`;
+  if (l.svg) return `<div class="sv">${typeof l.svg === 'function' ? l.svg(curF) : l.svg}</div>`;
+  const o = l[2] || {}, w = l[1] + (o.more ? det('more', 'détail', `<div>${o.more}</div>`) : '');
+  return `<div class="r${o.key ? ' key' : ''}"><div class="e">${tex(l[0])}</div><div class="w">${w}</div></div>`;
+}
+function lines(rs) {
+  let h = '', inChk = false;
+  for (const l of rs) {
+    const c = Array.isArray(l) && !!(l[2] && l[2].chk);
+    if (c && !inChk) h += '<div class="chk"><div class="cl">vérification, change quand on déplace les points</div>';
+    if (!c && inChk) h += '</div>';
+    inChk = c; h += line(l);
+  }
+  return h + (inChk ? '</div>' : '');
+}
+function block(ls, cls) {
+  const secs = [{head: null, o: {}, rows: []}];
+  for (const l of ls) {
+    const last = secs[secs.length - 1];
+    if (isHead(l) && !last.o.rest) secs.push({head: l[0], o: l[1] || {}, rows: []});
+    else last.rows.push(isHead(l) ? {h: l[0]} : l);
+  }
+  const body = secs.map(sc => !sc.head ? lines(sc.rows) : sc.o.fold ? det('fold' + (sc.o.fold === 'code' ? ' code' : ''), sc.head, lines(sc.rows)) : `<div class="h">${sc.head}</div>${lines(sc.rows)}`).join('');
+  return `<div class="eq${cls ? ' ' + cls : ''}">${body}</div>`;
+}
+const both = (one, general) => `<div class="lab">${STEPS[i].fig ? 'Un neurone, 5 exemples' : 'Un neurone, 5 exemples (points déplaçables)'}</div>${block(one)}<div class="lab">Forme générale : N neurones, Q sorties, T exemples</div>${block(general, 'gen')}`;
+const R = String.raw;
+const CODE = ['Dans le code (bachue)', {fold: 'code'}];
+const STEPS = [
+ {title: 'Le readout fait une somme pondérée de ce qu\'il lit',
+  text: 'Que calcule un readout d\'ordre 2 à partir de l\'état du réservoir ? On part d\'un réservoir à un neurone, d\'état x, et de 5 exemples d\'entraînement (xₜ, yₜ), t = 1 à 5 : les points noirs.',
+  key: [R`f(\mathbf{x}) = W^\top \varphi(\mathbf{x}), \qquad W \in \mathbb{R}^{D \times Q}, \qquad D = 1 + N + \frac{N(N+1)}{2}`, 'le readout fait une somme pondérée des D monômes d\'ordre au plus 2 des états : Q sorties, D poids par sortie'],
+  extra: F => both([
+    ['Ce que lit le readout'],
+    [R`\varphi(x) = \big(\varphi_0(x), \varphi_1(x), \varphi_2(x)\big) = (1,\ x,\ x^2)`, 'les entrées du readout : les 3 monômes de x jusqu\'à l\'ordre 2'],
+    ['La sortie'],
+    [R`f(x) = w_0\,\varphi_0(x) + w_1\,\varphi_1(x) + w_2\,\varphi_2(x) = \sum_{j=0}^{2} w_j\,\varphi_j(x)`, 'la sortie : une somme pondérée des 3 monômes'],
+    [R`w = (w_0, w_1, w_2), \qquad f(x) = w^\top \varphi(x)`, 'w : le vecteur des 3 poids, wⱼ sa coordonnée j ; wᵀφ(x) est la même somme, écrite en vecteurs'],
+    ['Avec les 5 exemples'],
+    [R`f(x) = ${n(F.w[0], 3)} ${s(F.w[1], 3)}\,x ${s(F.w[2], 3)}\,x^2`, 'les poids trouvés à l\'étape 4 : la courbe bleue', {chk: true}]], [
+    ['Ce que lit le readout'],
+    [R`\mathbf{x}_t = (x_{t1}, \dots, x_{tN}) \in \mathbb{R}^N`, '𝐱ₜ : l\'état de l\'exemple t = 1 … T ; xₜᵢ : son neurone i ; 𝐱 : un état quelconque', {more: 'un seul indice sur x désigne toujours un exemple, dans le cas à un neurone'}],
+    [R`\varphi(\mathbf{x}_t) = \big(1,\ x_{t1}, \dots, x_{tN},\ x_{t1}^2,\ x_{t1} x_{t2}, \dots, x_{tN}^2\big) \in \mathbb{R}^D`, 'φⱼ(𝐱ₜ) : sa coordonnée j, j = 0 … D − 1'],
+    [R`D = 1 + N + \frac{N(N+1)}{2}`, '1 constante, N états, N(N + 1)/2 produits xᵢxₗ avec i ≤ l'],
+    ['La sortie'],
+    [R`f_q(\mathbf{x}) = \sum_{j=0}^{D-1} W_{jq}\,\varphi_j(\mathbf{x}), \qquad q = 1, \dots, Q`, 'une sortie par classe, chacune avec ses D poids'],
+    [R`f(\mathbf{x}) = W^\top \varphi(\mathbf{x}), \qquad W \in \mathbb{R}^{D \times Q}`, 'les Q sorties ensemble', {key: true}],
+    ['Avec marron1'],
+    [R`N = 507,\quad D = 129\,286,\quad Q = 29,\quad T \approx 6\,700`, 'marron1 : D ≈ 19 T, bien plus de poids par sortie que d\'exemples']])},
+ {title: 'La régression ridge minimise un coût',
+  text: 'Quels poids la régression ridge choisit-elle ? Ceux qui minimisent un coût : les écarts au carré sur les exemples, plus une pénalité sur les poids.',
+  err: true,
+  key: [R`C(W) = \lVert \Phi W - Y \rVert_F^2 + \rho\,\lVert W \rVert_F^2`, 'les écarts au carré sur les T exemples et les Q sorties, plus la pénalité ; Φ : les φ(𝐱ₜ) en lignes, Y : les cibles'],
+  extra: F => { const d = X.map((x, j) => F.out(x) - Y[j]), E = d.reduce((t, v) => t + v * v, 0), P = RHO * F.w.reduce((t, v) => t + v * v, 0);
+    return both([
+      ['L\'écart'],
+      [R`d_t = f(x_t) - y_t`, 'l\'écart sur l\'exemple t (trait rouge)'],
+      ['Le coût'],
+      [R`C(w) = \sum_{t=1}^{5} d_t^2 + \rho \sum_{j=0}^{2} w_j^2`, 'le coût : écarts au carré, plus la pénalité'],
+      [R`\rho = 0{,}3`, 'la force de la pénalité, la même dans toute la page'],
+      ['Avec les 5 exemples'],
+      [R`C = ${n(E, 4)} + ${n(P, 4)} = ${n(E + P, 4)}`, 'au minimum, avec les 5 exemples : écarts, puis pénalité', {chk: true}]], [
+      ['L\'écart'],
+      [R`y_{tq} = \begin{cases} 1 & \text{si la classe de l'exemple } t \text{ est } q \\ 0 & \text{sinon} \end{cases}`, 'la cible : un vecteur à un seul 1 (one-hot)'],
+      [R`d_{tq} = f_q(\mathbf{x}_t) - y_{tq}`, 'l\'écart de la sortie q sur l\'exemple t'],
+      ['Le coût'],
+      [R`C(W) = \sum_{t=1}^{T} \sum_{q=1}^{Q} d_{tq}^2 + \rho \sum_{j=0}^{D-1} \sum_{q=1}^{Q} W_{jq}^2`, 'la somme sur les Q sorties du coût d\'une sortie'],
+      [R`C(W) = \lVert \Phi W - Y \rVert_F^2 + \rho\,\lVert W \rVert_F^2`, 'en matrices : Φₜⱼ = φⱼ(𝐱ₜ), Yₜq = yₜq, ‖M‖²_F = Σᵢⱼ M²ᵢⱼ', {key: true}],
+      ['Avec marron1'],
+      [R`\Phi \in \mathbb{R}^{6\,700 \times 129\,286}, \qquad Y \in \{0, 1\}^{6\,700 \times 29}, \qquad W \in \mathbb{R}^{129\,286 \times 29}`, 'Φ est T × D, Y est T × Q, W est D × Q']]); }},
+ {title: 'La dérivée du coût par rapport à chaque poids',
+  text: 'Où le coût C atteint-il son minimum ? On calcule sa dérivée par rapport à chaque poids, pour écrire à l\'étape 4 qu\'elle vaut zéro et résoudre directement les équations obtenues.',
+  err: true, same: true,
+  key: [R`\frac{\partial C}{\partial W} = 2\,\Phi^\top (\Phi W - Y) + 2\rho\,W`, 'une dérivée par poids ; au minimum, toutes valent zéro'],
+  extra: F => { const grad = w => F.G.map((r, j) => 2 * (r.reduce((t, v, l) => t + v * w[l], 0) - F.b[j]));
+    return both([
+    ['Ce que cherche la régression ridge'],
+    [R`w^\star = \arg\min_{w}\, C(w), \qquad C(w) = \sum_{t=1}^{5} \big(f(x_t) - y_t\big)^2 + \rho \sum_{j=0}^{2} w_j^2`, 'le coût de l\'étape 2 ; w⋆ : les poids de la ridge, ceux qui rendent C le plus petit possible'],
+    [R`C(w_0, w_1 + h, w_2) \approx C(w_0, w_1, w_2) + h\,\frac{\partial C}{\partial w_1}`, 'dérivée partielle : la pente de C quand seul w₁ varie, d\'une petite quantité h'],
+    [R`\frac{\partial C}{\partial w_j}(w^\star) = 0, \qquad j = 0, 1, 2`, 'au minimum : si une pente n\'était pas nulle, déplacer wⱼ dans le sens opposé ferait baisser C'],
+    ['Dérivée de la sortie sur un exemple'],
+    [R`f(x_t) = w_0\,\varphi_0(x_t) + w_1\,\varphi_1(x_t) + w_2\,\varphi_2(x_t)`, 'seul le terme wⱼφⱼ(xₜ) contient wⱼ'],
+    [R`\frac{\partial f(x_t)}{\partial w_j} = \varphi_j(x_t) \quad\Longrightarrow\quad \frac{\partial d_t}{\partial w_j} = \varphi_j(x_t)`, 'yₜ ne dépend pas de w'],
+    ['Dérivée d\'un écart au carré'],
+    [R`\frac{\partial (d_t^2)}{\partial w_j} = 2\,d_t\,\frac{\partial d_t}{\partial w_j} = 2\,d_t\,\varphi_j(x_t)`, 'règle de la chaîne : (u²)′ = 2u u′'],
+    ['Dérivée de la pénalité'],
+    [R`\frac{\partial}{\partial w_j}\Big(\rho \sum_{j'} w_{j'}^2\Big) = 2\rho\,w_j`, 'seul le terme j′ = j dépend de wⱼ'],
+    ['Somme des deux'],
+    [R`\frac{\partial C}{\partial w_j} = 2 \sum_{t} \varphi_j(x_t)\,d_t + 2\rho\,w_j`, 'une dérivée pour chaque j = 0, 1, 2'],
+    ['Avec les 5 exemples'],
+    [R`w = (0;\ 0;\ 0):\quad \Big(\frac{\partial C}{\partial w_0}, \frac{\partial C}{\partial w_1}, \frac{\partial C}{\partial w_2}\Big) = ${vec(grad([0, 0, 0]), 2)}`, 'des pentes non nulles : w = 0 n\'est pas le minimum', {chk: true}],
+    [R`w = ${vec(F.w)}:\quad \Big(\frac{\partial C}{\partial w_0}, \frac{\partial C}{\partial w_1}, \frac{\partial C}{\partial w_2}\Big) = ${vec(grad(F.w), 2)}`, 'les poids de la courbe bleue : les trois pentes sont nulles', {chk: true}],
+    ['Pour aller plus loin : la ridge ne fait pas de descente de gradient', {fold: true}],
+    [R`w \leftarrow w - \eta\,\frac{\partial C}{\partial w}, \qquad \eta > 0`, 'descente de gradient : faire un petit pas contre la pente, recommencer des centaines de fois ; elle tend vers le même w⋆'],
+    [R`\frac{\partial C}{\partial w_j} = 0 \ \text{ résolu en une fois}`, 'la ridge : les dérivées ne servent qu\'une fois, pour écrire les équations « pente nulle » ; linéaires en w (étape 4), on les résout directement']], [
+    ['Ce que cherche la régression ridge'],
+    [R`W^\star = \arg\min_{W}\, C(W), \qquad \frac{\partial C}{\partial W_{jq}}(W^\star) = 0 \ \text{ pour tous } j, q`, 'le même principe, pour D × Q poids'],
+    ['Dérivée de la sortie sur un exemple'],
+    [R`\frac{\partial f_q(\mathbf{x}_t)}{\partial W_{jq}} = \varphi_j(\mathbf{x}_t), \qquad \frac{\partial f_r(\mathbf{x}_t)}{\partial W_{jq}} = 0 \quad (r \neq q)`, 'le poids W_jq n\'apparaît que dans la sortie q'],
+    ['Dérivée d\'un écart au carré'],
+    [R`\frac{\partial (d_{tq}^2)}{\partial W_{jq}} = 2\,d_{tq}\,\varphi_j(\mathbf{x}_t)`, 'règle de la chaîne, comme dans le cas à un neurone'],
+    ['Dérivée de la pénalité'],
+    [R`\frac{\partial}{\partial W_{jq}}\Big(\rho \sum_{j', r} W_{j'r}^2\Big) = 2\rho\,W_{jq}`, 'seul le terme j′ = j, r = q dépend de W_jq'],
+    ['Somme des deux'],
+    [R`\frac{\partial C}{\partial W_{jq}} = 2 \sum_{t} \varphi_j(\mathbf{x}_t)\,d_{tq} + 2\rho\,W_{jq}`, 'seuls les écarts de la sortie q comptent'],
+    ['En matrices'],
+    [R`(\Phi W - Y)_{tq} = d_{tq}, \qquad \big(\Phi^\top (\Phi W - Y)\big)_{jq} = \sum_{t} \varphi_j(\mathbf{x}_t)\,d_{tq}`, 'la somme sur t est un produit par Φᵀ'],
+    [R`\frac{\partial C}{\partial W} = 2\,\Phi^\top (\Phi W - Y) + 2\rho\,W`, 'les D × Q dérivées ensemble', {key: true}]]); }},
+ {title: 'Annuler les dérivées donne des équations linéaires : la forme primale',
+  text: 'Quels poids annulent toutes les dérivées de l\'étape 3 ? On remplace l\'écart par sa formule, puis on regroupe les termes par poids.',
+  err: true, same: true, path: 'primal',
+  key: [R`\big(\Phi^\top \Phi + \rho\,\textcolor{#1D9E75}{I_D}\big)\,W = \Phi^\top Y`, 'la forme primale : D équations par sortie, une par poids, résolues directement ; I_D : l\'identité D × D'],
+  extra: F => { const G = F.G, b = F.b;
+    const num = G.map((r, i) => R`${n(r[0])}\,w_0 ${s(r[1])}\,w_1 ${s(r[2])}\,w_2 = ${n(b[i])}`);
+    return both([
+      ['Cas général, pour un j'],
+      [R`\sum_{t} \varphi_j(x_t)\,d_t + \rho\,w_j = 0`, '∂C/∂wⱼ = 0, divisé par 2'],
+      [R`\sum_{t} \varphi_j(x_t) \Big(\sum_{j'} w_{j'}\,\varphi_{j'}(x_t) - y_t\Big) + \rho\,w_j = 0`, 'dₜ remplacé par f(xₜ) − yₜ'],
+      [R`\sum_{t} \sum_{j'} \varphi_j(x_t)\,\varphi_{j'}(x_t)\,w_{j'} - \sum_{t} \varphi_j(x_t)\,y_t + \rho\,w_j = 0`, 'φⱼ(xₜ) multiplié par chaque terme de la parenthèse'],
+      [R`\sum_{j'} \Big(\sum_{t} \varphi_j(x_t)\,\varphi_{j'}(x_t)\Big) w_{j'} + \rho\,w_j = \sum_{t} \varphi_j(x_t)\,y_t`, 'sommes sur t et j′ échangées, w_j′ sorti de la somme sur t, terme en yₜ passé à droite'],
+      [R`C(w):\ \text{polynôme de degré 2 en } w, \text{ strictement convexe car } \rho > 0`, 'son seul point de pente nulle est son minimum : la solution de ces équations est la ridge'],
+      ['Le système d\'équations'],
+      [R`j = 0:\quad \Big(\sum 1 + \rho\Big) w_0 + \Big(\sum x\Big) w_1 + \Big(\sum x^2\Big) w_2 = \sum y`, 'φ₀φⱼ′ = 1, x, x² pour j′ = 0, 1, 2 ; le ρ vient de la pénalité'],
+      [R`j = 1:\quad \Big(\sum x\Big) w_0 + \Big(\sum x^2 + \rho\Big) w_1 + \Big(\sum x^3\Big) w_2 = \sum x\,y`, 'φ₁φⱼ′ = x, x², x³'],
+      [R`j = 2:\quad \Big(\sum x^2\Big) w_0 + \Big(\sum x^3\Big) w_1 + \Big(\sum x^4 + \rho\Big) w_2 = \sum x^2 y`, 'φ₂φⱼ′ = x², x³, x⁴'],
+      ['Avec les 5 exemples (les sommes portent sur t = 1 à 5)'],
+      [num[0], `Σ1 = 5, Σx = ${f(S(1))}, Σx² = ${f(S(2))}, Σy = ${f(S(0, 1))} ; ρ = 0,3 ajouté au coefficient de wⱼ dans l'équation j`, {chk: true}],
+      [num[1], `Σx³ = ${f(S(3), 3)}, Σxy = ${f(S(1, 1))}`, {chk: true}],
+      [num[2], `Σx⁴ = ${f(S(4))}, Σx²y = ${f(S(2, 1))}`, {chk: true}],
+      [R`w = \begin{pmatrix} ${F.G.map(r => r.map(v => n(v)).join(' & ')).join(R` \\ `)} \end{pmatrix}^{-1} ${vec(F.b)}^\top = ${vec(F.w)}`, 'la solution de la ridge, la courbe bleue : le système 3 × 3 résolu directement par élimination de Gauss, sans itérations', {chk: true}],
+      ['Pour aller plus loin : sans pénalité', {fold: true}],
+      [R`\rho = 0:\quad w = ${vec(solve(G.map((r, j) => r.map((v, l) => v - (j === l ? RHO : 0))), b))}`, 'les mêmes équations sans les ρ : moindres carrés ordinaires, des poids de norme plus grande', {chk: true}],
+      ['Le problème de ce chemin'],
+      [R`3 \text{ poids} \Rightarrow 3 \text{ équations}, \qquad D \text{ poids} \Rightarrow D \text{ équations}`, 'une équation par poids : c\'est la forme primale'],
+      [R`\text{marron1 :}\ D = 129\,286 \text{ équations, une matrice de } 134 \text{ Go}`, 'trop gros ; or il n\'y a que T = 6 700 exemples'],
+      [R`\text{étapes 5 et 6 : le même } w \text{ avec } T \text{ équations}`, 'le chemin dual : une équation par exemple au lieu d\'une par poids']], [
+      ['Cas général, pour un j'],
+      [R`\sum_{j'} \Big(\sum_{t} \varphi_j(\mathbf{x}_t)\,\varphi_{j'}(\mathbf{x}_t)\Big) W_{j'q} + \rho\,W_{jq} = \sum_{t} \varphi_j(\mathbf{x}_t)\,y_{tq}`, 'le même calcul, pour chaque j et chaque q'],
+      ['Le système d\'équations'],
+      [R`\big(\Phi^\top \Phi\big)_{jj'} = \sum_{t} \varphi_j(\mathbf{x}_t)\,\varphi_{j'}(\mathbf{x}_t), \qquad \big(\Phi^\top Y\big)_{jq} = \sum_{t} \varphi_j(\mathbf{x}_t)\,y_{tq}`, 'les sommes de la ligne précédente'],
+      [R`\big(\Phi^\top \Phi + \rho I_D\big)\,W = \Phi^\top Y`, 'la ridge en forme primale : D équations par sortie, la même matrice D × D pour les Q sorties ; I_D : l\'identité D × D, ρI_D vient de la pénalité', {key: true}],
+      [R`W = \big(\Phi^\top \Phi + \rho I_D\big)^{-1} \Phi^\top Y`, 'résolu directement : en pratique une factorisation de Cholesky de la matrice D × D, sans itérations ni taux d\'apprentissage'],
+      ['Le problème de ce chemin'],
+      [R`\text{coût} \approx T D^2 + \tfrac{D^3}{3}`, 'marron1 : 1,1 × 10¹⁴ + 7,2 × 10¹⁴ opérations, par Cholesky ; le détail est à l\'étape 11'],
+      [R`\text{mémoire} = D^2 \text{ nombres}`, 'marron1 : 129 286² × 8 octets = 134 Go'],
+      ['Pour aller plus loin : la matrice ΦᵀΦ', {fold: true}],
+      [R`\varphi_j(\mathbf{x}_t) = x_{ti}\,x_{tl},\ \ \varphi_{j'}(\mathbf{x}_t) = x_{tm}\,x_{tn} \ \Longrightarrow\ \big(\Phi^\top \Phi\big)_{jj'} = \sum_{t} x_{ti}\,x_{tl}\,x_{tm}\,x_{tn}`, 'les coefficients de ΦᵀΦ sont des moments d\'ordre 4 des états'],
+      [R`\operatorname{rang}\big(\Phi^\top \Phi\big) \le T = 6\,700 < D = 129\,286`, 'sans ρ, cette matrice n\'est pas inversible : ρ est indispensable']]); }},
+ {title: 'Chemin dual (1/2) : Φᵀ change de côté, une équation par exemple',
+  text: 'Peut-on obtenir les mêmes poids sans résoudre les D équations de l\'étape 4 ? On fait passer Φᵀ de l\'autre côté de l\'inverse : les inconnues deviennent T coefficients, un par exemple.',
+  same: true, path: 'dual',
+  key: [R`W = \Phi^\top A, \qquad \big(K + \rho\,\textcolor{#D4537E}{I_T}\big)\,A = Y, \qquad K = \Phi \Phi^\top`, 'la forme duale : T équations par sortie, une par exemple ; I_T : l\'identité T × T, K : les produits scalaires φ(𝐱ₜ)ᵀφ(𝐱ₛ)'],
+  extra: F => { const P = X.map(x => [1, x, x * x]);
+    return both([
+    ['Les données en matrices'],
+    [R`\Phi = ${mat(P)}, \qquad y = ${mat(Y.map(v => [v]))}`, 'une ligne de Φ par exemple : φ(xₜ)ᵀ = (1, xₜ, xₜ²) ; Φ a T = 5 lignes et D = 3 colonnes'],
+    [R`\big(\Phi^\top \Phi + \rho I_3\big)\,w = \Phi^\top y`, 'les 3 équations de l\'étape 4 : ΦᵀΦ contient les sommes Σ1, Σx, …, Σx⁴, et Φᵀy les sommes Σy, Σxy, Σx²y'],
+    ['Faire passer Φᵀ de l\'autre côté'],
+    [R`\Phi^\top \Phi + \rho I_3 \in \mathbb{R}^{3 \times 3}, \qquad \Phi \Phi^\top + \rho I_5 \in \mathbb{R}^{5 \times 5}`, 'deux tailles différentes, voir le schéma ; I₃ et I₅ : les identités de taille 3 et 5', {more: 'on ne peut même pas multiplier ces deux matrices entre elles. L\'identité ci-dessous n\'échange pas deux facteurs : Φᵀ, de taille 3 × 5, passe de droite à gauche et la matrice change de taille.'}],
+    {svg: matsSVG},
+    [R`\big(\Phi^\top \Phi + \rho I_3\big)\,\Phi^\top = \Phi^\top \Phi\,\Phi^\top + \rho\,\Phi^\top`, 'on développe (distributivité) ; I₃ Φᵀ = Φᵀ'],
+    [R`\Phi^\top \Phi\,\Phi^\top + \rho\,\Phi^\top = \Phi^\top \big(\Phi\,\Phi^\top\big) + \Phi^\top \big(\rho I_5\big)`, '(ΦᵀΦ)Φᵀ = Φᵀ(ΦΦᵀ) : associativité ; Φᵀ = Φᵀ I₅'],
+    [R`\Phi^\top \big(\Phi\,\Phi^\top\big) + \Phi^\top \big(\rho I_5\big) = \Phi^\top \big(\Phi \Phi^\top + \rho I_5\big)`, 'Φᵀ mis en facteur à gauche'],
+    [R`\big(\Phi^\top \Phi + \rho I_3\big)\,\Phi^\top = \Phi^\top \big(\Phi \Phi^\top + \rho I_5\big)`, 'les trois lignes précédentes, mises bout à bout'],
+    [R`v^\top \big(\Phi^\top \Phi + \rho I_3\big)\,v = \lVert \Phi v \rVert^2 + \rho \lVert v \rVert^2 > 0 \quad (v \ne 0)`, 'les valeurs propres de ΦᵀΦ + ρI₃ sont ≥ ρ > 0, donc elle est inversible ; de même pour ΦΦᵀ + ρI₅'],
+    [R`\big(\Phi^\top \Phi + \rho I_3\big)^{-1} \Phi^\top = \Phi^\top \big(\Phi \Phi^\top + \rho I_5\big)^{-1}`, 'l\'avant-dernière ligne, multipliée à gauche par (ΦᵀΦ + ρI₃)⁻¹ et à droite par (ΦΦᵀ + ρI₅)⁻¹'],
+    [R`w = \big(\Phi^\top \Phi + \rho I_3\big)^{-1} \Phi^\top y = \Phi^\top \big(\Phi \Phi^\top + \rho I_5\big)^{-1} y`, 'la solution de l\'étape 4, réécrite avec la ligne précédente'],
+    ['Les nouvelles inconnues : un coefficient par exemple'],
+    [R`A = \big(\Phi \Phi^\top + \rho I_5\big)^{-1} y, \qquad w = \Phi^\top A = \sum_{t} A_t\,\varphi(x_t)`, 'on nomme A ce vecteur de 5 nombres ; ΦᵀA est la somme des lignes de Φ, pondérées par les Aₜ'],
+    [R`K = \Phi \Phi^\top, \qquad K_{ts} = \varphi(x_t)^\top \varphi(x_s) = 1 + x_t\,x_s + x_t^2\,x_s^2`, 'la case (t, s) : le produit scalaire des lignes t et s de Φ, une ligne et une colonne par exemple'],
+    [R`(K + \rho I_5)\,A = y`, 'forme duale : 5 équations, une par exemple, sans w ; ρI₅ vient de la pénalité'],
+    ['Avec les 5 exemples'],
+    [R`K = ${mat(F.K)}`, 'Kₜₛ = 1 + xₜxₛ + xₜ²xₛ²', {chk: true}],
+    [R`A = ${vec(F.A)}`, 'la solution du système 5 × 5, résolu directement, sans connaître w', {chk: true}],
+    [R`w = \Phi^\top A = ${vec(F.wA)}`, `les mêmes poids qu'à l'étape 4 (${F.w.map(v => f(v, 3)).join(' ; ')}) : la même ridge`, {chk: true}],
+    ['Pour aller plus loin : le rang de K', {fold: true}],
+    [R`\operatorname{rang}(K) \le 3 < 5`, 'K = ΦΦᵀ et Φ n\'a que 3 colonnes : sans ρ, K ne serait pas inversible ; la pénalité est indispensable']], [
+    ['Les données en matrices'],
+    [R`\Phi \in \mathbb{R}^{T \times D}, \quad \Phi_{tj} = \varphi_j(\mathbf{x}_t), \qquad \big(\Phi^\top \Phi + \rho I_D\big)\,W = \Phi^\top Y`, 'la forme primale de l\'étape 4'],
+    ['Faire passer Φᵀ de l\'autre côté'],
+    [R`\big(\Phi^\top \Phi + \rho I_D\big)^{-1} \Phi^\top = \Phi^\top \big(\Phi \Phi^\top + \rho I_T\big)^{-1}`, 'le même calcul, avec I_T : l\'identité T × T ; ΦᵀΦ + ρI_D est D × D, ΦΦᵀ + ρI_T est T × T'],
+    ['Les nouvelles inconnues : un coefficient par exemple'],
+    [R`W = \Phi^\top A, \qquad A = \big(\Phi \Phi^\top + \rho I_T\big)^{-1} Y \in \mathbb{R}^{T \times Q}`, 'un coefficient pour chaque exemple d\'entraînement et chaque sortie'],
+    [R`(K + \rho I_T)\,A = Y, \qquad K = \Phi \Phi^\top \in \mathbb{R}^{T \times T}, \quad K_{ts} = \varphi(\mathbf{x}_t)^\top \varphi(\mathbf{x}_s)`, 'forme duale : T équations pour chaque sortie, la même matrice T × T pour les Q sorties', {key: true}],
+    ['Avec marron1'],
+    [R`6\,700 \times 29 \ \text{ coefficients au lieu de } \ 129\,286 \times 29 \ \text{ poids}`, 'marron1 : D ≈ 19 T'],
+    [R`\text{coût} \approx T^2 D + \tfrac{T^3}{3}`, 'K formé avec Φ : 5,8 × 10¹² + 1,0 × 10¹¹ opérations ; l\'étape 7 forme K sans Φ, le détail est à l\'étape 11'],
+    [R`\text{mémoire} = T^2 \text{ nombres}`, 'marron1 : 6 700² × 8 octets = 0,36 Go']]); }},
+ {title: 'Chemin dual (2/2) : la sortie s\'écrit avec A et le noyau k',
+  text: 'Comment prédire avec A, sans calculer w ? On remplace w par ΦᵀA dans la sortie : il n\'y reste que des produits scalaires φ(xₜ)ᵀφ(x), le noyau k.',
+  parts: true, same: true, path: 'dual',
+  key: [R`f_q(\mathbf{x}) = \sum_{t} A_{tq}\,k(\mathbf{x}_t, \mathbf{x}), \qquad k(\mathbf{a}, \mathbf{b}) = \varphi(\mathbf{a})^\top \varphi(\mathbf{b})`, 'la sortie ne demande que A et des valeurs du noyau k, jamais W'],
+  extra: F => both([
+    ['La sortie avec A'],
+    [R`f(x) = w^\top \varphi(x)`, 'la sortie, étape 1'],
+    [R`f(x) = \big(\Phi^\top A\big)^{\!\top} \varphi(x) = A^\top \Phi\,\varphi(x)`, 'w = ΦᵀA (étape 5) ; (ΦᵀA)ᵀ = AᵀΦ'],
+    [R`\Phi\,\varphi(x) = \big(\varphi(x_1)^\top \varphi(x), \dots, \varphi(x_5)^\top \varphi(x)\big)^\top`, 'la ligne t de Φ est φ(xₜ)ᵀ'],
+    [R`f(x) = A^\top \big(\Phi\,\varphi(x)\big) = \sum_{t} A_t\,\varphi(x_t)^\top \varphi(x)`, 'produit scalaire de A et du vecteur de la ligne précédente'],
+    ['Le noyau k'],
+    [R`k(a, b) = \varphi(a)^\top \varphi(b) = 1 + a\,b + a^2 b^2`, 'définition du noyau : a et b sont deux états du réservoir quelconques, les deux arguments de k'],
+    [R`K_{ts} = k(x_t, x_s), \qquad k(x_t, x)`, 'dans K : a = xₜ et b = xₛ, deux exemples d\'entraînement ; dans la sortie : a = xₜ et b = x, l\'état où l\'on prédit'],
+    [R`f(x) = \sum_{t} A_t\,k(x_t, x)`, 'la dernière ligne de la section précédente, avec φ(xₜ)ᵀφ(x) = k(xₜ, x) : la sortie ne demande que k et A', {more: 'chaque courbe rose est un terme Aₜ k(xₜ, x), et leur somme est la courbe bleue'}],
+    ['Avec les 5 exemples'],
+    [R`x = 1:\quad w^\top \varphi(1) = ${n(F.w[0] + F.w[1] + F.w[2], 4)}, \qquad \sum_{t} A_t\,k(x_t, 1) = ${n(F.out(1), 4)}`, 'la même valeur : les deux écritures donnent la sortie de la ridge, la même courbe bleue', {chk: true}],
+    ['Pour aller plus loin : k ne dépend que de φ', {fold: true}],
+    [R`k(a, b) = \varphi(a)^\top \varphi(b)`, 'k ne dépend que de φ, pas de la ridge ni de ρ : la ridge n\'intervient que dans A'],
+    ['Le chemin dual complet'],
+    [R`(K + \rho I_5)\,A = y \ \longrightarrow\ A \ \longrightarrow\ f(x) = \sum_{t} A_t\,k(x_t, x)`, 'l\'entraînement, par K, et la sortie ne demandent que k, jamais w : 5 équations au lieu de 3 ici, mais 6 700 au lieu de 129 286 sur marron1']], [
+    ['La sortie avec A'],
+    [R`f_q(\mathbf{x}) = \sum_{j} \Big(\sum_{t} A_{tq}\,\varphi_j(\mathbf{x}_t)\Big) \varphi_j(\mathbf{x}) = \sum_{t} A_{tq} \sum_{j} \varphi_j(\mathbf{x}_t)\,\varphi_j(\mathbf{x})`, 'W = ΦᵀA remplacé (étape 5), puis sommes échangées'],
+    ['Le noyau k'],
+    [R`k(\mathbf{a}, \mathbf{b}) = \varphi(\mathbf{a})^\top \varphi(\mathbf{b}) = 1 + \sum_{i} a_i b_i + \sum_{i \le l} a_i a_l\,b_i b_l`, '𝐚, 𝐛 ∈ ℝᴺ : deux états du réservoir, 𝐱ₜ et 𝐱ₛ dans K, 𝐱ₜ et 𝐱 dans la sortie'],
+    [R`f_q(\mathbf{x}) = \sum_{t} A_{tq}\,k(\mathbf{x}_t, \mathbf{x}), \qquad f(\mathbf{x}) = A^\top \mathbf{k}_{\mathbf{x}}, \quad \mathbf{k}_{\mathbf{x}} = \big(k(\mathbf{x}_1, \mathbf{x}), \dots, k(\mathbf{x}_T, \mathbf{x})\big)^\top`, 'la sortie d\'un nouvel état : T noyaux, puis A', {key: true}],
+    ['Pour aller plus loin : le coût d\'une prédiction', {fold: true}],
+    [R`\text{coût d'une prédiction} \approx 2\,T N + T Q \ \text{(dual) contre } \ D\,Q \ \text{(primal)}`, 'marron1 : 7,0 × 10⁶ contre 3,7 × 10⁶ ; il faut aussi garder les T états d\'entraînement', {more: '2TN + TQ = 6,8 × 10⁶ + 1,9 × 10⁵. Le terme 2TN suppose la formule courte de l\'étape 7 ; sans elle, chaque k coûte D et le total vaut T D = 8,7 × 10⁸.'}],
+    ['Le chemin dual complet'],
+    [R`(K + \rho I_T)\,A = Y,\ \ K_{ts} = k(\mathbf{x}_t, \mathbf{x}_s) \ \longrightarrow\ A \ \longrightarrow\ f_q(\mathbf{x}) = \sum_{t} A_{tq}\,k(\mathbf{x}_t, \mathbf{x})`, 'écrit avec un noyau k, ce chemin s\'appelle la régression ridge à noyau ; le schéma montre la voie duale'],
+    {svg: () => pathsSVG({hi: 'dual'})}])},
+ {title: 'L\'astuce : le même k, calculé sans écrire φ',
+  text: 'Peut-on calculer k(a, b) = φ(a)ᵀφ(b) sans former le vecteur φ(a) ? On garde le même φ, les monômes d\'ordre 2, et on cherche une autre formule pour le même nombre, qui ne lit que a et b.',
+  parts: true, path: 'dual',
+  key: [R`k(\mathbf{a}, \mathbf{b}) = 1 + p_1 + \frac{p_1^2 + p_2}{2}, \qquad p_1 = \sum_{i} a_i\,b_i, \quad p_2 = \sum_{i} a_i^2\,b_i^2`, 'le même nombre que φ(𝐚)ᵀφ(𝐛), en 2N multiplications au lieu de D'],
+  extra: () => { const a = X[0], b = X[3], c = a * b, pa = [1, a, a * a], pb = [1, b, b * b]; return both([
+    ['La formule'],
+    [R`k(a, b) = 1 + c + c^2, \qquad c = a\,b`, 'un neurone : un produit, puis un carré ; a et b sont deux états, par exemple xₜ et xₛ (étape 6) ; démontrée ci-dessous'],
+    ['Deux recettes pour le même nombre'],
+    [R`k(a, b) = \varphi(a)^\top \varphi(b)`, 'la définition : k vient de φ et en dépend toujours ; ici φ reste les monômes d\'ordre 2, l\'astuce ne change que le calcul'],
+    [R`\varphi(a)^\top \varphi(b) = 1 \cdot 1 + a\,b + a^2 b^2 = 1 + a\,b + (a\,b)^2`, 'la même fonction de a et b, réécrite : a²b² = (ab)²'],
+    [R`\text{par } \varphi:\quad \varphi(a) = (1, a, a^2),\ \ \varphi(b) = (1, b, b^2),\ \ k(a, b) = 1 \cdot 1 + a\,b + a^2 b^2`, 'former les deux vecteurs de D = 3 coordonnées, puis leur produit scalaire'],
+    [R`\text{sans } \varphi:\quad c = a\,b, \quad k(a, b) = 1 + c + c^2`, 'un seul produit de a et b, sans former φ(a) ni φ(b) : φ a disparu de la formule, pas de la définition'],
+    [R`a = ${n(a, 2)},\ b = ${n(b, 2)}:\quad ${pa.map((v, j) => [v, pb[j]].map(u => u < 0 ? `(${n(u, 3)})` : n(u, 3)).join(' \\times ')).join(' + ')} = ${n(1 + c + c * c, 4)}`, 'a = x₁ et b = x₄, deux des 5 exemples ; par φ : les 3 coordonnées de φ(a) et de φ(b)', {chk: true}],
+    [R`a = ${n(a, 2)},\ b = ${n(b, 2)}:\quad c = ${n(c, 4)}, \quad 1 ${s(c, 4)} + ${n(c * c, 4)} = ${n(1 + c + c * c, 4)}`, 'sans φ : le même nombre', {chk: true}],
+    ['Ce dont le chemin dual a besoin'],
+    [R`K_{ts} = k(x_t, x_s), \qquad f(x) = \sum_{t} A_t\,k(x_t, x)`, 'l\'entraînement (étape 5) et la sortie (étape 6) : seulement des valeurs de k ; l\'étape 5 ne passait par Φ que pour obtenir K', {more: 'si une formule courte donne k(a, b) directement à partir de a et b, on n\'écrit jamais les monômes'}],
+    ['Pour aller plus loin : une analogie, et le cas N = 1', {fold: true}],
+    [R`(u + v)^2 = u^2 + 2\,u\,v + v^2`, 'même idée : deux recettes pour le même nombre ; la recette de gauche ne calcule jamais u², 2uv ni v²'],
+    [R`\text{former } \varphi(a) = \text{calculer } \varphi_0(a), \varphi_1(a), \varphi_2(a)`, 'la formule courte ne calcule jamais ces nombres : elle part de a et b, pas de φ(a) et φ(b)'],
+    [R`N = 1:\quad 1 + c + \frac{c^2 + c^2}{2} = 1 + c + c^2`, 'la formule à N neurones de la forme générale redonne la formule à un neurone']], [
+    ['La formule'],
+    [R`k(\mathbf{a}, \mathbf{b}) = 1 + p_1 + \frac{p_1^2 + p_2}{2}, \qquad p_1 = \sum_{i=1}^{N} a_i\,b_i, \quad p_2 = \sum_{i=1}^{N} a_i^2\,b_i^2`, 'N neurones : deux sommes de N termes ; démontrée ligne à ligne ci-dessous', {key: true}],
+    [R`\text{elle se trouve en développant } \varphi(\mathbf{a})^\top \varphi(\mathbf{b}) \text{ et en regroupant les termes en } c_i = a_i\,b_i`, 'elle est propre à ce φ : un φ quelconque n\'a pas forcément de formule courte (étape 8) ; partir directement d\'un k : étape 9'],
+    ['Démonstration pour N neurones'],
+    [R`\varphi(\mathbf{a})^\top \varphi(\mathbf{b}) = 1 \cdot 1 + \sum_{i} a_i\,b_i + \sum_{i \le l} (a_i a_l)(b_i b_l)`, 'φ(𝐚) = (1, a₁, …, a_N, a₁², a₁a₂, …, a_N²) : la constante, les N états, les produits aᵢaₗ avec i ≤ l'],
+    [R`c_i = a_i\,b_i, \qquad i = 1, \dots, N`, 'N produits'],
+    [R`a_i a_l\,b_i b_l = c_i\,c_l`, 'chaque terme d\'ordre 2 du noyau'],
+    [R`\Big(\sum_{i} c_i\Big)^2 = \sum_{i} c_i^2 + 2 \sum_{i < l} c_i\,c_l`, 'carré d\'une somme'],
+    [R`\sum_{i < l} c_i\,c_l = \frac{\big(\sum_{i} c_i\big)^2 - \sum_{i} c_i^2}{2}`, 'de la ligne précédente'],
+    [R`\sum_{i \le l} c_i\,c_l = \sum_{i} c_i^2 + \sum_{i < l} c_i\,c_l = \frac{\big(\sum_{i} c_i\big)^2 + \sum_{i} c_i^2}{2}`, 'les termes i = l ajoutés'],
+    [R`p_1 = \sum_{i} c_i = \mathbf{a}^\top \mathbf{b}, \qquad p_2 = \sum_{i} c_i^2 = (\mathbf{a} \odot \mathbf{a})^\top (\mathbf{b} \odot \mathbf{b})`, 'sommes de puissances ; ⊙ le produit terme à terme'],
+    [R`k(\mathbf{a}, \mathbf{b}) = 1 + p_1 + \frac{p_1^2 + p_2}{2}`, 'la première ligne, avec Σᵢ aᵢbᵢ = p₁ et Σ_{i≤l} cᵢcₗ = (p₁² + p₂)/2 (identité de Newton)'],
+    ['Deux recettes pour le même nombre'],
+    [R`\varphi(\mathbf{a}) \in \mathbb{R}^{129\,286}, \qquad \mathbf{a} \in \mathbb{R}^{507}`, 'former φ(𝐚) : calculer et stocker ses 129 286 nombres ; la formule courte n\'utilise que les 507 nombres de 𝐚 et les 507 de 𝐛'],
+    [R`\text{par } \varphi:\quad \varphi(\mathbf{a}), \varphi(\mathbf{b}) \in \mathbb{R}^{D}, \qquad k(\mathbf{a}, \mathbf{b}) = \sum_{j=0}^{D-1} \varphi_j(\mathbf{a})\,\varphi_j(\mathbf{b})`, 'D = 129 286 coordonnées à former pour chaque état, puis D produits'],
+    [R`\text{sans } \varphi:\quad p_1 = \mathbf{a}^\top \mathbf{b},\ \ p_2 = (\mathbf{a} \odot \mathbf{a})^\top (\mathbf{b} \odot \mathbf{b}),\ \ k(\mathbf{a}, \mathbf{b}) = 1 + p_1 + \tfrac{p_1^2 + p_2}{2}`, 'deux produits scalaires de longueur N, jamais φ(𝐚) de longueur D'],
+    ['Ce dont le chemin dual a besoin'],
+    [R`K_{ts} = k(\mathbf{x}_t, \mathbf{x}_s), \qquad f_q(\mathbf{x}) = \sum_{t} A_{tq}\,k(\mathbf{x}_t, \mathbf{x})`, 'les mêmes valeurs de k, pour des paires d\'états de ℝᴺ'],
+    ['Avec marron1'],
+    [R`2 \times 507 \approx 1\,000 \ \text{ multiplications au lieu de } \ D = 129\,286`, 'marron1, pour une paire d\'états : cᵢ = aᵢbᵢ puis cᵢ², soit 2N', {more: 'par φ : D produits, plus N(N + 1)/2 ≈ 1,3 × 10⁵ multiplications pour former chaque φ(𝐚) ; le même décompte que pour K à la ligne suivante.'}],
+    [R`\text{coût de } K \approx 2\,T^2 N`, 'marron1 : 4,6 × 10¹⁰ au lieu de 5,8 × 10¹² (étape 5)'],
+    CODE,
+    [R`k_{\text{code}}(\mathbf{a}, \mathbf{b}) = k(\mathbf{a}, \mathbf{b}) - 1 = p_1 + \frac{p_1^2 + p_2}{2}`, 'ridge:2 (monomial_kernel) enlève la constante : le biais, non pénalisé, vient du centrage de K et de Y (ligne suivante)'],
+    [R`K_c = H\,K_{\text{code}}\,H, \quad Y_c = H\,Y, \qquad H = I_T - \tfrac{1}{T}\,\mathbf{1}_T\mathbf{1}_T^\top`, '𝟏_T : le vecteur de T uns ; enlever le 1 de k enlève la coordonnée constante de φ, et un biais non pénalisé revient à centrer les colonnes de Φ, donc K ← HKH']]); }},
+ {title: 'Partir de φ : l\'astuce n\'existe que si φ(𝐚)ᵀφ(𝐛) se factorise',
+  text: 'Pour quels φ peut-on calculer k sans former φ ? On cherche quand le produit scalaire φ(𝐚)ᵀφ(𝐛) se factorise en une formule courte.',
+  parts: true,
+  key: [R`\varphi = \text{tous les monômes de degré } d:\ k \text{ en } O(N d); \qquad \varphi = \text{une liste arbitraire}:\ \text{aucun gain}`, 'l\'astuce demande que φ(𝐚)ᵀφ(𝐛) se factorise ; sinon, il faut former φ'],
+  extra: () => both([
+    ['Partir de φ'],
+    [R`\varphi \text{ choisi} \ \Longrightarrow\ k(a, b) = \varphi(a)^\top \varphi(b)`, 'n\'importe quel φ définit un k ; l\'autre choix, partir directement d\'un k valide, est l\'étape 9'],
+    [R`v^\top K\,v = v^\top \Phi \Phi^\top v = \big\lVert \Phi^\top v \big\rVert^2 \ge 0 \quad \text{pour tout } v`, 'K = ΦΦᵀ (étape 5) : le K de n\'importe quel φ est valide, et K + ρI₅ est inversible'],
+    ['Quand la formule courte existe'],
+    [R`\varphi(x) = (1, x, x^2):\ \ k(a, b) = 1 + c + c^2,\ c = a\,b`, 'une formule courte existe : on peut calculer k sans former φ (étape 7)'],
+    ['Quand elle n\'existe pas'],
+    [R`\varphi(x) = (1, x, \sin x):\ \ k(a, b) = 1 + a\,b + \sin a\,\sin b`, 'pas de raccourci : calculer k, c\'est calculer les coordonnées de φ', {more: 'pour un φ quelconque, par exemple 64 monômes tirés au hasard, il faut former φ ; si D est petit, la forme primale suffit.'}]], [
+    ['Quand la formule courte existe'],
+    [R`\varphi(\mathbf{a}) = \mathbf{a} \otimes \mathbf{a} = (a_i\,a_l)_{i, l = 1 \dots N} \ \Longrightarrow\ \varphi(\mathbf{a})^\top \varphi(\mathbf{b}) = \sum_{i, l} a_i b_i\,a_l b_l = (\mathbf{a}^\top \mathbf{b})^2`, '⊗ : le produit de Kronecker, tous les produits en paires ordonnées ; la double somme se factorise en un carré'],
+    [R`\varphi = \text{tous les monômes de degré } d, \text{ poids ne dépendant que de } d \ \Longrightarrow\ k \text{ en } O(N d)`, 'par les sommes de puissances p_m = Σᵢ (aᵢbᵢ)ᵐ, m = 1 … d (identités de Newton) : le cas de l\'étape 7, avec d ≤ 2', {key: true}],
+    ['Quand elle n\'existe pas'],
+    [R`\varphi = (\varphi_j)_{j \in S},\ \ S = 64 \text{ monômes choisis}:\ \ \sum_{j \in S} \varphi_j(\mathbf{a})\,\varphi_j(\mathbf{b})`, 'une liste arbitraire ne se factorise pas : il faut former les 64 coordonnées ; D = 64 < T, la forme primale suffit'],
+    ['Pourquoi une liste arbitraire ne se factorise pas'],
+    [R`\mathbf{1}_N = (1, \dots, 1) \in \mathbb{R}^N, \qquad I_N \in \mathbb{R}^{N \times N}`, '𝟏_N : le vecteur de N uns ; I_N : l\'identité N × N'],
+    [R`\mathbf{c} = \mathbf{a} \odot \mathbf{b}, \qquad \sum_{(i, l) \in S} c_i\,c_l = \mathbf{c}^\top M\,\mathbf{c}, \qquad M_{il} = \begin{cases} 1 & (i, l) \in S \\ 0 & \text{sinon} \end{cases}`, 'les produits d\'ordre 2 de φ, avec ⊙ le produit terme à terme (étape 7) : φ(𝐚)ᵀφ(𝐛) devient une forme quadratique en 𝐜, car cᵢcₗ = (aᵢaₗ)(bᵢbₗ)'],
+    {svg: gridsSVG},
+    [R`S = \text{toutes les paires } (i, l) \ \Longrightarrow\ M = \mathbf{1}_N\mathbf{1}_N^\top,\ \ \mathbf{c}^\top M\,\mathbf{c} = \big(\mathbf{1}_N^\top \mathbf{c}\big)^2 = p_1^2`, 'grille de gauche : M de rang 1, N multiplications pour 𝐜, une somme, un carré'],
+    [R`S = \{(i, l) : i \le l\}:\ \ \mathbf{c}^\top U\,\mathbf{c} = \mathbf{c}^\top\, \frac{\mathbf{1}_N \mathbf{1}_N^\top + I_N}{2}\,\mathbf{c} = \frac{p_1^2 + p_2}{2}`, 'grille du milieu : U, M triangulaire supérieure avec sa diagonale ; U + Uᵀ = 𝟏_N𝟏_Nᵀ + I_N et cᵀUc = cᵀUᵀc, avec p₂ = cᵀc'],
+    [R`S = \{(1, 2),\ (3, 3),\ (2, 5)\}:\ \ \mathbf{c}^\top M\,\mathbf{c} = c_1 c_2 + c_3^2 + c_2 c_5`, 'grille de droite, trois monômes choisis, N = 5 : regrouper c₂(c₁ + c₅) n\'économise qu\'une multiplication ; le coût suit le nombre de termes'],
+    [R`S = 64 \text{ paires au hasard parmi } 128\,778 \ \Longrightarrow\ \text{coût} \approx |S| = D`, 'M n\'a pas de structure, son rang va jusqu\'à 64 : la formule coûte autant que former φ, l\'astuce ne gagne rien'],
+    CODE,
+    [R`\texttt{weights\_high:64}, \quad \texttt{random:64}`, 'nos sélections de 64 monômes : il faut former leurs 64 coordonnées, et la forme primale suffit']])},
+ {title: 'Partir de k : un φ infini, mais k en une ligne',
+  text: 'Que se passe-t-il si l\'on choisit directement k, sans écrire φ ? Change le noyau dans la liste : chaque k valide correspond à un φ, parfois infini, que la forme duale n\'a jamais besoin de former.',
+  parts: true, kernel: true,
+  key: [R`k \text{ valide} \ \Longrightarrow\ \exists\, \varphi:\ k(\mathbf{a}, \mathbf{b}) = \varphi(\mathbf{a})^\top \varphi(\mathbf{b}); \qquad \text{gaussien}:\ D = \infty,\ k(\mathbf{a}, \mathbf{b}) \text{ fini}`, 'on choisit k, jamais φ : la forme duale ne demande que des valeurs de k'],
+  extra: F => both([
+    ['Partir de k'],
+    [R`k \text{ choisi, valide (condition de Mercer)} \ \Longrightarrow\ \exists\, \varphi : k(a, b) = \varphi(a)^\top \varphi(b)`, 'φ existe, mais on ne le choisit pas et on ne l\'écrit jamais : seulement k (noyau gaussien, Volterra)'],
+    ['Le choix fixe ce que lit le readout'],
+    [R`k(a, b) = 1 + a\,b`, 'ordre 1 : φ(x) = (1, x), la sortie est une droite'],
+    [R`k(a, b) = 1 + a\,b + a^2 b^2`, 'ordre 2 : φ(x) = (1, x, x²)'],
+    [R`k(a, b) = e^{-(a - b)^2 / 2\sigma^2}, \qquad 2\sigma^2 = 0{,}5`, 'gaussien'],
+    [R`e^{-(a - b)^2 / 2\sigma^2} = e^{-a^2 / 2\sigma^2}\, e^{-b^2 / 2\sigma^2} \sum_{m \ge 0} \frac{1}{m!} \Big(\frac{a\,b}{\sigma^2}\Big)^m`, 'une infinité de termes, un par degré m'],
+    [R`\varphi_m(x) = e^{-x^2/2\sigma^2}\,\frac{x^m}{\sigma^m \sqrt{m!}},\ \ m = 0, 1, 2, \dots \ \Longrightarrow\ k(a, b) = \sum_{m \ge 0} \varphi_m(a)\,\varphi_m(b)`, 'chaque terme se sépare en un facteur de a et un facteur de b : une coordonnée par degré m, donc φ est infini'],
+    ['Ce que veut dire « de dimension infinie »'],
+    [R`D = \infty`, 'c\'est φ qui a une infinité de coordonnées φ₀, φ₁, φ₂, … ; k(a, b) reste un seul nombre, fini'],
+    {svg: () => seriesSVG(X[2], X[3])},
+    ...((a, b) => { const s2 = 0.25, g = Math.exp(-(a * a + b * b) / (2 * s2)), z = a * b / s2, part = M => { let t = 0, u = 1; for (let m = 0; m <= M; m++) { t += u; u *= z / (m + 1); } return g * t; };
+      return [[R`a = x_3 = ${n(a, 2)},\ b = x_4 = ${n(b, 2)}:\quad k(a, b) = e^{-(a - b)^2 / 2\sigma^2} = ${n(Math.exp(-((a - b) ** 2) / (2 * s2)), 4)}`, 'la valeur exacte, en une ligne : la droite en tirets du schéma', {chk: true}],
+        [R`\sum_{m=0}^{M} \varphi_m(a)\,\varphi_m(b):\quad ${[0, 1, 2, 4].map(M => `M = ${M}:\\ ${n(part(M), 4)}`).join(',\\quad ')}`, 'en gardant les coordonnées m = 0 … M : la somme s\'approche de k, mais ne l\'atteint pour aucun M fini', {chk: true, more: 'avec les points de départ, M = 4 suffit à 4 décimales, car ab est petit ; pour des points plus grands, il faut bien plus de termes.'}],
+        [R`\big|\varphi_m(a)\,\varphi_m(b)\big| = e^{-(a^2 + b^2)/2\sigma^2}\,\frac{\left|a\,b / \sigma^2\right|^m}{m!}`, 'raison 1, k(a, b) est fini : les termes décroissent en 1/m!, donc la somme infinie converge', {more: 'comme la série de eᶻ ; le nombre de paires (a, b) n\'y est pour rien.'}],
+        [R`\text{entraînement}:\ T^2 \text{ valeurs } K_{ts} = k(x_t, x_s), \qquad \text{prédiction}:\ T \text{ valeurs } k(x_t, x)`, 'raison 2, le calcul est fini : la forme duale n\'a besoin que de ces valeurs, chacune donnée par la formule courte ; elle entraîne ce noyau comme les autres'],
+        [R`w = \sum_{t} A_t\,\varphi(x_t) \in \mathbb{R}^{\infty}`, 'w aurait une infinité de coordonnées : impossible à stocker ou à calculer en forme primale', {more: 'en forme duale, A n\'a que T = 5 nombres et K que 5 × 5 valeurs de k.'}]]; })(X[2], X[3]),
+    ['Avec les 5 exemples'],
+    F.w ? [R`w = ${vec(F.wA, 2)}`, `les poids sur les monômes (${F.names.replace('^2', '²')}), calculés par w = ΦᵀA`, {chk: true}] : [R`A = ${vec(F.A, 2)}`, 'pas de w fini : seuls les 5 coefficients A existent', {chk: true}]], [
+    ['Partir de k'],
+    [R`k \text{ valide} \iff K \text{ symétrique et } v^\top K v \ge 0 \ \text{ pour tous } \mathbf{x}_1, \dots, \mathbf{x}_T \text{ et tout } v \in \mathbb{R}^T`, 'condition de Mercer : elle garantit qu\'un φ existe, avec k(𝐚, 𝐛) = φ(𝐚)ᵀφ(𝐛), et que K + ρI_T est inversible', {key: true, more: 'un contre-exemple : k(a, b) = −(a − b)² ne convient pas.'}],
+    ['Le choix fixe ce que lit le readout'],
+    [R`k(\mathbf{a}, \mathbf{b}) = 1 + \mathbf{a}^\top \mathbf{b}`, 'ordre 1 : D = N + 1, le readout linéaire'],
+    [R`k(\mathbf{a}, \mathbf{b}) = 1 + p_1 + \frac{p_1^2 + p_2}{2}`, 'ordre 2 : D = 1 + N + N(N + 1)/2'],
+    [R`k(\mathbf{a}, \mathbf{b}) = \exp\!\big(-\lVert \mathbf{a} - \mathbf{b} \rVert^2 / 2\sigma^2\big)`, 'gaussien : D infini'],
+    ['Pour aller plus loin : le noyau de Volterra', {fold: true}],
+    [R`\mathbf{z} = (z_0, z_{-1}, z_{-2}, \dots),\ \ z_s \in \mathbb{R}^{n_{\text{mfcc}}}, \qquad \overleftarrow{\mathbf{z}} = (z_{-1}, z_{-2}, \dots)`, '𝐳 : un historique de trames de MFCC, z₀ la trame actuelle, 𝐳⃖ l\'historique sans z₀ ; τ > 0 pondère le degré, λ > 0 le retard', {more: 'Volterra remplace le réservoir lui-même : il compare deux historiques d\'entrées, pas deux états du réservoir.'}],
+    [R`k(\mathbf{z}, \mathbf{z}') = 1 + \frac{\lambda^2\,k(\overleftarrow{\mathbf{z}}, \overleftarrow{\mathbf{z}}')}{1 - \tau^2\, z_0^\top z'_0}`, 'Volterra : D infini, une récurrence sur les retards'],
+    [R`k(\mathbf{0}, \mathbf{0}) = 1 + \lambda^2\,k(\mathbf{0}, \mathbf{0}) \ \Longrightarrow\ k(\mathbf{0}, \mathbf{0}) = \frac{1}{1 - \lambda^2}`, 'la récurrence avec 𝐳 = 𝐳′ = 𝟎 : le départ, un historique nul'],
+    [R`\lVert z_s \rVert \le R, \qquad \tau R < 1, \qquad \lambda^2 < 1 - \tau^2 R^2`, 'R : la plus grande norme d\'une trame ; conditions de Gonon et al. 2022, qui gardent le dénominateur positif et la série convergente']])},
+ {title: 'Noyau et forme duale : liés, mais pas la même chose',
+  text: 'Le noyau et la forme duale sont-ils la même chose ? On sépare ce que lit le readout, fixé par φ ou par k, de la façon de résoudre la ridge.',
+  path: 'both', fig: 'paths',
+  key: [R`\varphi \text{ ou } k:\ \text{ce que lit le readout}; \qquad \text{primal ou dual}:\ \text{comment on résout la ridge}`, 'deux choix indépendants : un φ fini se résout des deux façons, avec les mêmes poids ; un φ infini, seulement en forme duale'],
+  extra: () => block([
+    ['Deux choix indépendants'],
+    [R`\text{forme primale ou duale}:\ \text{deux façons de résoudre la même ridge}`, 'étapes 4 et 5 : les mêmes poids', {key: true}],
+    [R`k(\mathbf{a}, \mathbf{b}):\ \text{ce qui compare deux exemples}`, 'étapes 5 et 6 : k, ou son φ, fixe ce que lit le readout'],
+    [R`\varphi \text{ fini} \ \Longrightarrow\ \text{primal ou dual}`, 'un noyau à φ fini s\'entraîne aussi en forme primale, avec les mêmes poids (étape 5)'],
+    [R`\varphi \text{ infini} \ \Longrightarrow\ \text{dual}`, 'une infinité de poids : en principe, seule la forme duale est possible (étape 9)'],
+    [R`D = 129\,286 > T = 6\,700 \ \Longrightarrow\ \text{dual en pratique}`, 'marron1 : un φ fini plus long que le nombre d\'exemples oblige aussi à passer par la forme duale']], 'gen')
+    + `<div class="tw"><table class="fm"><tr><th>Ce que lit le readout</th><th class="p">Forme primale : ${tex(R`f(\mathbf{x}) = W^\top \varphi(\mathbf{x})`, false)}</th><th class="d">Forme duale : ${tex(R`f(\mathbf{x}) = \sum_t A_t\,k(\mathbf{x}_t, \mathbf{x})`, false)}</th></tr>`
+    + `<tr><td>Les états (ordre 1)</td><td>notre ridge linéaire, 507 poids et un biais par sortie</td><td>Shi &amp; Han 2007 ; mêmes poids</td></tr>`
+    + `<tr><td>Tous les monômes d'ordre 2</td><td>Ohkubo &amp; Inubushi 2024, N = 10 ; hors de portée à 507 neurones : 134 Go pour ΦᵀΦ</td><td><code>ridge:2</code> : A résout ${tex(R`(K + \rho I_T)\,A = Y`, false)} ; <code>nlms:2</code>, <code>neh:2</code> : les mêmes coefficients A, appris en ligne exemple par exemple</td></tr>`
+    + `<tr><td>Un noyau approché (<code>nystrom:M</code>, <code>maclaurin:M</code>)</td><td>nos sélections : M entrées construites pour que leur produit scalaire approche k</td><td class="no">sans intérêt : M &lt; T, donc la forme primale est la plus petite</td></tr>`
+    + `<tr><td>Un φ infini (gaussien, Volterra)</td><td class="no">impossible : une infinité de poids</td><td>Zhou et al. 2018, notre étude de Volterra</td></tr></table></div>`},
+ {title: 'Le compte des calculs, avant et après l\'astuce',
+  text: 'Combien coûte chaque chemin, sur 5 exemples et sur marron1 ? On compte les multiplications de trois façons d\'obtenir la même ridge d\'ordre 2 ; chaque multiplication va avec une addition.',
+  path: 'both', fig: 'paths', costs: true,
+  key: [R`8{,}3 \times 10^{14} \ \longrightarrow\ 1{,}5 \times 10^{11} \text{ opérations}, \qquad 134 \text{ Go} \ \longrightarrow\ 0{,}36 \text{ Go}`, 'sur marron1, l\'astuce divise l\'entraînement par environ 5 600 et la mémoire par 370 ; sur 5 exemples, elle coûte plus cher'],
+  extra: () => { const c = (t, a, b) => `<td>${tex(t, false)}<div class="nm">${a} <span class="sep">|</span> ${b}</div></td>`;
+    const rows = [
+      ['Former Φ ou les carrés', [R`T\,\tfrac{N(N+1)}{2}`, '5', '8,6 × 10⁸'], [R`T\,\tfrac{N(N+1)}{2}`, '5', '8,6 × 10⁸'], [R`T N`, 'inutile si N = 1', '3,4 × 10⁶']],
+      ['Former la matrice', [R`T D^2 + T D Q`, '45 + 15', '1,1 × 10¹⁴ + 2,5 × 10¹⁰'], [R`T^2 D`, '75', '5,8 × 10¹²'], [R`2\,T^2 N`, '50', '4,6 × 10¹⁰']],
+      ['Résoudre', [R`\tfrac{D^3}{3} + 2 D^2 Q`, '9 + 18', '7,2 × 10¹⁴ + 9,7 × 10¹¹'], [R`\tfrac{T^3}{3} + 2 T^2 Q`, '42 + 50', '1,0 × 10¹¹ + 2,6 × 10⁹'], [R`\tfrac{T^3}{3} + 2 T^2 Q`, '42 + 50', '1,0 × 10¹¹ + 2,6 × 10⁹']],
+      ['Total', [R`\approx`, '92', '8,3 × 10¹⁴'], [R`\approx`, '172', '5,9 × 10¹²'], [R`\approx`, '142', '1,5 × 10¹¹']],
+      ['Mémoire', [R`D^2 + T D`, '9 + 15 nombres', '134 Go + 6,9 Go'], [R`T^2 + T D`, '25 + 15 nombres', '0,36 Go + 6,9 Go'], [R`T^2 + T N`, '25 + 5 nombres', '0,36 Go + 27 Mo']],
+      ['Prédiction', [R`\tfrac{N(N+1)}{2} + D Q`, '4', '3,9 × 10⁶'], [R`T D`, '15', '8,7 × 10⁸'], [R`2\,T N + T Q`, '15', '7,0 × 10⁶']],
+      ['Taille du système', [R`D \times D`, '3 × 3', '129 286 × 129 286'], [R`T \times T`, '5 × 5', '6 700 × 6 700'], [R`T \times T`, '5 × 5', '6 700 × 6 700']]];
+    return `<p class="cap">Chaque case : la formule, puis sa valeur sur 5 exemples (N = 1, D = 3, T = 5, Q = 1) | sur marron1.</p><div class="tw"><table class="fm"><tr><th>Calcul</th><th class="p">Primal, φ formé (étape 4)</th><th class="d">Dual, K formé avec Φ (étape 5)</th><th class="d">Dual, k par la formule courte (étape 7)</th></tr>`
+      + rows.map(r => `<tr${r[0] === 'Total' ? ' class="tot"' : ''}><td>${r[0]}</td>${r.slice(1).map(x => c(...x)).join('')}</tr>`).join('') + '</table></div>'
+      + block([
+        ['Bilan'],
+        [R`\frac{8{,}3 \times 10^{14}}{1{,}5 \times 10^{11}} \approx 5\,600, \qquad \frac{5{,}9 \times 10^{12}}{1{,}5 \times 10^{11}} \approx 40`, 'entraînement : l\'astuce divise par 5 600 le coût de la forme primale, et par 40 celui de la forme duale avec Φ', {key: true}],
+        [R`\frac{134 \text{ Go}}{0{,}36 \text{ Go}} \approx 370`, 'mémoire : ΦᵀΦ contre K, dans le rapport (D/T)²'],
+        [R`\text{à } 10^{11} \text{ opérations par seconde}:\ 2{,}3 \text{ h} \ \longrightarrow\ 1{,}5 \text{ s}`, 'ordre de grandeur pour un nœud ; la mémoire de 134 Go bloque la forme primale avant le temps'],
+        [R`3{,}9 \times 10^{6} \ \longrightarrow\ 7{,}0 \times 10^{6}`, 'prédiction : l\'astuce coûte environ 2 fois plus que la forme primale, car il faut comparer 𝐱 aux T états d\'entraînement'],
+        [R`T = 5 > D = 3`, 'sur 5 exemples, plus d\'exemples que de poids : la forme primale est la moins chère, et l\'astuce ne sert à rien']], 'gen')
+      + both([
+        ['Détail du compte, ligne à ligne', {fold: true, rest: true}],
+        ['Avant : forme primale, φ formé (N = 1, D = 3, T = 5)'],
+        [R`\Phi:\ T = 5`, 'une multiplication par exemple : xₜ²'],
+        [R`\Phi^\top \Phi:\ T D^2 = 45, \qquad \Phi^\top y:\ T D = 15`, 'chaque case est une somme sur les 5 exemples'],
+        [R`\text{résoudre } 3 \times 3:\ \tfrac{D^3}{3} + 2 D^2 = 9 + 18 = 27`, 'factorisation de Cholesky, puis deux systèmes triangulaires'],
+        [R`\text{total} \approx 92, \qquad \text{prédiction}:\ 1 + D = 4`, 'prédire : former x², puis wᵀφ(x)'],
+        ['Après : forme duale, k par la formule courte de l\'étape 7'],
+        [R`K_{ts} = 1 + c + c^2, \qquad c = x_t\,x_s`, 'la formule courte : jamais φ(xₜ) = (1, xₜ, xₜ²)'],
+        [R`K:\ 2\,T^2 = 50`, 'pour chaque paire : c = xₜxₛ, puis c², soit 25 paires ; pour N = 1, c² remplace les carrés'],
+        [R`\text{résoudre } 5 \times 5:\ \tfrac{T^3}{3} + 2 T^2 \approx 42 + 50 = 92`, 'K + ρI₅ est plus grande que ΦᵀΦ + ρI₃'],
+        [R`\text{total} \approx 142, \qquad \text{prédiction}:\ 2\,T + T = 15`, 'prédire : 5 noyaux k(xₜ, x), puis la somme pondérée par les Aₜ']], [
+        ['Détail du compte, ligne à ligne', {fold: true, rest: true}],
+        [R`N = 507, \quad D = 1 + N + \tfrac{N(N+1)}{2} = 129\,286, \quad T = 6\,700, \quad Q = 29`, 'marron1'],
+        ['Avant : forme primale, φ formé'],
+        [R`\Phi:\ T\,\tfrac{N(N+1)}{2} = 8{,}6 \times 10^{8}`, 'les produits xₜᵢxₜₗ de chaque exemple'],
+        [R`\Phi^\top \Phi:\ T D^2 = 1{,}1 \times 10^{14}, \qquad \Phi^\top Y:\ T D Q = 2{,}5 \times 10^{10}`, 'une somme sur les T exemples pour chacune des D² cases'],
+        [R`\text{résoudre}:\ \tfrac{D^3}{3} + 2 D^2 Q = 7{,}2 \times 10^{14} + 9{,}7 \times 10^{11}`, 'Cholesky de la matrice D × D, puis les Q sorties'],
+        [R`\text{total} \approx 8{,}3 \times 10^{14}, \qquad \text{mémoire}:\ D^2 = 134 \text{ Go}`, 'ΦᵀΦ seule ; Φ ajoute T D = 6,9 Go'],
+        [R`\text{prédiction}:\ \tfrac{N(N+1)}{2} + D Q = 3{,}9 \times 10^{6}`, 'former φ(𝐱), puis Wᵀφ(𝐱)'],
+        ['Entre les deux : forme duale, K formé avec Φ'],
+        [R`\Phi:\ 8{,}6 \times 10^{8}, \qquad K = \Phi \Phi^\top:\ T^2 D = 5{,}8 \times 10^{12}`, 'chaque case de K est un produit scalaire de longueur D'],
+        [R`\text{résoudre}:\ \tfrac{T^3}{3} + 2 T^2 Q = 1{,}0 \times 10^{11} + 2{,}6 \times 10^{9}`, 'Cholesky de la matrice T × T'],
+        [R`\text{total} \approx 5{,}9 \times 10^{12}, \qquad \text{prédiction}:\ T D = 8{,}7 \times 10^{8}`, 'former K domine ; prédire demande T produits scalaires de longueur D'],
+        ['Après : forme duale, k par la formule courte de l\'étape 7'],
+        [R`K_{ts} = 1 + p_1 + \tfrac{p_1^2 + p_2}{2}, \qquad p_1 = \mathbf{x}_t^\top \mathbf{x}_s, \quad p_2 = (\mathbf{x}_t \odot \mathbf{x}_t)^\top (\mathbf{x}_s \odot \mathbf{x}_s)`, 'la formule courte : deux produits scalaires de longueur N, jamais φ(𝐱ₜ) de longueur D'],
+        [R`\mathbf{x}_t \odot \mathbf{x}_t:\ T N = 3{,}4 \times 10^{6}`, 'les carrés de chaque état, une fois pour toutes'],
+        [R`K:\ 2\,T^2 N = 4{,}6 \times 10^{10}`, 'pour chaque paire : p₁ = 𝐚ᵀ𝐛 et p₂ = (𝐚 ⊙ 𝐚)ᵀ(𝐛 ⊙ 𝐛), N multiplications chacun'],
+        [R`\text{résoudre}:\ \tfrac{T^3}{3} + 2 T^2 Q = 1{,}0 \times 10^{11} + 2{,}6 \times 10^{9}`, 'le même système qu\'avec K formé par Φ'],
+        [R`\text{total} \approx 1{,}5 \times 10^{11}, \qquad \text{mémoire}:\ T^2 = 0{,}36 \text{ Go}`, 'K ; les T états ajoutent T N = 27 Mo'],
+        [R`\text{prédiction}:\ 2\,T N + T Q = 7{,}0 \times 10^{6}`, 'T noyaux, puis la somme pondérée par A']]); }},
+ {title: 'Bonus : chaque Aₜ est l\'erreur sur l\'exemple t, divisée par ρ',
+  text: 'Que représentent les coefficients Aₜ ? On repart de l\'équation « dérivée nulle » de l\'étape 4 et on isole le poids ; cette lecture n\'est pas nécessaire pour l\'astuce du noyau.',
+  err: true, path: 'dual',
+  key: [R`A_t = \frac{y_t - f(x_t)}{\rho}`, 'chaque coefficient est l\'erreur de la ridge sur l\'exemple t, divisée par ρ'],
+  extra: F => { const fw = x => F.w[0] + F.w[1] * x + F.w[2] * x * x, Aw = X.map((x, t) => (Y[t] - fw(x)) / RHO), x1 = X[0];
+    return both([
+    ['Isoler le poids'],
+    [R`\sum_{t} \varphi_j(x_t)\,d_t + \rho\,w_j = 0`, 'la dérivée nulle, pour chaque j (étape 4)'],
+    [R`\rho\,w_j = -\sum_{t} \varphi_j(x_t)\,d_t = \sum_{t} \big(y_t - f(x_t)\big)\,\varphi_j(x_t)`, 'le terme en dₜ passé à droite, avec −dₜ = yₜ − f(xₜ)'],
+    [R`w_j = \sum_{t} \frac{y_t - f(x_t)}{\rho}\,\varphi_j(x_t)`, 'divisé par ρ, possible car ρ > 0'],
+    [R`\begin{pmatrix} w_0 \\ w_1 \\ w_2 \end{pmatrix} = \sum_{t} \frac{y_t - f(x_t)}{\rho} \begin{pmatrix} \varphi_0(x_t) \\ \varphi_1(x_t) \\ \varphi_2(x_t) \end{pmatrix}`, 'les 3 équations j = 0, 1, 2 en colonne'],
+    [R`w = \sum_{t} c_t\,\varphi(x_t), \qquad c_t = \frac{y_t - f(x_t)}{\rho}`, 'une écriture de w avec les φ(xₜ) ; elle ne prouve pas encore que cₜ = Aₜ', {more: 'les 5 vecteurs φ(xₜ) de ℝ³ sont liés, de rang 3 < 5 : plusieurs jeux de coefficients donnent le même w.'}],
+    ['Les mêmes A qu\'à l\'étape 5'],
+    [R`\rho\,A = y - K A = y - \Phi\,w`, 'depuis l\'étape 5 : (K + ρI₅)A = y réécrit, puis KA = ΦΦᵀA = Φw'],
+    [R`\Phi\,w = \big(f(x_1), \dots, f(x_5)\big)^\top`, 'la ligne t de Φw est φ(xₜ)ᵀw = f(xₜ)'],
+    [R`A_t = \frac{y_t - f(x_t)}{\rho} = c_t`, 'déduit de (K + ρI₅)A = y, dont la solution est unique : les cₜ sont bien les Aₜ de l\'étape 5', {key: true}],
+    [R`A_t = \frac{y_t - w^\top \varphi(x_t)}{\rho}`, 'w des deux côtés : cette écriture explique les A, mais ne sert pas à les calculer ; l\'étape 5 les calcule'],
+    ['Avec les 5 exemples'],
+    [R`f(x_1) = w_0 + w_1\,x_1 + w_2\,x_1^2 = ${n(F.w[0], 3)} ${s(F.w[1], 3)} \times (${n(x1)}) ${s(F.w[2], 3)} \times (${n(x1)})^2 = ${n(fw(x1), 3)}`, `la sortie sur l'exemple 1 (x₁ = ${f(x1)}), avec le w de l'étape 4`, {chk: true}],
+    [R`A_1 = \frac{y_1 - f(x_1)}{\rho} = \frac{${n(Y[0])} ${s(-fw(x1), 3)}}{${n(RHO, 1)}} = ${n(Aw[0], 3)}`, 'l\'erreur sur l\'exemple 1, divisée par ρ', {chk: true}],
+    [R`A = ${vec(Aw)}`, 'le même calcul pour t = 1 à 5 : les mêmes A qu\'à l\'étape 5', {chk: true}],
+    ['Ce que disent les A'],
+    [R`|A_t| \text{ grand} \iff |y_t - f(x_t)| \text{ grand}`, 'les exemples loin de la courbe bleue, aux longs traits rouges, ont les plus grands coefficients : ils pèsent le plus dans w']], [
+    ['Isoler le poids'],
+    [R`W_{jq} = \sum_{t} A_{tq}\,\varphi_j(\mathbf{x}_t), \qquad A_{tq} = \frac{y_{tq} - f_q(\mathbf{x}_t)}{\rho}`, 'pour chaque exemple d\'entraînement et chaque sortie'],
+    ['Les mêmes A qu\'à l\'étape 5'],
+    [R`\rho\,A = Y - K A = Y - \Phi W`, 'A : les résidus de la ridge sur les exemples d\'entraînement, divisés par ρ'],
+    ['Ce que disent les A'],
+    [R`\text{chaque colonne } W_{:q} \in \operatorname{vect}\big(\varphi(\mathbf{x}_1), \dots, \varphi(\mathbf{x}_T)\big)`, 'les poids sont toujours une combinaison des φ des exemples d\'entraînement (théorème du représentant)']]); }}];
+// the inset on the left: a short label and the result of each step (phase: the first step of each part)
+const ROAD = [
+ {ph: 'Le problème', lab: 'le readout', k: R`f = W^\top \varphi(\mathbf{x})`},
+ {lab: 'le coût de la ridge', k: R`\|\Phi W - Y\|^2 + \rho \|W\|^2`},
+ {lab: 'ses dérivées', k: R`\partial C / \partial W = 0`},
+ {ph: 'Deux chemins', lab: 'la forme primale', k: R`(\Phi^\top \Phi + \rho I_D)\,W = \Phi^\top Y`},
+ {lab: 'chemin dual 1/2', k: R`(K + \rho I_T)\,A = Y`},
+ {lab: 'chemin dual 2/2', k: R`f = \textstyle\sum_t A_t\,k(\mathbf{x}_t, \mathbf{x})`},
+ {ph: 'L\'astuce du noyau', lab: 'le même k, sans φ', k: R`k = 1 + p_1 + \tfrac{p_1^2 + p_2}{2}`},
+ {lab: 'partir de φ', k: R`\text{degré } d:\ k \text{ en } O(N d)`},
+ {lab: 'partir de k', k: R`\text{gaussien}:\ D = \infty`},
+ {ph: 'Bilan', lab: 'noyau ≠ forme duale', k: R`\text{deux choix indépendants}`},
+ {lab: 'le compte des calculs', k: R`8{,}3 \times 10^{14} \to 1{,}5 \times 10^{11}`},
+ {ph: 'Bonus', lab: 'chaque Aₜ : l\'erreur sur l\'exemple t, divisée par ρ', k: R`A_t = \tfrac{y_t - f(x_t)}{\rho}`}];
+const CARD = '<div class="card"><b>marron1</b> N = 507 · D = 129 286 <br>T ≈ 6 700 · Q = 29 · D/T ≈ 19 <br><b>5 exemples</b> N = 1 · D = 3 · ρ = 0,3</div>';
+function road() {
+  let h = `<div class="tt">Étape ${i + 1} sur ${STEPS.length}<span class="cur-t"> : ${ROAD[i].lab}</span></div>`;
+  ROAD.forEach((r, j) => {
+    if (r.ph) h += `${j ? '</ol>' : ''}<div class="ph">${r.ph}</div><ol>`;
+    const cls = [j < i ? 'done' : j === i ? 'cur' : '', STEPS[j].path || ''].join(' ').trim();
+    const body = j < i ? `<span class="rk">${tex(r.k, false)}</span>` : j === i ? `${r.lab}<span class="rk">${tex(r.k, false)}</span>` : r.lab;
+    h += `<li data-i="${j}" class="${cls}" title="${j + 1}. ${r.lab}">${body}</li>`;
+  });
+  document.getElementById('road').innerHTML = h + '</ol>' + CARD;
+}
+document.getElementById('road').onclick = e => { const li = e.target.closest('li[data-i]'); if (li) { i = +li.dataset.i; draw(); } };
+document.getElementById('extra').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.f) { if (d.open) openF.add(d.dataset.f); else openF.delete(d.dataset.f); } }, true);
+const PILL = {primal: 'primal · D = 129 286 inconnues par sortie', dual: 'dual · T ≈ 6 700 inconnues par sortie', both: 'primal et dual'};
+let i = 0;
+function draw() {
+  const st = STEPS[i], kn = st.kernel ? document.getElementById('ks').value : 'o2', F = fit(kn);
+  curF = F; foldN = 0;
+  document.getElementById('g').dataset.path = st.path || '';
+  document.getElementById('title').textContent = `${i + 1}. ${st.title}`;
+  document.getElementById('pills').innerHTML = (st.path ? `<span class="pill ${st.path}">${PILL[st.path]}</span> ` : '') + (st.same ? '<span class="pill same">même ridge, mêmes poids</span>' : '');
+  document.getElementById('txt').textContent = st.text;
+  document.getElementById('kbox').style.display = st.kernel ? '' : 'none';
+  const pf = st.fig === 'paths';
+  document.getElementById('plot').style.display = pf ? 'none' : '';
+  document.getElementById('schema').style.display = pf ? 'none' : '';
+  const pa = document.getElementById('paths');
+  pa.style.display = pf ? '' : 'none';
+  pa.innerHTML = pf ? pathsSVG({costs: !!st.costs}) : '';
+  document.getElementById('extra').innerHTML = st.extra(F);
+  document.querySelectorAll('.prev').forEach(e => e.disabled = i === 0);
+  document.querySelectorAll('.next').forEach(e => e.disabled = i === STEPS.length - 1);
+  plot(F, st);
+  road();
+}
+document.querySelectorAll('.prev').forEach(e => e.onclick = () => { i = Math.max(0, i - 1); draw(); });
+document.querySelectorAll('.next').forEach(e => e.onclick = () => { i = Math.min(STEPS.length - 1, i + 1); draw(); });
+document.getElementById('ks').onchange = draw;
+const svg = document.getElementById('plot');
+let dragged = null, pending = false;
+function toData(e) {  // (pointer position in the coordinates of the data, inside the drawn area)
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+  const x = (q.x - 40) / 580 * 4.4 - 2.2, y = (270 - q.y) / 250 * 4.5 - 1.5;
+  return [Math.min(2.1, Math.max(-2.1, x)), Math.min(2.9, Math.max(-1.4, y))];
+}
+svg.addEventListener('pointerdown', e => {
+  const t = e.target.closest && e.target.closest('.drag');
+  if (!t) return;
+  dragged = +t.dataset.t; try { svg.setPointerCapture(e.pointerId); } catch (error) {} svg.classList.add('dragging'); e.preventDefault();
+});
+svg.addEventListener('pointermove', e => {
+  if (dragged === null) return;
+  [X[dragged], Y[dragged]] = toData(e);
+  if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
+});
+const release = () => { dragged = null; svg.classList.remove('dragging'); };
+svg.addEventListener('pointerup', release);
+svg.addEventListener('pointercancel', release);
+draw();
+</script>
+</body>
+</html>

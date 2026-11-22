@@ -2,9 +2,10 @@
 # Prediction of the next phrase of canary songs (bachue.tasks.next_phrase) on PlaFRIM, one job per condition
 # (reservoirs of the next-phrase studies, outputs/readout_window/hpo/marron1_db.sqlite3), then the merge of their results and the paired
 # comparisons. Run from the root of a checkout of bachue:
-#   HAG_CANARY_TASK=next_phrase [HAG_CANARY_LEAK=1] bash slurm/submit_next_phrase.sh [sizes] [nb_seeds]   (default 500,1000 and 10 seeds)
-# (HAG_CANARY_READOUT_ORDER=2: the generalized readout; CONSTRAINT: the nodes, default zonda, suroit and bora)
+#   BACHUE_TASK=next_phrase [BACHUE_LEAKY_RESERVOIRS=1] bash slurm/submit_next_phrase.sh [sizes] [nb_seeds]   (default 500,1000 and 10 seeds)
+# (BACHUE_READOUT_ORDER=2: the generalized readout; CONSTRAINT: the nodes, default zonda, suroit and bora)
 set -euo pipefail
+source "$(dirname "$0")/env_names.sh"  # (the former names HAG_CANARY_*, until the jobs that use them are done)
 SIZES=${1:-500,1000}
 NB_SEEDS=${2:-10}
 MAX_RUNNING=${MAX_RUNNING:-12}
@@ -24,10 +25,10 @@ PYTHONPATH=$PWD:${HAG_DIR:-$HOME/hag_core} \
 n=$(wc -l < "$TASKS")
 
 array=$(sbatch --parsable "${NODES[@]}" --array=0-$((n - 1))%$MAX_RUNNING --time=1-00:00:00 \
-    --job-name=canary-next-phrase --export=ALL,HAG_CANARY_MODE=next_phrase,HAG_CANARY_WORKERS=1,HAG_CANARY_TASKS="$TASKS" \
+    --job-name=canary-next-phrase --export=ALL,BACHUE_JOB_MODE=next_phrase,BACHUE_WORKERS=1,BACHUE_TASK_FILE="$TASKS" \
     slurm/canary.sbatch "$NB_SEEDS")
 echo "next phrase: job array $array ($n conditions, $TASKS)"
 merge=$(sbatch --parsable "${NODES[@]}" --cpus-per-task=1 --mem=8G --time=01:00:00 --dependency=afterany:$array \
-    --job-name=next-phrase-merge --export=ALL,HAG_CANARY_MODE=next_phrase,HAG_CANARY_WORKERS=1 \
+    --job-name=next-phrase-merge --export=ALL,BACHUE_JOB_MODE=next_phrase,BACHUE_WORKERS=1 \
     --output=slurm/logs/%x-%j.out slurm/canary.sbatch merge)
 echo "merge and comparisons: job $merge (after $array)"

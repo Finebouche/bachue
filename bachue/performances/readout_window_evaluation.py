@@ -16,7 +16,7 @@ The paired comparisons of their results are made with the condition REFERENCE.
 Results: outputs/<study>/performances/<prefix>hpo.csv (e.g. next_phrase_leak_hpo.csv; <prefix>hpo_order<n>.csv with the
 generalized readout, <prefix>hpo_points_<points>[<tail>].csv with other training rows) and their paired comparisons
 (bachue.analysis.comparisons): <...>_comparisons.csv, <...>_readout_comparisons.csv.
-Usage (HAG_CANARY_TASK=next_phrase, with the variables of the studies, e.g. HAG_CANARY_LEAK=1):
+Usage (BACHUE_TASK=next_phrase, with the variables of the studies, e.g. BACHUE_LEAKY_RESERVOIRS=1):
   python -m bachue.performances.readout_window_evaluation [sizes] [nb_seeds]   all the conditions (default 500,1000, 10 seeds)
   python -m bachue.performances.readout_window_evaluation run <condition> <size> [nb_seeds]   one condition
                                              (slurm/submit_next_phrase.sh), results in outputs/<study>/performances/<name>_parts
@@ -36,13 +36,14 @@ from bachue.hpo.readout_window_study import choose_ridges
 from bachue.hpo.studies import best_trial, study_name_of
 from bachue.models.reservoirs import ESN_MODELS, HAG_MODELS, PURE_MODELS, build, parts
 from bachue.models.ridge_readouts import READOUT_ORDER, fit_readout
-from bachue.settings import CALLS, HPO_READOUT, STUDY_PREFIX, TAIL_HPO, TASK
+from bachue.settings import CALLS, DATASET_NAME, HPO_READOUT, STUDY_PREFIX, TAIL_HPO, TASK
 from bachue.tasks.next_phrase import (BASE_READOUT, READOUTS, START, decision_of, metrics, point_data, prepare,
                                       readout_name, readout_of_params, training_of)
 
 
-OUTPUTS = OUTPUTS_DIR / "readout_window" / "performances"
-ANALYSIS = OUTPUTS_DIR / "readout_window" / "analysis"  # (the paired comparisons)
+# (one folder per dataset, e.g. outputs/readout_window/performances/marron1/)
+OUTPUTS = OUTPUTS_DIR / "readout_window" / "performances" / DATASET_NAME
+ANALYSIS = OUTPUTS_DIR / "readout_window" / "analysis" / DATASET_NAME  # (the paired comparisons)
 
 SIZES = [500, 1000]
 REFERENCE = "random_ee"  # (condition of the paired comparisons)
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     if command == "baselines":
         baselines()
     elif TASK != "next_phrase":
-        raise RuntimeError("HAG_CANARY_TASK=next_phrase is needed (names of the studies)")
+        raise RuntimeError("BACHUE_TASK=next_phrase is needed (names of the studies)")
     elif command == "list":
         for condition, _, _, _, size in all_conditions([int(s) for s in sys.argv[2].split(",")]):
             print(condition, size)

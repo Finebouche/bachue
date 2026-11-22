@@ -4,7 +4,7 @@ prediction (ESN reading the phrase labels of the song, with START and END), but 
 the reservoir runs over the whole song (no reset between the phrases) and, at the end of each phrase, the readout predicts
 the label of the next one (END after the last phrase); before the first phrase (Maxime's START), it predicts the first
 one. Phrases as in bachue.datasets.load_categorical_forecasting.load_songs: SIL, TRASH and call ignored, repeated labels merged; with
-HAG_CANARY_CALLS=1, the calls are phrases too (SIL and TRASH ignored). With HAG_CANARY_RESET=1, the reservoirs hear
+BACHUE_WITH_CALLS=1, the calls are phrases too (SIL and TRASH ignored). With BACHUE_RESET_EACH_PHRASE=1, the reservoirs hear
 the current phrase only, from a zero state (as the Canary task of hag), instead of the whole song: the
 state of a point is the last one of a run on the frames of the phrase that ends there (the zero state before the first
 phrase); the HAG learning is the same (on phrases). Input: the 13 MFCC, without their deltas (their effect, with and
@@ -16,33 +16,33 @@ and the MFCC frames are centered (half a window, 11.6 ms, of audio after their t
 what follows the time t is the one of the last frame whose window ends before t (DELAY earlier).
 
 Readout: ridge regression on the one-hot next label at the prediction points (reservoirpy.nodes.Ridge, solver
-HAG_CANARY_RIDGE_SOLVER, default "svd": the singular value decomposition of the centered states, stable with the
+BACHUE_RIDGE_SOLVER, default "svd": the singular value decomposition of the centered states, stable with the
 smallest coefficients), its coefficient chosen by the 3-fold cross-validation by song on the train songs (out-of-fold
-accuracy), then trained on all the train songs and scored on the test songs for each seed. With HAG_CANARY_READOUT_ORDER=n (n >= 2), the generalized
+accuracy), then trained on all the train songs and scored on the test songs for each seed. With BACHUE_READOUT_ORDER=n (n >= 2), the generalized
 readout of Ohkubo & Inubushi (2024) instead (bachue.models.generalized_readout.GeneralizedRidge: ridge regression on all the
 monomials of the state up to degree n, the quadratic form for n = 2), its coefficient always chosen by the same
 cross-validation (the coefficients of the studies are those of the linear readout).
-Training rows of the readout (HAG_CANARY_POINTS), from the states of the window of each point: those of the frames of
+Training rows of the readout (BACHUE_READOUT_TRAINING_ROWS), from the states of the window of each point: those of the frames of
 the phrase ending there, up to the point (from the first frame of the song for the point before the first phrase; the
 state at the point alone when there is no such frame): "last" (default) its last state only, "tail" those of its
-last HAG_CANARY_TAIL frames (default 10, 116 ms), "tail_mean" their mean, "all" all its states, "mean" their mean; all
+last BACHUE_READOUT_TAIL frames (default 10, 116 ms), "tail_mean" their mean, "all" all its states, "mean" their mean; all
 the rows of a point have its next label.
-Decision (HAG_CANARY_DECISION, the scores of the validation and test points): the outputs on the last state of the
-window ("last"), on the mean of the states of its last HAG_CANARY_TAIL frames ("tail_mean", the mean of the outputs
+Decision (BACHUE_READOUT_DECISION, the scores of the validation and test points): the outputs on the last state of the
+window ("last"), on the mean of the states of its last BACHUE_READOUT_TAIL frames ("tail_mean", the mean of the outputs
 on these states with the linear readout) or on the mean of all its states ("mean"); by default, on the training row of
 the point, or on the mean of its rows ("tail": "tail_mean", "all": "mean").
-With the studies of a fixed readout (HAG_CANARY_HPO_READOUT, bachue.hpo.readout_window_study: reservoirs optimized
+With the studies of a fixed readout (BACHUE_STUDY_READOUT, bachue.hpo.readout_window_study: reservoirs optimized
 for it), this readout alone, with the ridge coefficient of the study.
 Comma-separated lists of these three variables: all their combinations (readouts (points, decision, tail), the tail
 None when neither uses it), on the same reservoirs, their coefficients chosen by the same cross-validation (that of
 the study for "last" -> "last"), and their paired comparisons with "last" -> "last".
-With the studies of the readout (HAG_CANARY_TAIL_HPO=1, the studies of canopy), the readouts of each
+With the studies of the readout (BACHUE_SEARCH_READOUT=1, the studies of canopy), the readouts of each
 condition are instead: "last" -> "last", that of its study (column hpo; for the conditions without study, mfcc and
 hybrids, the best of TAIL_READOUTS in the cross-validation) and, for each kind of tail readout (training rows "tail"
 or "tail_mean", decision "last" or "tail_mean"), the length of tail of the best cross-validation accuracy (column
-best_tail), the coefficients of all of them chosen by the same cross-validation. With HAG_CANARY_TAIL_HPO=2 (TAIL_SEPARATE),
+best_tail), the coefficients of all of them chosen by the same cross-validation. With BACHUE_SEARCH_READOUT=2 (TAIL_SEPARATE),
 the tails of the training rows (tail) and of the decision (decision_tail) are two parameters of the studies, and
-best_tail is the best pair of tails of each kind of readout; HAG_CANARY_DECISION_TAIL does the same for lists of
+best_tail is the best pair of tails of each kind of readout; BACHUE_READOUT_DECISION_TAIL does the same for lists of
 readouts (default: the tail of the training rows).
 Metrics as Maxime's: accuracy and macro F1 of all the points,
 without the last one of each song ("skip_last": its target is END), and of the phrases only ("no_end": points whose
@@ -51,11 +51,11 @@ References: n-grams of the true labels of the previous phrases (bachue.tasks.nex
 (the n previous labels, START before the first phrase; unseen context: the most frequent next label) and adaptive (the
 longest context seen in the train songs, up to MAX_ORDER).
 
-Results: outputs/<study>/performances/<HAG_CANARY_TASK=next_phrase prefix>hpo.csv (e.g. next_phrase_leak_hpo.csv) and
+Results: outputs/<study>/performances/<BACHUE_TASK=next_phrase prefix>hpo.csv (e.g. next_phrase_leak_hpo.csv) and
 <...>_comparisons.csv (<...>hpo_order<n>.csv with the generalized readout, <...>hpo_points_<points>[<tail>].csv
 with other training rows),
 references in next_phrase_ngrams.csv (next_phrase_calls_ngrams.csv with the calls).
-Usage (HAG_CANARY_TASK=next_phrase, with the variables of the studies, e.g. HAG_CANARY_LEAK=1):
+Usage (BACHUE_TASK=next_phrase, with the variables of the studies, e.g. BACHUE_LEAKY_RESERVOIRS=1):
   python -m bachue.performances.readout_window_evaluation [sizes] [nb_seeds]   all the conditions (default 500,1000, 10 seeds)
   python -m bachue.performances.readout_window_evaluation run <condition> <size> [nb_seeds]   one condition (slurm/submit_next_phrase.sh),
                                                                           results in outputs/<study>/performances/<name>_parts
@@ -63,7 +63,6 @@ Usage (HAG_CANARY_TASK=next_phrase, with the variables of the studies, e.g. HAG_
   python -m bachue.performances.readout_window_evaluation list <sizes>                        "<condition> <size>" of all the conditions
   python -m bachue.performances.readout_window_evaluation baselines                           the n-grams
 """
-import os
 
 import numpy as np
 from sklearn.metrics import f1_score
@@ -71,11 +70,11 @@ from sklearn.metrics import f1_score
 from bachue.datasets.load_categorical_forecasting import SONGS_SAMPLING_RATE, annotations_of_songs, canary_mfcc_config, song_phrases
 from bachue.models.reservoirs import CHUNK, state_chunks, states
 from bachue.models.ridge_readouts import READOUT_ORDER
-from bachue.settings import CALLS, HPO_READOUT, MAX_TAIL, RESET, TAIL_HPO, TAIL_SEPARATE
+from bachue.settings import CALLS, HPO_READOUT, MAX_TAIL, RESET, TAIL_HPO, TAIL_SEPARATE, env
 
 START, END = "START", "END"
 N_STATIC = 13  # MFCC, before their deltas and delta-deltas in the cached features
-TAIL_MODES = ("tail", "tail_mean")  # (those of the last HAG_CANARY_TAIL frames of the windows)
+TAIL_MODES = ("tail", "tail_mean")  # (those of the last BACHUE_READOUT_TAIL frames of the windows)
 WHOLE_MODES = ("mean", "all")  # (those of all the frames of the windows)
 BASE_READOUT = ("last", "last", None, None)  # (training rows, decision, tail, decision tail): the last state only
 
@@ -86,8 +85,8 @@ def readout_of(points, decision, tail, decision_tail=None):
     the last state)."""
     decision = decision or {"tail": "tail_mean", "all": "mean"}.get(points, points)
     if points not in ("last",) + WHOLE_MODES + TAIL_MODES or decision not in ("last", "mean", "tail_mean"):
-        raise ValueError(f"Unknown readout {points} -> {decision}: HAG_CANARY_POINTS last, mean, all, tail or "
-                         f"tail_mean, HAG_CANARY_DECISION last, mean or tail_mean")
+        raise ValueError(f"Unknown readout {points} -> {decision}: BACHUE_READOUT_TRAINING_ROWS last, mean, all, tail or "
+                         f"tail_mean, BACHUE_READOUT_DECISION last, mean or tail_mean")
     return (points, decision, tail if points in TAIL_MODES or decision == "tail_mean" else None,
             (decision_tail or tail) if decision == "tail_mean" else None)
 
@@ -118,18 +117,19 @@ TAIL_READOUTS = list(dict.fromkeys(
                        for decision, decision_tail in [("last", None)] + [("tail_mean", t) for t in range(2, MAX_TAIL + 1)]]
                       if TAIL_SEPARATE else [readout_of(points, decision, tail) for points in TAIL_MODES
                                              for decision in ("last", "tail_mean") for tail in range(2, MAX_TAIL + 1)])))
-# (HAG_CANARY_DECISION_TAIL: tails of the decision, by default that of the training rows)
+# (BACHUE_READOUT_DECISION_TAIL: tails of the decision, by default that of the training rows)
 READOUTS = TAIL_READOUTS if TAIL_HPO and READOUT_ORDER == 1 else list(dict.fromkeys(
     readout_of(points, decision, int(tail), int(decision_tail) if decision_tail else None)
-    for points in os.environ.get("HAG_CANARY_POINTS", "last").split(",")
-    for decision in os.environ.get("HAG_CANARY_DECISION", "").split(",")
-    for tail in os.environ.get("HAG_CANARY_TAIL", "10").split(",")
-    for decision_tail in os.environ.get("HAG_CANARY_DECISION_TAIL", "").split(",")))
+    for points in env("BACHUE_READOUT_TRAINING_ROWS", "last").split(",")
+    for decision in env("BACHUE_READOUT_DECISION", "").split(",")
+    for tail in env("BACHUE_READOUT_TAIL", "10").split(",")
+    for decision_tail in env("BACHUE_READOUT_DECISION_TAIL", "").split(",")))
 if HPO_READOUT:  # (the readout of the studies, bachue.hpo.readout_window_study)
     points, decision, *tail = HPO_READOUT.split(":")
     READOUTS = [readout_of(points, decision, int(tail[0]) if tail else None)]
 if READOUT_ORDER > 1 and any(points in ("tail", "all") for points, *_ in READOUTS):
-    raise ValueError("The generalized readout needs a single row per point (HAG_CANARY_POINTS last, mean or tail_mean)")
+    raise ValueError("The generalized readout needs a single row per point "
+                     "(BACHUE_READOUT_TRAINING_ROWS last, mean or tail_mean)")
 # audio after the time of a frame in its features: half a window
 DELAY = canary_mfcc_config(SONGS_SAMPLING_RATE)["win_length"] / 2 / SONGS_SAMPLING_RATE
 

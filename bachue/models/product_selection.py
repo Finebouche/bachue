@@ -2,7 +2,7 @@
 Selection of the monomials of degree 2 of the generalized readout (bachue.models.generalized_readout, "ridge:2" of
 bachue.performances.learning_rules_evaluation: N + N (N + 1) / 2 monomials of the N units, 502 502 at 1001 units): can a
 few hundred or thousand products, chosen before the regression, replace all of them? Exploratory: all the readouts
-read the same reservoirs, those of the studies of the variables of the environment (HAG_CANARY_HPO_RULE=ridge:2: the
+read the same reservoirs, those of the studies of the variables of the environment (BACHUE_STUDY_RULE=ridge:2: the
 reservoirs optimized for the full readout of order 2, which they approximate), not reservoirs optimized for each.
 
 Readouts ("methods"), ridge regressions (unpenalized bias) on the last state x of the window of each prediction point
@@ -61,12 +61,11 @@ products of each selection of units or pairs ("share"), and the effective number
 Results: outputs/<study>/performances/<prefix>monomial_selection.csv (one row per condition, size, seed and method),
 <prefix>monomial_selection_cv.csv (out-of-fold accuracy of each method and coefficient) and
 <prefix>monomial_selection_diagnostics.csv.
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_HPO_RULE=ridge:2, with the variables of the studies):
+Usage (BACHUE_TASK=next_phrase BACHUE_STUDY_RULE=ridge:2, with the variables of the studies):
   python -m bachue.performances.partial_order2_evaluation run <condition> <size> [nb_seeds]   (results in _parts)
   python -m bachue.performances.partial_order2_evaluation merge
   python -m bachue.performances.partial_order2_evaluation list <sizes>      "<condition> <size>" of the pure models
 """
-import os
 import zlib
 from functools import cached_property
 
@@ -74,8 +73,9 @@ import numpy as np
 from sklearn.model_selection import GroupKFold
 
 from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.settings import env
 
-SIZES = [int(m) for m in os.environ.get("HAG_CANARY_SELECTION_SIZES", "32,64,128").split(",")]
+SIZES = [int(m) for m in env("BACHUE_SELECTION_SIZES", "32,64,128").split(",")]
 UNIT_KINDS = ("weights_high", "weights_low", "random")  # (all the products of m units)
 PAIR_KINDS = ("residual", "random_pairs", "squares", "ofr", "leverage")  # (products of two units)
 REPLACED_KINDS = ("half_squares", "neighbors_t2", "neighbors_t3")  # (a unit out of two replaced by a product)

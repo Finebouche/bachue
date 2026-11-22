@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sélections de produits d'ordre 2</title>
+<style>
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--text-accent:#185FA5;--bg:#fcfcfb;--bg-neutral:#eceae3;--border-strong:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--text-accent:#85B7EB;--bg:#151515;--bg-neutral:#2c2c2a;--border-strong:#444441}}
+body{background:var(--bg);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px}
+main{max-width:760px;margin:0 auto}
+h1{font-size:20px;font-weight:500;margin:0 0 6px}
+p.note{font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 16px}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px 10px}
+.pn h3{font-size:12px;font-weight:500;margin:0 0 3px;font-family:var(--font-mono)}
+.pn h3.pub{color:#D85A30}
+.pn p{font-size:12px;color:var(--text-secondary);margin:3px 0 0;line-height:1.35}
+.pn p.rf{color:var(--text-muted)}
+.pn p.rf a{color:var(--text-accent);text-decoration:none}
+.px{font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;margin:0 0 0 4px;white-space:nowrap;cursor:help}
+.px b{font-weight:500;color:#D85A30}.px i{font-style:normal;color:var(--text-muted);opacity:.45}.px u{text-decoration:none;color:var(--text-muted)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px;min-width:640px}
+th,td{padding:5px 6px;text-align:center;border-bottom:0.5px solid var(--border-strong)}
+th{font-weight:500;color:var(--text-secondary);vertical-align:bottom}
+th:first-child,td:first-child{text-align:left}td.sel{text-align:left;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)}
+td a{color:var(--text-accent);text-decoration:none}td.y{color:#D85A30}td.n{color:var(--text-muted);opacity:.45}td.q{color:var(--text-muted)}
+td.sc{font-variant-numeric:tabular-nums;font-weight:500}td.rd{color:var(--text-muted);white-space:nowrap}
+tr.grp td{text-align:left;font-weight:500;color:var(--text-primary);padding-top:12px;border-bottom:0.5px solid var(--text-muted)}
+tr.us td{background:var(--bg-neutral)}
+dl.cr{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;color:var(--text-secondary);line-height:1.45;margin:0 0 12px}
+dl.cr dt{font-family:var(--font-mono);font-weight:500;color:#D85A30}dl.cr dd{margin:0}
+.pn svg{width:100%;height:auto;display:block}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-secondary);margin:0 0 10px}
+.lg span{display:flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.gt{font-size:13px;font-weight:500;color:var(--text-primary);margin:14px 0 8px}
+code{font-family:var(--font-mono);font-size:12px}
+.fm{font-family:var(--font-mono);font-size:10px;font-weight:500;margin-left:5px;padding:0 3px;border-radius:3px;border:0.5px solid;cursor:help;white-space:nowrap}
+.fm.p{color:#1D9E75}.fm.d{color:#D4537E}.fm.a{color:#7F77DD}
+table.cmp th,table.cmp td{text-align:left;vertical-align:top}
+#papers small{display:block;color:var(--text-muted);font-size:11px}
+#papers tr.grp td{white-space:normal}
+#papers td:first-child{white-space:normal;color:var(--text-primary)}
+.k{display:inline-block;font-size:11px;font-weight:500;border-radius:8px;padding:1px 7px;margin-bottom:2px}
+.k.y{background:#E1F5EE;color:#085041}.k.n{background:var(--bg-neutral);color:var(--text-secondary)}.k.h{background:#FAEEDA;color:#633806}
+.k.q{color:var(--text-muted);border:0.5px dashed var(--border-strong)}
+@media (prefers-color-scheme: dark){.k.y{background:#085041;color:#9FE1CB}.k.h{background:#633806;color:#FAC775}}
+table.cmp td:first-child{color:var(--text-secondary);white-space:nowrap}
+table.mx{border-collapse:separate;border-spacing:6px;table-layout:fixed}
+table.mx th,table.mx td{border-bottom:0;text-align:left;line-height:1.4}
+table.mx th{vertical-align:bottom;padding:2px 4px}table.mx th[scope=row]{vertical-align:middle}
+table.mx td{background:var(--bg-neutral);border-radius:8px;padding:8px;vertical-align:top;color:var(--text-primary)}
+table.mx small{display:block;font-weight:400;color:var(--text-muted);font-size:11px}
+table.mx td.e{background:transparent;border:0.5px dashed var(--border-strong);color:var(--text-muted)}
+table.mx td.us{background:#E6F1FB;color:#0C447C;box-shadow:inset 0 0 0 2px #85B7EB}
+table.mx td.us small{color:#185FA5}table.mx td.us span{color:var(--text-secondary)}table.mx td.us span+small{color:var(--text-muted)}
+@media (prefers-color-scheme: dark){table.mx td.us{background:#0C447C;color:#E6F1FB;box-shadow:inset 0 0 0 2px #378ADD}table.mx td.us small{color:#B5D4F4}table.mx td.us span{color:#d3d1c7}table.mx td.us span+small{color:#b4b2a9}}
+details.notes{margin:6px 0 12px}details.notes summary{cursor:pointer;font-size:13px;color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<main>
+<h1>Le readout d'ordre 2 complet et ses deux formes</h1>
+<p class="note">Sur marron1, un fold d'entraînement a T ≈ 6 700 lignes : une par phrase des chants d'entraînement, avec l'état du réservoir à la fin de la phrase et, pour cible, l'étiquette de la phrase suivante parmi 29 classes. L'état x a N = 507 valeurs, une par neurone. Le readout d'ordre 2 complet (règle <code>ridge:2</code>) lit ses D = 129 285 monômes : ces 507 valeurs et leurs 128 778 produits x<sub>i</sub> x<sub>j</sub> avec i ≤ j. C'est une régression ridge sur Φ, la matrice T × D des monômes centrés. Elle a deux formes, qui donnent les mêmes poids pour ρ &gt; 0 :</p>
+<p class="note" style="font-family:var(--font-mono);color:var(--text-primary)">W = (Φ<sup>⊤</sup> Φ + ρ I)<sup>−1</sup> Φ<sup>⊤</sup> Y = Φ<sup>⊤</sup> (Φ Φ<sup>⊤</sup> + ρ I)<sup>−1</sup> Y</p>
+<svg viewBox="0 0 680 250" role="img" aria-label="Les matrices des deux formes à la même échelle : 129 285 de côté pour la forme primale, 6 700 pour la forme duale" style="width:100%;height:auto;display:block;margin:0 0 10px">
+<text x="20" y="16" font-size="12" fill="var(--text-secondary)">Φ : 6 700 exemples × 129 285 monômes (un fold de marron1, 507 neurones)</text>
+<rect x="20" y="24" width="193" height="10" rx="2" fill="#1D9E75" fill-opacity="0.45" stroke="#1D9E75" stroke-width="0.5"/>
+<rect x="20" y="50" width="193" height="193" rx="3" fill="#1D9E75" fill-opacity="0.45" stroke="#1D9E75" stroke-width="0.5"/>
+<text x="116" y="136" font-size="13" font-weight="500" text-anchor="middle" fill="var(--text-primary)">Forme primale : ΦᵀΦ</text>
+<text x="116" y="156" font-size="12" text-anchor="middle" fill="var(--text-secondary)">129 285 × 129 285</text>
+<rect x="260" y="50" width="10" height="10" rx="1.5" fill="#D4537E" stroke="#D4537E" stroke-width="0.5"/>
+<text x="280" y="60" font-size="13" font-weight="500" fill="var(--text-primary)">Forme duale : ΦΦᵀ</text>
+<text x="280" y="80" font-size="12" fill="var(--text-secondary)">6 700 × 6 700</text>
+<text x="260" y="220" font-size="12" fill="var(--text-muted)">Φ et les deux carrés sont dessinés à la même échelle.</text>
+<text x="260" y="238" font-size="12" fill="var(--text-muted)">Vert : les entrées du readout (neurones en gris plus bas). Rose : les exemples.</text>
+</svg>
+<p class="note" style="margin-top:14px">Le lien entre ces matrices et les panneaux de la suite de la page, où une case est une entrée du readout. Le dessin reprend leurs tailles, 16 neurones et 6 exemples d'entraînement, et toutes ses cases ont la même taille à partir de l'étape 3.</p>
+<div id="bridge" style="margin:0 0 12px"></div>
+<div class="tw"><table class="cmp">
+<tr><th></th><th><i class="sw" style="background:#1D9E75"></i> Forme primale</th><th><i class="sw" style="background:#D4537E"></i> Forme duale</th></tr>
+<tr><td>Inconnues</td><td>un poids par monôme et par sortie : W, de taille D × K</td><td>un coefficient par exemple et par sortie : A, de taille T × K, avec W = Φ<sup>⊤</sup> A</td></tr>
+<tr><td>Matrice décomposée</td><td>Φ<sup>⊤</sup> Φ, de taille D × D</td><td>Φ Φ<sup>⊤</sup>, de taille T × T : le noyau des exemples</td></tr>
+<tr><td>Ce qui est calculé d'abord</td><td>les D monômes de chaque exemple</td><td>le noyau de chaque paire d'exemples, sans les monômes, en 2 N multiplications</td></tr>
+<tr><td>Coût de l'entraînement</td><td>T D² + D³</td><td>2 T² N + T³</td></tr>
+<tr><td>Sur un fold de marron1</td><td>2 × 10¹⁵ multiplications, au moins 134 Go</td><td>3,5 × 10¹¹ multiplications, 0,4 Go. Avec le noyau calculé depuis les monômes explicites, sans la formule : 5,8 × 10¹² et 6,9 Go</td></tr>
+<tr><td>Sortie d'un nouvel état</td><td>D K : ses monômes, puis W</td><td>2 T N + T K : son noyau avec les T exemples, puis A</td></tr>
+<tr><td>Entraînement choisi par le code quand</td><td>D ≤ T</td><td>D &gt; T (règle du solveur « auto » ; les deux coûts ne s'égalent pas exactement à D = T)</td></tr>
+<tr><td>Après l'entraînement</td><td>les poids W sont là</td><td>W = Φ<sup>⊤</sup> A peut être formé une fois (D K valeurs, 30 Mo ici), et l'inférence redevient primale</td></tr>
+</table></div>
+<p class="note" style="margin-top:12px">Le noyau de deux états a et b est le produit scalaire de leurs monômes uniques. Pour l'ordre 2, avec c<sub>i</sub> = a<sub>i</sub> b<sub>i</sub> : k(a, b) = Σ<sub>i</sub> c<sub>i</sub> + ((Σ<sub>i</sub> c<sub>i</sub>)² + Σ<sub>i</sub> c<sub>i</sub>²) / 2 (<code>monomial_kernel</code>). Ce n'est pas le noyau polynomial usuel (a · b)², qui compte deux fois les produits croisés et change donc leur pénalité ridge.</p>
+<details class="notes"><summary>Notes de lecture : Ohkubo et Inubushi, formes duales déjà publiées</summary>
+<p class="note">A. Ohkubo et M. Inubushi (2024) entraînent leur readout par une régression ridge ordinaire, sur des réservoirs de 5 à 40 neurones (N = 10 le plus souvent) : la forme primale leur suffit, et leur texte ne mentionne pas de forme duale (version arXiv, lue le 20 novembre 2026). Ils écrivent le terme quadratique r<sup>⊤</sup> W<sup>Q</sup> r avec un tenseur N × N complet par sortie, sans dire s'il est symétrique ni quels poids la régression ridge pénalise. Si elle pénalise les N² coefficients, son noyau est a · b + (a · b)². Notre code pénalise également chaque monôme unique (i ≤ j), d'où le noyau ci-dessus. Les deux readouts décrivent les mêmes fonctions et ne diffèrent que par la pénalité des produits croisés : le nôtre n'est donc pas démontré identique au leur. La forme duale est la régression ridge à noyau de C. Saunders, A. Gammerman et V. Vovk, « <a href="https://eprints.soton.ac.uk/258942" style="color:var(--text-accent);text-decoration:none">Ridge Regression Learning Algorithm in Dual Variables</a> », ICML 1998, p. 515-521. <code>GeneralizedRidge</code> prend la forme la moins chère (solveur « auto ») : elle rend le readout complet calculable à 500 et 1 000 neurones. Les deux formes ont été comparées le 20 novembre 2026 sur N = 60, T = 400 et D = 1 890 : pour ρ = 10⁻², leurs sorties diffèrent de 4 × 10⁻¹⁰ au plus. L'écart croît quand ρ diminue (3 × 10⁻⁷ pour ρ = 10⁻⁶).</p>
+<p class="note"><b>Formes duales déjà publiées en reservoir computing</b>, lues le 20 novembre 2026. J. Dong, R. Ohana, M. Rafayelyan et F. Krzakala (« <a href="https://arxiv.org/abs/2006.07310" style="color:var(--text-accent);text-decoration:none">Reservoir Computing meets Recurrent Kernels and Structured Transforms</a> », NeurIPS 2020) remplacent le réservoir par son noyau limite, calculé sur les séquences d'entrée, avec une matrice de noyau n × n ; leur tableau 1 compare les coûts O(n N² + N³) du réservoir et O(n³) du noyau, « avantageux quand n ≪ N » (texte intégral lu). H. Zhou et al. (« <a href="https://livrepository.liverpool.ac.uk/id/eprint/3019825" style="color:var(--text-accent);text-decoration:none">Echo state kernel recursive least squares algorithm for machine condition prediction</a> », Mechanical Systems and Signal Processing 111, 2018) appliquent un noyau gaussien à l'état du réservoir concaténé à l'entrée et l'entraînent en ligne, avec un coefficient par exemple gardé dans un dictionnaire (manuscrit accepté lu en entier ; réservoirs de 300 et 600 unités). P. Tiňo (« <a href="https://jmlr.csail.mit.edu/papers/v21/19-589.html" style="color:var(--text-accent);text-decoration:none">Dynamical Systems as Temporal Feature Spaces</a> », JMLR 21, 2020) traite le readout comme une machine à noyau sur les états et considère le noyau polynomial (⟨φ(u), φ(v)⟩ + a)<sup>d</sup> au-dessus d'un réservoir linéaire, dans une analyse de la mémoire, sans entraîner de readout (lu en entier). L. Gonon, L. Grigoryeva et J.-P. Ortega (« <a href="https://arxiv.org/abs/2212.14641" style="color:var(--text-accent);text-decoration:none">Reservoir kernels and Volterra series</a> ») et L. Grigoryeva, H. Lim et J.-P. Ortega (« <a href="https://arxiv.org/abs/2412.09800" style="color:var(--text-accent);text-decoration:none">Infinite-dimensional next-generation reservoir computing</a> ») entraînent en forme duale des noyaux définis sur les séquences d'entrée, sans réservoir fini ; le second compare les coûts des formes primale et duale de NG-RC (textes lus en entier). M. Gross et H.-M. Rieser (« <a href="https://arxiv.org/abs/2602.14677" style="color:var(--text-accent);text-decoration:none">Kernel-based optimization of measurement operators for quantum reservoir computers</a> », 2026) écrivent les formes primale et duale pour les réservoirs quantiques, avec leurs coûts (lu en entier). M. Hermans et B. Schrauwen (« <a href="https://biblio.ugent.be/publication/1979943/file/1979944.pdf" style="color:var(--text-accent);text-decoration:none">Recurrent Kernel Machines: Computing with Infinite Echo State Networks</a> », Neural Computation 24, 2012) définissent les noyaux récursifs d'un réservoir infini, les entraînent par une régression ridge en variables duales, et montrent que la forme duale d'un ESN fini redonne son readout ridge (manuscrit lu en entier). H. Soh et Y. Demiris (« <a href="https://spiral.imperial.ac.uk/handle/10044/1/18527" style="color:var(--text-accent);text-decoration:none">Spatio-Temporal Learning With the Online Finite and Infinite Echo-State Gaussian Processes</a> », IEEE TNNLS 26, 2015) entraînent en ligne un processus gaussien à noyau gaussien sur l'état d'un réservoir de 50 neurones, avec un coefficient par vecteur de base gardé (préprint lu en entier). Z. Shi et M. Han (« <a href="https://doi.org/10.1109/TNN.2006.885113" style="color:var(--text-accent);text-decoration:none">Support Vector Echo-State Machine for Chaotic Time-Series Prediction</a> », IEEE TNN 18, 2007) entraînent en forme duale un readout linéaire sur les états d'un réservoir de 200 à 1 200 neurones : une régression à vecteurs de support, ou une régression ridge pour la perte quadratique, avec un multiplicateur par exemple et la matrice des produits scalaires des états. Le noyau des états y est toujours linéaire, et les noyaux polynomial et gaussien ne servent qu'aux machines de comparaison, sur les entrées retardées (manuscrit des auteurs lu en entier). C. Saunders, A. Gammerman et V. Vovk (ICML 1998) dérivent la prédiction y<sup>⊤</sup>(K + a I)<sup>−1</sup>k par les multiplicateurs de Lagrange, avec des noyaux polynomiaux et de splines sur des entrées statiques, et disent la formule déjà connue en statistique et en krigeage (<a href="http://web.archive.org/web/20060107005213id_/http://www.ecs.soton.ac.uk:80/~cjs/publications/Dualrr_ICML98.pdf" style="color:var(--text-accent);text-decoration:none">PDF des auteurs</a> lu en entier). Non lu, faute d'accès : S. Chatzis et Y. Demiris, « Echo State Gaussian Process », IEEE TNN 22, 2011, connu ici par ce que Soh et Demiris en écrivent. La forme duale d'un readout linéaire sur les états d'un réservoir fini est donc publiée depuis 2007, et la comparaison de ses coûts avec la forme primale l'est aussi. Aucun des textes lus n'entraîne un readout quadratique par le noyau des monômes des états d'un réservoir fini.</p>
+</details>
+<div class="gt">Ce que lit le readout de chaque forme duale publiée, et sur quel objet</div>
+<p class="note" style="margin-bottom:8px">Tous ces papiers entraînent ou analysent un readout en forme duale. La ligne dit ce que le readout lit, donc le noyau, et la colonne dit à quoi le noyau s'applique. Notre étude est la seule à entraîner un readout dans la case des monômes des états d'un réservoir fini.</p>
+<div class="tw"><table class="mx" id="grid">
+<colgroup><col style="width:19%"><col style="width:27%"><col style="width:27%"><col style="width:27%"></colgroup>
+<tr><th>Ce que le readout lit</th><th>Les états d'un réservoir fini</th><th>Un réservoir infini<small>noyau calculé depuis les séquences d'entrée</small></th><th>Pas de réservoir<small>entrées statiques ou retardées, ou mesures quantiques</small></th></tr>
+<tr><th scope="row">Les valeurs elles-mêmes<small>readout linéaire, ordre 1</small></th>
+<td>Shi &amp; Han 2007<small>SVR et ridge en forme duale, 200 à 1 200 neurones</small>Hermans &amp; Schrauwen 2012<small>équivalence avec le readout ridge, section 6.2</small></td>
+<td>Hermans &amp; Schrauwen 2012<small>le cas qu'ils entraînent</small>Dong et al. 2020<small>coût du réservoir contre coût du noyau</small></td>
+<td>Gross &amp; Rieser 2026<small>mesures d'un réservoir quantique</small></td></tr>
+<tr><th scope="row">Leurs monômes<small>readout polynomial</small></th>
+<td class="us">Notre étude<small>ordre 2 complet, 507 et 1 001 neurones</small><span>Tiňo 2020</span><small>discuté, aucun readout entraîné</small></td>
+<td>Gonon, Grigoryeva &amp; Ortega 2022<small>tous les ordres, monômes des entrées</small></td>
+<td>Saunders, Gammerman &amp; Vovk 1998<small>ridge à noyau polynomial, entrées statiques</small>Grigoryeva, Lim &amp; Ortega 2024<small>NG-RC, ordre p ; coût primal contre dual</small></td></tr>
+<tr><th scope="row">Une transformation gaussienne<small>tous les ordres, sans monômes explicites</small></th>
+<td>Zhou et al. 2018<small>300 et 600 unités</small>Soh &amp; Demiris 2015<small>50 neurones</small>Chatzis &amp; Demiris 2011<small>processus gaussien ; non lu, d'après Soh &amp; Demiris</small></td>
+<td>Hermans &amp; Schrauwen 2012<small>noyau gaussien récursif</small>Soh &amp; Demiris 2015<small>variante à réservoir infini</small></td>
+<td class="e">Engel, Mannor &amp; Meir 2004<small>filtre à noyau, fenêtres d'entrées</small></td></tr>
+</table></div>
+<div class="gt">Ce que fait chaque papier cité</div>
+<div class="lg"><span><span class="k y">oui</span></span><span><span class="k n">non</span></span><span><span class="k h">en partie</span></span><span><span class="k q">?</span>non vérifié</span></div>
+<div class="tw"><table class="cmp" id="papers"></table></div>
+<p class="note" style="margin-top:8px">La ligne grise sous chaque nom dit ce qui a été lu. Un « ? » marque une case qui ne vient pas d'une lecture du texte.</p>
+<p class="note">Les règles en ligne <code>nlms:2</code> et <code>neh:2</code> entraînent aussi la forme duale : chaque exemple met à jour son propre coefficient dans A, pour T K multiplications (<code>bachue/models/readout_rules/kernel.py</code>). Sur marron1, les sélections de produits restent en forme primale, parce que leurs D = N + M = 2 587 entrées sont moins nombreuses que les exemples. Sur JapaneseVowels, un fold n'a que 180 exemples : le solveur « auto » de ridge y passe en forme duale pour les sélections aussi, et seules les règles en ligne gardent un poids par entrée.</p>
+<h1 style="margin-top:28px">Quels produits d'ordre 2 chaque sélection garde</h1>
+<p class="note">Entrées du readout pour chaque méthode de <code>bachue.models.product_selection</code> : la ligne du haut montre les neurones du réservoir gardés en entrée linéaire, le triangle les produits ajoutés. Chaque case du triangle est une paire i ≤ j. Illustration avec 16 neurones, m = 5, M = 15 et 5 sorties ; en réalité 507 ou 1 001 neurones et 29 sorties. Figure enregistrée le 19 novembre 2026, complétée le 20.</p>
+<div class="lg"><span><b style="font-family:var(--font-mono);font-weight:500;color:#D85A30">nom</b>Antécédent publié, références en dessous</span><span><span class="px" style="margin:0"><b>R</b><b>2</b><b>X</b><b>P</b><i>D</i><i>L</i></span>Critères partagés avec notre étude (lettre orange : partagé), détail en bas de page</span><span><span class="fm p" style="margin:0">primale</span>Un poids par entrée</span><span><span class="fm d" style="margin:0">duale</span>Un coefficient par exemple d'entraînement</span><span><span class="fm a" style="margin:0">approché</span>Entrées explicites qui approchent un noyau</span><span><i class="sw" style="background:#888780"></i>Neurone du réservoir gardé en entrée linéaire (ligne du haut)</span><span><i class="sw" style="background:#185FA5;border-radius:50%"></i>Sortie du readout linéaire (ligne du dessous)</span><span><i class="sw" style="background:#D4537E;border-radius:50%"></i>Noyau de l'état avec un exemple d'entraînement (ligne du dessous)</span><span><i class="sw" style="background:#1D9E75"></i>Produit de deux neurones</span><span><i class="sw" style="background:#378ADD"></i>Produit de deux sorties</span><span><i class="sw" style="background:#7F77DD"></i>Produit de deux composantes ou projections, ou mélange de produits</span><span><i class="sw" style="background:var(--bg-neutral);border:0.5px solid var(--border-strong)"></i>Écarté</span></div>
+<div class="gt" style="margin-top:0">Readouts de référence</div>
+<div class="pg" id="g0"></div>
+<div class="gt">Nos sélections</div>
+<div class="pg" id="g1"></div>
+<div class="gt">Alternatives ajoutées pour la comparaison</div>
+<div class="pg" id="g2"></div>
+<p class="note" style="margin-top:14px">Les positions de <code>residual</code> et d'<code>ofr</code>, les scores de <code>leverage</code> et les neurones choisis par <code>weights_high</code>, <code>weights_low</code> et <code>random</code> sont inventés pour l'exemple.</p>
+<h1 style="margin-top:28px">Proximité des publications avec notre étude</h1>
+<p class="note">Notre étude entraîne en ligne le readout d'un réservoir récurrent sur ses états et sur une partie des produits x<sub>i</sub> x<sub>j</sub>, choisie à partir des données ou au hasard. Chaque publication est comparée à cette description sur six critères. Le score compte les critères partagés, sur 6. La ligne « Notre étude » décrit la cible de l'étude, une règle en ligne sur des produits choisis : elle ne décrit pas chaque étude lancée, dont beaucoup utilisent ridge ou un tirage au hasard. Le tableau sépare les travaux sur des réservoirs des autres, parce que le critère R pèse plus que les autres pour notre étude : une méthode de statistique sans réservoir peut atteindre 4 sur 6 sans porter sur le même objet.</p>
+<dl class="cr">
+<dt>R</dt><dd>La méthode porte sur le readout d'un réservoir récurrent.</dd>
+<dt>2</dt><dd>Le readout reçoit des termes d'ordre 2 explicites dans les expériences : des carrés ou des produits (ou un noyau polynomial qui les contient).</dd>
+<dt>X</dt><dd>Le readout reçoit des produits croisés entre unités différentes, et pas seulement des puissances d'une même unité.</dd>
+<dt>P</dt><dd>Une partie seulement des termes possibles est gardée, ou une expansion compacte les remplace.</dd>
+<dt>D</dt><dd>Les termes gardés sont choisis à partir des données (poids, résidu, ACP, levier), et non fixés d'avance ou tirés au hasard.</dd>
+<dt>L</dt><dd>Le readout est appris en ligne (LMS, RLS ou règle locale), et non par une régression en une fois.</dd>
+</dl>
+<div class="tw"><table id="tb"></table></div>
+<p class="note" style="margin-top:12px">La colonne « Forme » dit comment la régression est posée, et ne compte pas dans le score. Presque toutes les publications sont en forme primale, comme nos sélections : un poids par entrée explicite. Williams &amp; Seeger et El Alaoui &amp; Mahoney travaillent sur le noyau des exemples, en forme duale. Kar &amp; Karnick et Woodruff &amp; Zandieh construisent des entrées explicites qui approchent un noyau. Sur marron1, notre readout d'ordre 2 complet est le seul que nous entraînons en forme duale ; sur JapaneseVowels, ridge y passe aussi pour les sélections, parce que les exemples sont moins nombreux que les entrées.</p>
+<p class="note" style="margin-top:12px">Un « ? » marque un critère qui n'a pas pu être établi, et il compte pour zéro. La colonne « Lecture » donne la source de chaque ligne. Tous les textes ont été lus en entier le 19 novembre 2026, sauf trois. Les articles de Boccato et al. sont fermés : la ligne vient du chapitre 5 de la thèse de L. Boccato (Unicamp, 2013), qui dit reprendre ces deux articles. L'article de Butcher et al. est fermé aussi : la ligne vient de son résumé et de l'article ESANN 2010 qui définit R2SP. L'article de Chen & Nurdin est fermé : la ligne vient de son résumé et du chapitre 7 de la thèse de J. Chen (UNSW, 2022), qui le reprend en partie.</p>
+<p class="note">Trois lectures ont changé des cases. Le readout de Boccato et al. est un filtre de Volterra d'ordre 3 sans les termes d'ordre 2, appliqué aux composantes principales seules (la partie linéaire aussi), et ses coefficients sont calculés en une fois : le critère 2 est donc « non », et L aussi. Chen et al. 2017 annoncent omettre les termes d'ordre 2, mais leur nombre de caractéristiques (286 pour 10 composantes) les contient : le critère 2 reste « ? ». Lupascu & Coca calculent le readout en une fois par moindres carrés, et seuls les poids d'entrée et de retour sont adaptés récursivement : L est « non ». Aucune des publications lues ne compare sa sélection à un tirage aléatoire de produits. Chen & Nurdin entraînent en ligne, par LMS et RLS modifiés, un readout polynomial qui contient tous les monômes des états : c'est la seule publication trouvée, avec Jaeger 2002, qui partage le critère L.</p>
+</main>
+<script>
+const T = '#1D9E75', P = '#7F77DD', G = '#888780', B = '#378ADD', BD = '#185FA5', E = '#D4537E';  // (E: the training examples)
+const CR = [['R', 'réservoir récurrent'], ['2', 'termes d\'ordre 2'], ['X', 'produits croisés entre unités'], ['P', 'partie des termes seulement'], ['D', 'choix à partir des données'], ['L', 'readout appris en ligne']];
+const PUBS = {
+ ohkubo: ['Ohkubo & Inubushi 2024', 'https://arxiv.org/abs/2405.14885', 'R2X', '', 'lu'],
+ chennurdin: ['Chen & Nurdin 2021', 'https://doi.org/10.1109/CDC45484.2021.9683633', 'R2XL', '', 'résumé, thèse lue (chap. 7)'],
+ lupascu: ['Lupascu & Coca 2026', 'https://doi.org/10.1038/s41598-026-42971-5', 'R2XPD', '', 'lu'],
+ boccato11: ['Boccato et al. 2011', 'https://doi.org/10.1109/IJCNN.2011.6033273', 'RXPD', '', 'thèse lue (chap. 5)'],
+ boccato12: ['2012', 'https://doi.org/10.1016/j.neunet.2012.02.028', 'RXPD', '', '', 'boccato11'],
+ boccato13: ['thèse 2013', 'https://repositorio.unicamp.br/Acervo/Detalhe/908938', 'RXPD', '', '', 'boccato11'],
+ chatto: ['Chattopadhyay et al. 2020', 'https://doi.org/10.5194/npg-27-373-2020', 'R2XP', '', 'lu'],
+ jaeger: ['Jaeger 2002', 'https://papers.neurips.cc/paper_files/paper/2002/file/426f990b332ef8193a61cc90516c1245-Paper.pdf', 'R2PL', '', 'lu'],
+ pathak18: ['Pathak et al. 2018', 'https://link.aps.org/accepted/10.1103/PhysRevLett.120.024102', 'R2P', '', 'lu (manuscrit accepté)'],
+ pathak17: ['Pathak et al. 2017', 'https://doi.org/10.1063/1.5010300', 'R2P', '', 'lu'],
+ butcher: ['Butcher et al. 2013', 'https://research.aston.ac.uk/en/publications/reservoir-computing-and-extreme-learning-machines-for-non-linear-/', 'R', '', 'résumé, précurseur lu'],
+ chen17: ['Chen et al. 2017', 'https://doi.org/10.1587/transinf.2017EDP7089', 'XPD', '2', 'lu'],
+ hiernet: ['hierNet', 'https://arxiv.org/abs/1205.5050', '2XPD', '', 'lu'],
+ glinternet: ['glinternet', 'https://arxiv.org/abs/1308.2719', '2XPD', '', 'lu'],
+ hao: ['Hao, Feng & Zhang', 'https://arxiv.org/abs/1501.00049', '2XPD', '', 'lu'],
+ iform: ['iFORM', 'https://ideas.repec.org/a/taf/jnlasa/v109y2014i507p1285-1301.html', '2XPD', '', 'lu'],
+ sprinter: ['sprinter, Yu, Bien & Tibshirani', 'https://arxiv.org/abs/1907.08414', '2XPD', '', 'lu'],
+ chen89: ['Chen, Billings & Luo 1989', 'https://doi.org/10.1080/00207178908953472', '2XPD', '', 'lu'],
+ woodruff: ['Woodruff & Zandieh 2020', 'https://proceedings.mlr.press/v119/woodruff20a.html', '2XPD', '', 'lu'],
+ kar: ['Kar & Karnick 2012', 'https://proceedings.mlr.press/v22/kar12.html', '2XP', '', 'lu'],
+ alaoui: ['El Alaoui & Mahoney 2015', 'https://arxiv.org/abs/1411.0306', 'PD', '', 'lu'],
+ nystrom: ['Williams & Seeger 2001', 'https://papers.nips.cc/paper/1866-using-the-nystrom-method-to-speed-up-kernel-machines', 'P', '', 'lu']};
+// form of the regression of a readout or of a publication: P primal (a weight per explicit input), D dual (a
+// coefficient per training example, through a kernel), A explicit inputs which approximate a kernel
+const FORMS = {P: ['primale', 'p', 'Forme primale : un poids par entrée explicite'], D: ['duale', 'd', 'Forme duale : un coefficient par exemple d\'entraînement, par un noyau'],
+  A: ['approché', 'a', 'Entrées explicites qui approchent un noyau, puis un poids par entrée']};
+const FORM = {woodruff: 'A', kar: 'A', alaoui: 'D', nystrom: 'D'};  // (of the publications; the others: P)
+const PANEL_FORM = {'ordre 2 complet, dual': 'D', 'maclaurin:M': 'A', 'nystrom:M': 'A'};  // (of our readouts; the others: P)
+const badge = key => `<span class="fm ${FORMS[key][1]}" title="${FORMS[key][2]}">${FORMS[key][0]}</span>`;  // (in words: the letters are criteria)
+const link = id => `<a href="${PUBS[id][1]}">${PUBS[id][0]}</a>`;
+const score = id => PUBS[id][2].length;
+function profile(id) { const [, , yes, unknown] = PUBS[id];
+  const shared = CR.filter(([c]) => yes.includes(c)).map(c => c[1]), open = CR.filter(([c]) => unknown.includes(c)).map(c => c[1]);
+  const title = `Partagé avec notre étude : ${shared.join(', ') || 'rien'}` + (open.length ? `. Non vérifié : ${open.join(', ')}` : '') + `. Score ${score(id)}/6.`;
+  return `<span class="px" title="${title}">` + CR.map(([c]) => yes.includes(c) ? `<b>${c}</b>` : unknown.includes(c) ? '<u>?</u>' : `<i>${c}</i>`).join('') + '</span>'; }
+const A = (...ids) => ids.map(id => link(id) + (PUBS[id][5] ? '' : profile(id) + badge(FORM[id] || 'P', true))).join(', ');
+function lcg(s) { return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296; }
+const all16 = [...Array(16).keys()];
+const block = u => { const m = new Map(); u.forEach(a => u.forEach(b => { if (a <= b) m.set(a + ',' + b, 1); })); return m; };
+const full = (n, v) => { const m = new Map(); for (let i = 0; i < n; i++) for (let j = i; j < n; j++) m.set(i + ',' + j, v); return m; };
+const list = (ks, f) => new Map(ks.map((k, r) => [k, f ? f(r) : 1]));
+function randomPairs(n, M, seed) { const r = lcg(seed), a = [...full(n, 1).keys()]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return list(a.slice(0, M)); }
+const diag = js => list(js.map(j => j + ',' + j));
+const t2 = [2, 4, 6, 8, 10, 12, 14], t3 = [1, 3, 5, 7, 9, 11, 13];
+const residual = list(['0,9', '0,12', '1,9', '1,13', '2,6', '2,12', '3,3', '3,11', '4,9', '5,12', '6,6', '6,13', '8,9', '9,12', '11,14']);
+const ofr = list(['2,9', '5,5', '0,12', '7,13', '3,6', '9,14', '1,4', '10,10', '4,11', '6,15', '0,3', '8,12', '2,2', '11,13', '5,9'], r => 1 - 0.65 * r / 14);
+const r = lcg(11), hot = {3: 0.5, 9: 0.35, 12: 0.45}, lev = new Map(), pool = [];
+for (let i = 0; i < 16; i++) for (let j = i; j < 16; j++) { const s = 0.06 + 0.12 * r() + (hot[i] || 0) * 0.5 + (hot[j] || 0) * 0.5; lev.set(i + ',' + j, Math.min(0.42, s * 0.8)); pool.push([i + ',' + j, s]); }
+const r2 = lcg(5); for (let d = 0; d < 15; d++) { const tot = pool.reduce((a, p) => a + p[1], 0); let u = r2() * tot, k = 0; while (u > pool[k][1]) { u -= pool[k][1]; k++; } lev.set(pool[k][0], 1); pool.splice(k, 1); }
+const boccato = ['boccato11', 'boccato12', 'boccato13', 'chen17'];
+const ohkubo = ['ohkubo', 'chennurdin'];
+const refs = [
+ ['linear', 16, new Map(), T, all16, 'Les états seuls, aucun produit.', []],
+ ['ordre 2 complet, primal', 16, full(16, 1), T, all16, 'Tous les produits, un poids chacun : la limite de toutes les sélections, et la forme du papier d\'origine, à 10 neurones. À 507 neurones, elle demanderait 134 Go.', ohkubo],
+ ['ordre 2 complet, dual', 16, full(16, 0.16), T, all16, 'Le même readout par le noyau : il lit le noyau de l\'état avec chaque exemple d\'entraînement (ronds roses) et ne calcule aucun produit (triangle pâle). C\'est notre entraînement, sur les états bruts x (<code>full</code>, règle <code>ridge:2</code>) ou standardisés z (<code>full_std</code>).', [], 9, 6, E,
+  '<p class="rf"><a href="https://eprints.soton.ac.uk/258942">Saunders, Gammerman &amp; Vovk 1998</a>' + badge('D', true) + '</p>']];
+const ours = [
+ ['weights_high:m', 16, block([0, 1, 2, 3, 4]), T, all16, 'Les m neurones de plus grands poids linéaires.', ['hiernet', 'glinternet', 'hao', 'iform']],
+ ['weights_low:m', 16, block([11, 12, 13, 14, 15]), T, all16, 'Les m neurones de plus petits poids linéaires.', []],
+ ['random:m', 16, block([1, 4, 7, 10, 14]), T, all16, 'm neurones tirés au hasard.', []],
+ ['random_pairs:M', 16, randomPairs(16, 15, 7), T, all16, 'M paires tirées au hasard.', []],
+ ['residual:M', 16, residual, T, all16, 'Les M paires les plus corrélées au résidu linéaire.', ['sprinter']],
+ ['pca:m', 16, block([0, 1, 2, 3, 4]), P, all16, 'Les m premières composantes principales, fin de phrase.', boccato],
+ ['pca_frames:m', 16, block([0, 1, 2, 3, 4]), P, all16, 'Les m premières composantes principales, toutes les trames.', boccato],
+ ['scores', 5, full(5, 1), B, all16, 'Toutes les paires des sorties du readout linéaire : 5 sorties ici, 29 en réalité (435 produits).', [], 9, 5]];
+const others = [
+ ['squares', 16, diag(all16), T, all16, 'Tous les carrés.', ['jaeger', 'pathak18']],
+ ['half_squares', 16, diag([1, 3, 5, 7, 9, 11, 13, 15]), T, [0, 2, 4, 6, 8, 10, 12, 14], 'Un neurone sur deux remplacé par son carré.', ['pathak17']],
+ ['neighbors_t2', 16, list(t2.map(j => (j - 2) + ',' + (j - 1))), T, all16.filter(j => !t2.includes(j)), 'Un sur deux remplacé par le produit des deux voisins précédents.', ['chatto']],
+ ['neighbors_t3', 16, list(t3.map(j => (j - 1) + ',' + (j + 1))), T, all16.filter(j => !t3.includes(j)), 'Un sur deux remplacé par le produit des voisins de chaque côté.', ['chatto']],
+ ['ofr:M', 16, ofr, T, all16, 'M paires choisies une à une, la plus foncée en premier.', ['chen89', 'lupascu']],
+ ['leverage:M', 16, lev, T, all16, 'M paires tirées selon leur score de levier (teinte pâle).', ['alaoui', 'woodruff']],
+ ['maclaurin:M', 30, list(all16.slice(0, 15).map(a => a + ',' + (15 + a))), P, all16, 'M produits de deux projections aléatoires, parmi 2M projections.', ['kar']],
+ ['nystrom:M', 16, full(16, 0.3), P, all16, 'Chaque caractéristique mélange tous les produits.', ['nystrom']],
+ ['r2sp:M', 16, new Map(), P, all16, 'Aucun produit : M unités tanh aléatoires.', ['butcher']]];
+function draw(id, panels) { document.getElementById(id).innerHTML = panels.map(([name, n, keep, color, kept, text, ref, cell, outputs, circles, more]) => {
+  const c = cell || 144 / n, top = outputs ? 30 : 16; let cells = '';
+  for (let j = 0; j < 16; j++) cells += `<rect x="${j * 9 + 0.5}" y="0.5" width="8" height="8" rx="1" fill="${kept.includes(j) ? G : 'var(--bg-neutral)'}"/>`;
+  for (let j = 0; j < (outputs || 0); j++) cells += `<circle cx="${j * 9 + 4.5}" cy="18.5" r="4" fill="${circles || BD}"/>`;
+  for (let i = 0; i < n; i++) for (let j = i; j < n; j++) { const v = keep.get(i + ',' + j);
+    cells += `<rect x="${(j * c + 0.5).toFixed(2)}" y="${(top + i * c + 0.5).toFixed(2)}" width="${(c - 1).toFixed(2)}" height="${(c - 1).toFixed(2)}" rx="1" fill="${v ? color : 'var(--bg-neutral)'}"${v && v < 1 ? ` fill-opacity="${v.toFixed(2)}"` : ''}/>`; }
+  return `<div class="pn"><h3${ref.length || more ? ' class="pub"' : ''}>${name}${badge(PANEL_FORM[name] || 'P', true)}</h3><svg viewBox="0 0 144 ${Math.max(160, top + n * c)}" role="img" aria-label="${text.replace(/<[^>]+>/g, '')}">${cells}</svg><p>${text}</p>${ref.length ? `<p class="rf">${A(...ref)}</p>` : ''}${more || ''}</div>`; }).join(''); }
+draw('g0', refs); draw('g1', ours); draw('g2', others);
+const used = {}; [...refs, ...ours, ...others].forEach(p => p[6].forEach(id => (used[PUBS[id][5] || id] ||= new Set()).add(p[0])));
+const cells = (yes, unknown) => CR.map(([c]) => yes.includes(c) ? '<td class="y">●</td>' : unknown.includes(c) ? '<td class="q">?</td>' : '<td class="n">·</td>').join('');
+const row = id => { const [, , yes, unknown, read] = PUBS[id], twins = Object.keys(PUBS).filter(k => PUBS[k][5] === id);
+  return `<tr><td>${[id, ...twins].map(link).join(', ')}</td><td class="sel">${[...(used[id] || [])].join(', ')}</td>${cells(yes, unknown)}<td class="sc">${score(id)}/6</td><td>${badge(FORM[id] || 'P')}</td><td class="rd">${read}</td></tr>`; };
+const ids = Object.keys(PUBS).filter(id => !PUBS[id][5]), by = (a, b) => score(b) - score(a);
+const group = (title, list) => `<tr class="grp"><td colspan="11">${title}</td></tr>` + list.sort(by).map(row).join('');
+document.getElementById('tb').innerHTML = '<tr><th>Publication</th><th style="text-align:left">Sélection illustrée</th>' + CR.map(([c, d]) => `<th title="${d}">${c}</th>`).join('') + '<th>Score</th><th>Forme</th><th>Lecture</th></tr>'
+  + `<tr class="us"><td>Notre étude</td><td class="sel">nlms:pca:m, eh_np_local:random_pairs:M…</td>${cells('R2XPDL', '')}<td class="sc">6/6</td><td>${badge('P')}</td><td class="rd"></td></tr>`
+  + group('Readouts de réservoirs récurrents', ids.filter(id => PUBS[id][2].includes('R'))) + group('Hors réservoir : statistique, noyaux, autres réseaux', ids.filter(id => !PUBS[id][2].includes('R')));
+// from the cells of the panels (an input of the readout) to the matrices of the two forms, with the sizes of the
+// panels: 16 neurons, 6 training examples; from step 3 on, a cell is a square of side c
+(() => {
+  const n = 16, examples = 6, c = 3, products = n * (n + 1) / 2, D = n + products, width = c * D;
+  const label = (x, y, s, bold) => `<text x="${x}" y="${y}" font-size="12" font-weight="${bold ? 500 : 400}" fill="var(--text-${bold ? 'primary' : 'secondary'})">${s}</text>`;
+  const grid = (x, y, w, h, pattern = 'cells') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${pattern})"/>`;
+  // (a matrix whose columns are the D inputs: the neurons in gray, the products in green)
+  const columns = (y, h, pattern) => `<rect x="0" y="${y}" width="${c * n}" height="${h}" fill="${G}"/><rect x="${c * n}" y="${y}" width="${c * products}" height="${h}" fill="${T}"/>` + grid(0, y, width, h, pattern);
+  let s = `<defs><pattern id="cells" width="${c}" height="${c}" patternUnits="userSpaceOnUse"><path d="M${c} 0V${c}H0" fill="none" stroke="var(--bg)" stroke-width="0.6"/></pattern><pattern id="bars" width="${c}" height="${c}" patternUnits="userSpaceOnUse"><path d="M${c} 0V${c}" fill="none" stroke="var(--bg)" stroke-width="0.6"/></pattern></defs>`;
+  s += label(0, 12, '1. Les entrées du readout pour un état, comme dans les panneaux', true);
+  for (let j = 0; j < n; j++) s += `<rect x="${9 * j + 0.5}" y="20.5" width="8" height="8" rx="1" fill="${G}"/>`;
+  for (let i = 0; i < n; i++) for (let j = i; j < n; j++) s += `<rect x="${9 * j + 0.5}" y="${36.5 + 9 * i}" width="8" height="8" rx="1" fill="${T}"/>`;
+  s += label(170, 29, `${n} neurones (gris) : 507 en réalité`) + label(170, 60, `${products} produits (vert) : 128 778 en réalité`) + label(170, 78, `${D} entrées en tout : 129 285 en réalité`);
+  s += label(0, 204, `2. Les mêmes ${D} entrées mises en ligne : une ligne de Φ (agrandie en hauteur)`, true) + columns(212, 9, 'bars');
+  s += label(0, 240, `3. Φ : une ligne par exemple d'entraînement (${examples} ici, 6 700 en réalité)`, true) + columns(248, c * examples);
+  s += `<rect x="${width + 6}" y="248" width="${c}" height="${c * examples}" fill="${E}"/>` + grid(width + 6, 248, c, c * examples) + label(width + 16, 261, `${examples} exemples (rose)`);
+  // (the real length of a row, under it: a dimension line for the neurons, one for the products)
+  const span = (x1, x2, text) => `<path d="M${x1 + 0.5} 270V276M${x1 + 0.5} 273H${x2 - 0.5}M${x2 - 0.5} 270V276" fill="none" stroke="var(--text-muted)" stroke-width="1"/>` + label(x1, 289, text);
+  s += span(0, c * n, '') + span(c * n + 2, width, '') + label(0, 289, `${n} neurones ici, 507 en réalité`) + label(c * n + 160, 289, `${products} produits ici, 128 778 en réalité`)
+    + label(0, 306, `Longueur d'une ligne : ${D} colonnes ici, 129 285 en réalité.`);
+  const top = 338, side = c * n;
+  s += label(0, top - 8, '4. La matrice à décomposer dans chaque forme', true);
+  s += `<rect x="0" y="${top}" width="${side}" height="${side}" fill="${G}"/><rect x="${side}" y="${top}" width="${width - side}" height="${side}" fill="${T}" fill-opacity="0.5"/><rect x="0" y="${top + side}" width="${side}" height="${width - side}" fill="${T}" fill-opacity="0.5"/><rect x="${side}" y="${top + side}" width="${width - side}" height="${width - side}" fill="${T}"/>` + grid(0, top, width, width);
+  const x = width + 20;
+  s += label(x, top + 12, 'Forme primale : ΦᵀΦ', true) + label(x, top + 30, `${D} × ${D} : une ligne et une`) + label(x, top + 46, 'colonne par entrée') + label(x, top + 64, 'en réalité 129 285 × 129 285');
+  s += `<rect x="${x}" y="${top + 110}" width="${c * examples}" height="${c * examples}" fill="${E}"/>` + grid(x, top + 110, c * examples, c * examples);
+  s += label(x, top + 148, 'Forme duale : ΦΦᵀ', true) + label(x, top + 166, `${examples} × ${examples} : une ligne et une`) + label(x, top + 182, 'colonne par exemple') + label(x, top + 200, 'en réalité 6 700 × 6 700');
+  document.getElementById('bridge').innerHTML = `<svg viewBox="0 0 680 ${top + width + 6}" role="img" aria-label="Des cases des panneaux aux matrices des deux formes : les ${D} entrées d'un état forment une ligne de Φ, les ${examples} exemples ses lignes, et les matrices à décomposer ont ${D} et ${examples} de côté" style="width:100%;height:auto;display:block">${s}</svg>`;
+})();
+// what each cited paper does: [name, what was read, then four cells [status, text, small text]] (status: y yes,
+// n no, h partly, q not verified, '' none), or [title of a group]
+const PAPERS = [
+ ['Notre étude', 'bachue', ['y'], ['h', 'duale pour l\'ordre 2 complet, primale pour les sélections'], ['', '2', 'ordre 3 possible, non lancé'], ['', '507 et 1 001']],
+ ['Readouts polynomiaux des états d\'un réservoir'],
+ ['Ohkubo & Inubushi 2024', 'relu le 20 novembre 2026', ['y'], ['n', 'ridge sur les termes explicites'], ['', '3'], ['', '10', 'balayage de 5 à 40']],
+ ['Lupascu & Coca 2026', 'lu', ['y'], ['n', 'régression orthogonale'], ['', '3', '1 à 2 % des monômes gardés'], ['', '6 à 80']],
+ ['Chen & Nurdin 2021', 'thèse lue, article en résumé', ['y'], ['n', 'LMS et RLS en ligne'], ['', '1 à 3'], ['', '2 à 50']],
+ ['Boccato et al. 2011 à 2013', 'thèse lue', ['y'], ['n'], ['', '3, sans l\'ordre 2', 'sur 2 à 10 composantes principales'], ['', '10 à 100']],
+ ['Gonon & Ortega 2018', 'prépublication arXiv lue en entier', ['y', 'réservoir linéaire fini'], ['n', 'théorème d\'existence, sans algorithme d\'apprentissage'], ['', 'degré quelconque', 'polynôme des états, non borné'], ['', 'non bornée', 'aucune expérience numérique']],
+ ['Chen et al. 2017', 'lu', ['n', 'réseau sans récurrence'], ['n'], ['', '3', 'sur 3 à 30 composantes'], ['', 'pas de réservoir']],
+ ['Formes duales autour d\'un réservoir'],
+ ['Shi & Han 2007', 'manuscrit des auteurs lu en entier (version soumise, pas la mise en page de la revue)', ['y', 'états seuls, plus un biais'], ['y', 'régression à vecteurs de support et ridge', 'un multiplicateur par exemple, matrice des produits scalaires des états ; coût O(M³) donné, sans comparaison à la forme primale'], ['', '1', 'noyau linéaire seul sur les états ; noyaux polynomial et gaussien seulement pour les machines de comparaison, sur les entrées retardées'], ['', '200 à 1 200', '400 à 2 000 exemples d\'entraînement']],
+ ['Zhou et al. 2018', 'manuscrit accepté lu en entier', ['y', 'état concaténé à l\'entrée'], ['y', 'en ligne, avec dictionnaire'], ['', 'noyau gaussien', 'pas de noyau polynomial'], ['', '300 et 600', 'Mackey-Glass et laser ; non donnée pour les moteurs']],
+ ['Soh & Demiris 2015', 'préprint accepté lu en entier', ['y', 'état concaténé à l\'entrée', 'une variante remplace le réservoir par un noyau récursif'], ['y', 'processus gaussien en ligne', 'un coefficient par vecteur de base gardé (100 au plus)'], ['', 'noyau gaussien', 'pas de noyau polynomial'], ['', '50', 'sur les tâches de robot ; non donnée pour les tâches de référence']],
+ ['Dong et al. 2020', 'texte intégral lu', ['h', 'le réservoir est remplacé par son noyau limite'], ['y', 'matrice n × n', 'n = 7 000 exemples au plus, par manque de mémoire'], ['', '1', 'readout linéaire'], ['', 'infinie', 'comparée à 1 948 à 32 668 neurones']],
+ ['Tiňo 2020', 'lu en entier', ['y', 'réservoir linéaire'], ['h', 'outil d\'analyse', 'aucun readout n\'est entraîné'], ['', '1', 'noyau polynomial de degré d discuté, sans expérience'], ['', '100']],
+ ['Gross & Rieser 2026', 'lu en entier', ['h', 'réservoirs quantiques'], ['y', 'primale et duale comparées', 'coûts O(m³) et O(P³)'], ['', '1', 'monômes des mesures jusqu\'à l\'ordre 4, en option'], ['', '3 à 5 qubits', 'espace de dimension 2^N']],
+ ['Noyaux sans réservoir fini'],
+ ['Hermans & Schrauwen 2012', 'manuscrit des auteurs lu en entier', ['h', 'réservoir infini, remplacé par un noyau récursif sur les séquences d\'entrée'], ['y', 'ridge en variables duales (LS-SVM)', 'montre que la forme duale d\'un ESN fini redonne son readout ridge (section 6.2)'], ['', '1', 'readout linéaire sur le réservoir infini ; un noyau polynomial récursif est défini, non testé'], ['', 'infinie', 'comparée à des ESN de 16 à 2 000 neurones']],
+ ['Gonon, Grigoryeva & Ortega 2022', 'lu en entier', ['h', 'réservoir de dimension infinie, jamais calculé'], ['y', 'aucun réservoir fini comparé'], ['', 'tous les ordres', 'monômes des entrées à tous les retards'], ['', 'infinie']],
+ ['Grigoryeva, Lim & Ortega 2024', 'lu en entier', ['n', 'entrées retardées de NG-RC'], ['y', 'coûts des deux formes comparés (tableau I)'], ['', 'p quelconque', 'p = 2 à 5 dans les expériences'], ['', 'pas de réservoir']],
+ ['Saunders, Gammerman & Vovk 1998', 'PDF des auteurs lu en entier', ['n', 'régression sur des entrées statiques'], ['y', 'matrice T × T des produits scalaires', 'par les multiplicateurs de Lagrange ; formule dite déjà connue en statistique et en krigeage ; aucun coût chiffré'], ['', 'noyau polynomial de degré d', 'et noyaux de splines et ANOVA'], ['', 'pas de réservoir', 'Boston Housing : 401 exemples, 13 variables']],
+ ['Engel, Mannor & Meir 2004', 'rapport technique lu en entier, pas la version de la revue', ['n', 'entrées statiques ou fenêtres retardées'], ['y', 'en ligne, avec dictionnaire', 'pseudo-inverse du noyau, sans terme ridge'], ['', 'noyau gaussien'], ['', 'pas de réservoir']],
+ ['Cité, mais non lu'],
+ ['Chatzis & Demiris 2011', 'non lu : article fermé, copies ouvertes retirées ; décrit par Soh & Demiris 2012 et 2015 et par la thèse de Soh, lus', ['q', 'oui d\'après Soh & Demiris', 'état concaténé à l\'entrée'], ['q', 'oui d\'après Soh & Demiris', 'processus gaussien, matrice n × n ; avec un noyau linéaire, même prédiction que le readout ridge'], ['q', 'noyau gaussien cité', 'aucun noyau polynomial mentionné par ces sources'], ['q', 'non trouvée']]];
+(() => {
+  const WORDS = {y: 'oui', n: 'non', h: 'en partie', q: '?'};
+  const cell = ([status, text, small]) => `<td>${status ? `<span class="k ${status}">${WORDS[status]}</span>` : ''}${status && text ? '<br>' : ''}${text || ''}${small ? `<small>${small}</small>` : ''}</td>`;
+  document.getElementById('papers').innerHTML = '<tr><th>Papier</th><th>0. Readout d\'un réservoir ?</th><th>1. Forme duale ?</th><th>2. Ordre</th><th>3. Taille du réservoir</th></tr>'
+    + PAPERS.map((paper, i) => paper.length === 1 ? `<tr class="grp"><td colspan="5">${paper[0]}</td></tr>`
+      : `<tr${i === 0 ? ' class="us"' : ''}><td>${paper[0]}<small>${paper[1]}</small></td>${paper.slice(2).map(cell).join('')}</tr>`).join('');
+})();
+</script>
+</body>
+</html>

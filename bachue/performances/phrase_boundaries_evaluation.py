@@ -29,8 +29,8 @@ from bachue.models.reservoirs import build, normal_equations, readout_outputs, r
 from bachue.performances.readout_window_evaluation import REFERENCE, conditions
 from bachue.tasks.boundaries import cross_validate, load_dataset, scores
 
-OUTPUTS = OUTPUTS_DIR / "phrase_boundaries" / "performances"
-ANALYSIS = OUTPUTS_DIR / "phrase_boundaries" / "analysis"
+OUTPUTS = OUTPUTS_DIR / "phrase_boundaries" / "performances" / "marron1"  # (one folder per dataset: the songs only)
+ANALYSIS = OUTPUTS_DIR / "phrase_boundaries" / "analysis" / "marron1"
 
 SIZES = [250, 500, 1000]
 

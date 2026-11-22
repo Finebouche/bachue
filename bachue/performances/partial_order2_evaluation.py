@@ -3,19 +3,19 @@ Final evaluations of the readouts on selected products of degree 2 (bachue.model
 a few hundred or thousand products, chosen before the regression, replace all those of the generalized readout?
 
 The studies of bachue.hpo.partial_order2_study (the command "studies"): for each condition (the reservoirs of the
-studies of HAG_CANARY_HPO_RULE=<rule>:<selection>, optimized for it), its rate, noise and alpha of the study, its number
+studies of BACHUE_STUDY_RULE=<rule>:<selection>, optimized for it), its rate, noise and alpha of the study, its number
 of epochs (and ridge coefficient) chosen again by the 3-fold cross-validation on the train songs, then the rule
 trained on all the train songs and scored on the test songs for each seed (reservoirs drawn with the seed). Results:
-outputs/partial_order2/performances/<prefix>readout_rules.csv (one row per condition, size and seed) and _cv.csv,
-the paired comparisons with the other conditions in outputs/partial_order2/analysis (bachue.analysis.comparisons).
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_HPO_RULE=<rule>:<selection>
-[HAG_CANARY_LEAK=1]):
+outputs/expansions/performances/<prefix>readout_rules.csv (one row per condition, size and seed) and _cv.csv,
+the paired comparisons with the other conditions in outputs/expansions/analysis (bachue.analysis.comparisons).
+Usage (BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0 BACHUE_STUDY_RULE=<rule>:<selection>
+[BACHUE_LEAKY_RESERVOIRS=1]):
   python -m bachue.performances.partial_order2_evaluation studies run <condition> <size> [nb_seeds]   (results in _parts)
   python -m bachue.performances.partial_order2_evaluation studies merge
 
 The exploratory comparisons of the selections (the commands "run", "merge", "list" and "rules"). Exploratory: all the readouts read the same reservoirs, those of the studies of the variables of the environment
-(HAG_CANARY_HPO_RULE=ridge:2: the reservoirs optimized for the full readout of order 2, which they approximate), not
-reservoirs optimized for each (for that: HAG_CANARY_HPO_RULE=<rule>:<selection>, bachue.hpo.partial_order2_study).
+(BACHUE_STUDY_RULE=ridge:2: the reservoirs optimized for the full readout of order 2, which they approximate), not
+reservoirs optimized for each (for that: BACHUE_STUDY_RULE=<rule>:<selection>, bachue.hpo.partial_order2_study).
 
 Protocol: the ridge coefficient of each method chosen by the 3-fold cross-validation by song on the train songs
 (choose), then each method trained on all the train songs and scored on the test songs for each
@@ -24,7 +24,7 @@ seed (reservoirs drawn with the seed). Diagnostics of seed 0: bachue.analysis.se
 Results: outputs/<study>/performances/<prefix>monomial_selection.csv (one row per condition, size, seed and method),
 <prefix>monomial_selection_cv.csv (out-of-fold accuracy of each method and coefficient) and
 <prefix>monomial_selection_diagnostics.csv.
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_HPO_RULE=ridge:2, with the variables of the studies):
+Usage (BACHUE_TASK=next_phrase BACHUE_STUDY_RULE=ridge:2, with the variables of the studies):
   python -m bachue.performances.partial_order2_evaluation run <condition> <size> [nb_seeds]   (results in _parts)
   python -m bachue.performances.partial_order2_evaluation merge
   python -m bachue.performances.partial_order2_evaluation list <sizes>      "<condition> <size>" of the pure models
@@ -33,12 +33,12 @@ The online rules on the same selected products (the command "rules"): the rules 
 bachue.performances.learning_rules_evaluation instead of the ridge regression, on the same inputs. With few products,
 the rules learn their weights themselves (primal form), without the kernel of the training rows of "nlms:2" and
 "neh:2", and RLS, whose matrix has the size of the inputs, becomes possible. Exploratory as well: the same reservoirs.
-  - rules: HAG_CANARY_SELECTION_RULES (default nlms, eh_np_local, rls);
-  - inputs (HAG_CANARY_SELECTION_METHODS): "linear" (z alone), "full_std" (all the products of z, in dual form: only
+  - rules: BACHUE_SELECTION_RULES (default nlms, eh_np_local, rls);
+  - inputs (BACHUE_SELECTION_METHODS): "linear" (z alone), "full_std" (all the products of z, in dual form: only
     nlms and neh), or a selection ("weights_high:m", "residual:M", "pca:m", "random_pairs:M", "scores", ...): z and the
     selected products, in primal form;
   - protocol: the hyperparameters of each rule and method (the grids of bachue.hpo.learning_rules_study; noise of the
-    versions of EH: NEH_NOISES; alpha of RLS: RLS_ALPHAS; number of epochs, at most HAG_CANARY_RULES_MAX_EPOCHS, default
+    versions of EH: NEH_NOISES; alpha of RLS: RLS_ALPHAS; number of epochs, at most BACHUE_ONLINE_MAX_EPOCHS, default
     1000) chosen by the 3-fold cross-validation by song on the train songs, then each rule and method trained on all
     the train songs and scored on the test songs for each seed.
 Results: outputs/<study>/performances/<prefix>monomial_selection_rules.csv (one row per condition, size, seed, rule and method, with
@@ -49,9 +49,8 @@ Usage (the same variables):
   python -m bachue.performances.partial_order2_evaluation rules merge
 
 The final evaluation of the studies of bachue.hpo.partial_order2_study (a rule and a selection, reservoirs optimized
-for them): bachue.performances.learning_rules_evaluation with HAG_CANARY_HPO_RULE=<rule>:<selection>.
+for them): bachue.performances.learning_rules_evaluation with BACHUE_STUDY_RULE=<rule>:<selection>.
 """
-import os
 import sys
 import time
 
@@ -69,17 +68,18 @@ from bachue.models.product_selection import COMPONENT_KINDS, RIDGES_STD, SIZES, 
 from bachue.models.readout_rules.training import rule_inputs as label_inputs, selected_rows, trained
 from bachue.models.reservoirs import build
 from bachue.performances.readout_window_evaluation import all_conditions
-from bachue.settings import DATASET, HPO_RULE, N_FOLDS, SELECTION, SONGS, STUDY_PREFIX
+from bachue.settings import DATASET, DATASET_NAME, HPO_RULE, N_FOLDS, SELECTION, SONGS, STUDY_PREFIX, env
 from bachue.tasks.next_phrase import BASE_READOUT, metrics, prepare, reservoir_data, song_data, stacked
 
 
-OUTPUTS = OUTPUTS_DIR / "partial_order2" / "performances"
-ANALYSIS = OUTPUTS_DIR / "partial_order2" / "analysis"  # (the diagnostics of the selections)
+# (one folder per dataset, e.g. outputs/expansions/performances/japanese_vowels/)
+OUTPUTS = OUTPUTS_DIR / "expansions" / "performances" / DATASET_NAME
+ANALYSIS = OUTPUTS_DIR / "expansions" / "analysis" / DATASET_NAME  # (the diagnostics of the selections)
 
 # ---- Ridge coefficient of the readouts on selected products (bachue.models.product_selection), chosen by the 3-fold
 # cross-validation by song on the train songs, all the methods on the same reservoirs: the first step of
 # bachue.performances.partial_order2_evaluation (which describes the protocol).
-JOBS = int(os.environ.get("HAG_CANARY_RULES_JOBS", "1"))  # processes (folds, then seeds)
+JOBS = int(env("BACHUE_RULE_PROCESSES", "1"))  # processes (folds, then seeds)
 
 
 def ridges_of(method):
@@ -131,8 +131,8 @@ def choose(model, params, size, songs, train_songs, frame, classes, methods):
 DEFAULT_METHODS = (["linear", "full", "full_std", "scores"]
                    + [f"{kind}:{m}" for kind in UNIT_KINDS + COMPONENT_KINDS for m in SIZES]
                    + [f"{kind}:{m * (m + 1) // 2}" for kind in ("residual", "random_pairs") for m in SIZES])
-METHODS = os.environ.get("HAG_CANARY_SELECTION_METHODS", ",".join(DEFAULT_METHODS)).split(",")
-RESULTS = f"{STUDY_PREFIX}monomial_selection{os.environ.get('HAG_CANARY_SELECTION_SUFFIX', '')}"
+METHODS = env("BACHUE_SELECTION_METHODS", ",".join(DEFAULT_METHODS)).split(",")
+RESULTS = f"{STUDY_PREFIX}monomial_selection{env("BACHUE_SELECTION_SUFFIX", '')}"
 PARTS = OUTPUTS / f"{RESULTS}_parts"
 
 
@@ -186,11 +186,11 @@ def run(todo, nb_seeds, methods=METHODS):
 # ---- Hyperparameters of the online rules on the inputs of the selections of products, chosen by the 3-fold
 # cross-validation by song on the train songs: the first step of bachue.performances.partial_order2_evaluation (which
 # describes the rules, the methods and the protocol).
-RULES = os.environ.get("HAG_CANARY_SELECTION_RULES", "nlms,eh_np_local,rls").split(",")
-RULES_METHODS = os.environ.get("HAG_CANARY_SELECTION_METHODS", "linear,full_std,scores,weights_high:64,residual:2080,pca:64,"
+RULES = env("BACHUE_SELECTION_RULES", "nlms,eh_np_local,rls").split(",")
+RULES_METHODS = env("BACHUE_SELECTION_METHODS", "linear,full_std,scores,weights_high:64,residual:2080,pca:64,"
                          "pca_frames:64,random_pairs:2080").split(",")
 RLS_ALPHAS = [1e-8, 1e-6, 1e-4, 1e-2, 1.0]  # (initial P = I / alpha, on the standardized inputs)
-RULES_MAX_EPOCHS = int(os.environ.get("HAG_CANARY_RULES_MAX_EPOCHS", "1000"))
+RULES_MAX_EPOCHS = int(env("BACHUE_ONLINE_MAX_EPOCHS", "1000"))
 
 
 def rule_configurations(rule):
@@ -286,7 +286,7 @@ def choose_rules(model, params, size, songs, train_songs, frame, classes, method
 
 
 # ---- monomial selection rules
-RULES_RESULTS = f"{STUDY_PREFIX}monomial_selection_rules{os.environ.get('HAG_CANARY_SELECTION_SUFFIX', '')}"
+RULES_RESULTS = f"{STUDY_PREFIX}monomial_selection_rules{env("BACHUE_SELECTION_SUFFIX", '')}"
 RULES_PARTS = OUTPUTS / f"{RULES_RESULTS}_parts"
 
 
@@ -339,7 +339,7 @@ def run_rules(todo, nb_seeds, methods=RULES_METHODS, rules=RULES):
 
 
 # ---- The final evaluation of the studies of bachue.hpo.partial_order2_study (the command "studies")
-STUDIES_RESULTS = f"{STUDY_PREFIX}readout_rules{os.environ.get('HAG_CANARY_RULES_SUFFIX', '')}"
+STUDIES_RESULTS = f"{STUDY_PREFIX}readout_rules{env("BACHUE_EVAL_RULES_SUFFIX", '')}"
 STUDIES_PARTS = OUTPUTS / f"{STUDIES_RESULTS}_parts"
 
 
@@ -389,7 +389,7 @@ def run_studies(todo, nb_seeds):
 
 
 def run_studies_on_instances(todo, nb_seeds):
-    """run_studies on a classification dataset of hag (HAG_CANARY_DATASET): the last state of each instance, the
+    """run_studies on a classification dataset of hag (BACHUE_DATASET): the last state of each instance, the
     hyperparameters of the rule chosen by bachue.hpo.learning_rules_study.choose_on_instances on the train instances
     (with the rate, noise and alpha of the study), then the rule trained on all the train instances and scored on the
     test instances for each seed (the protocol of bachue.performances.hag_benchmarks_evaluation)."""
@@ -425,7 +425,7 @@ def run_studies_on_instances(todo, nb_seeds):
 def studies_command(arguments):
     """The command "studies": run <condition> <size> [nb_seeds], merge."""
     if not SELECTION:
-        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection>")
+        raise ValueError(f"BACHUE_STUDY_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection>")
     command = arguments[0] if arguments else ""
     if command == "run":
         condition, size = arguments[1], int(arguments[2])

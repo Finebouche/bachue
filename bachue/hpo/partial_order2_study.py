@@ -6,7 +6,7 @@ for each of them (results: bachue.performances.partial_order2_evaluation studies
 comparisons of the selections on the reservoirs of "ridge:2": the other commands of
 bachue.performances.partial_order2_evaluation.)
 
-Rule and selection of the study: HAG_CANARY_HPO_RULE=<rule>:<selection> (studies
+Rule and selection of the study: BACHUE_STUDY_RULE=<rule>:<selection> (studies
 "next_phrase_calls_[leak_]<rule>-<selection>_<model>_<size>", the ":" of the selection replaced by "-"):
   - rule: "ridge", "rls", "lms", "nlms", or a version of EH ("eh_np_local", "neh", ...), on the standardized state
     and products, in primal form;
@@ -22,7 +22,7 @@ fold), the amplitude of the exploration noise of EH ("readout:noise", log-unifor
 alpha of RLS (initial P = I / alpha, "readout:alpha", log-uniform in RULE_ALPHAS, one epoch); the same ranges as the
 rules on the states (bachue.hpo.learning_rules_study), so that the two studies are comparable. Objective: the
 out-of-fold accuracy in the 3-fold cross-validation on the train set (the next phrase of the songs, readout
-"last" -> "last"; or the class of the instances of a classification dataset of hag, HAG_CANARY_DATASET, the last state
+"last" -> "last"; or the class of the instances of a classification dataset of hag, BACHUE_DATASET, the last state
 of each instance); the selection of products is chosen on the training rows of each fold, and the other
 hyperparameters of the rule (number of epochs, up to MAX_EPOCHS; the ridge coefficient of "ridge:<selection>") in
 this cross-validation (the cross-validation of the rules, bachue.hpo.learning_rules_study.choose and
@@ -31,17 +31,16 @@ models, with and without leak, on marron1 and JapaneseVowels.
 
 Results: bachue.performances.partial_order2_evaluation studies (the final evaluation of these studies).
 
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_CALLS=1 HAG_CANARY_TAIL_HPO=0 HAG_CANARY_HPO_RULE=<rule>:<selection>
-[HAG_CANARY_LEAK=1]):
+Usage (BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0 BACHUE_STUDY_RULE=<rule>:<selection>
+[BACHUE_LEAKY_RESERVOIRS=1]):
   python -m bachue.hpo.partial_order2_study <model> 500     (slurm/submit_hpo_rules.sh with RULES="<rule>:<selection> ...")
 """
-import os
 import sys
 
 from bachue.hpo.learning_rules_study import choose, choose_on_instances
 from bachue.hpo.studies import reservoir_parameters, run_study
 from bachue.models.readout_rules.training import rule_inputs
-from bachue.settings import HPO_RULE
+from bachue.settings import HPO_RULE, env
 from bachue.tasks.next_phrase import BASE_READOUT
 
 # range of the normalized learning rate of the online rules (c / mean ||x||^2 for LMS and EH, stable below 2;
@@ -53,8 +52,8 @@ RULE_RATES = {"lms": (1e-3, 0.3), "eh": (1e-2, 1.0), "eh_np": (1e-2, 1.0), "eh_n
 RULE_NOISES = {"eh": (0.05, 4.0), "eh_np": (0.05, 4.0), "eh_np_local": (0.05, 4.0), "neh": (0.05, 4.0)}
 # range of the coefficient alpha of RLS (initial P = I / alpha; below 1e-8 the recursion loses its precision)
 RULE_ALPHAS = {"rls": (1e-8, 1.0)}
-# number of epochs of the online rules chosen up to this one (HAG_CANARY_HPO_RULE_MAX_EPOCHS)
-MAX_EPOCHS = int(os.environ.get("HAG_CANARY_HPO_RULE_MAX_EPOCHS", 3000))
+# number of epochs of the online rules chosen up to this one (BACHUE_STUDY_MAX_EPOCHS)
+MAX_EPOCHS = int(env("BACHUE_STUDY_MAX_EPOCHS", 3000))
 
 
 def objective_of_selection(label):
@@ -83,7 +82,7 @@ def objective_of_selection(label):
 
 if __name__ == "__main__":
     if not HPO_RULE or rule_inputs(HPO_RULE)[2] is None:
-        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection> (all the "
+        raise ValueError(f"BACHUE_STUDY_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection> (all the "
                          "monomials, <rule>:2, and the rules on the states: bachue.hpo.learning_rules_study)")
     run_study(sys.argv[1], int(sys.argv[2]), objective_of_selection(HPO_RULE),
               lambda trial: f"readout {trial.user_attrs['readout_rule']}", tasks=("next_phrase", "classification"))

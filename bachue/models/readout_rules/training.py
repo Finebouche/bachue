@@ -33,7 +33,7 @@ def normalized(hyper, rows, states, fit):
 
 
 def rule_inputs(label):
-    """(rule, order, selection) of a rule of HAG_CANARY_READOUT_RULES: "<rule>" (order 1, the states), "<rule>:<order>"
+    """(rule, order, selection) of a rule of BACHUE_EVAL_RULES: "<rule>" (order 1, the states), "<rule>:<order>"
     (the monomials of the states up to degree order: ridge and NORMALIZED_RULES) or "<rule>:<selection>" (order 1, the
     states and the products of a selection of monomial_selection, e.g. "nlms:pca:64"; selection None otherwise)."""
     rule, _, inputs = label.partition(":")

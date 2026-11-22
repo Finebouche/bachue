@@ -9,20 +9,19 @@ readout of HAG's evaluations, the "last" -> "last" of the canary songs), and out
 
 Reservoirs: those of HAG's studies of the dataset (hag.hpo.utility.retrieve_best_model: 400 trials, optimized for
 HAG's own ridge readout on the last states), built by bachue.models.reservoirs.build. Exploratory, as
-bachue.performances.learning_rules_evaluation without HAG_CANARY_HPO_RULE: all the rules read the same reservoirs,
+bachue.performances.learning_rules_evaluation without BACHUE_STUDY_RULE: all the rules read the same reservoirs,
 optimized for the ridge readout and not for each rule: no fair ranking of the rules.
 
 Protocol of readout_rules: the hyperparameters of each rule (its grid: readout_rules.configurations; number of epochs
-at most HAG_CANARY_RULES_MAX_EPOCHS) chosen by a 3-fold cross-validation on the train instances (reservoirs of fold k
+at most BACHUE_ONLINE_MAX_EPOCHS) chosen by a 3-fold cross-validation on the train instances (reservoirs of fold k
 drawn with the seed CV_SEED + k, HAG learning on the instances of the fold); then each rule trained on all the train
 instances and scored on the test instances for each seed (reservoirs drawn with the seed).
 
 Results: outputs/benchmarks/<dataset>_<model>_readout_rules.csv (one row per seed and rule) and ..._cv.csv (accuracy
 of each configuration and number of epochs in the cross-validation).
 Usage: python -m bachue.performances.hag_benchmarks_evaluation <dataset> [model] [nb_seeds]     (model: default random_ee; rules:
-  HAG_CANARY_BENCHMARK_RULES, comma-separated)
+  BACHUE_BENCHMARK_RULES, comma-separated)
 """
-import os
 import sys
 
 import numpy as np
@@ -35,13 +34,14 @@ from bachue.datasets.benchmarks import instance_data, load
 from bachue.hpo.learning_rules_study import JOBS, MAX_EPOCHS, choose_on_instances
 from bachue.models.readout_rules.training import normalized, rule_inputs, rule_order, selected_rows, trained
 from bachue.models.reservoirs import build
+from bachue.settings import env
 
 
 # ---- Reservoirs and hyperparameters of the rules on the classification datasets of hag: the parameters of the best
 # trial of HAG's study of a dataset (study_parameters), and the hyperparameters of each rule chosen by a 3-fold
 # cross-validation on the train instances (choose). The first step of bachue.performances.hag_benchmarks_evaluation (which
 # describes the protocol).
-RULES = os.environ.get("HAG_CANARY_BENCHMARK_RULES", "ridge,rls,nlms,eh_np_local,ridge:2,nlms:2,ridge:random_pairs:n,"
+RULES = env("BACHUE_BENCHMARK_RULES", "ridge,rls,nlms,eh_np_local,ridge:2,nlms:2,ridge:random_pairs:n,"
                        "nlms:random_pairs:n,ridge:pca:32,nlms:pca:32").split(",")
 
 

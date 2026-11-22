@@ -8,9 +8,9 @@ from bachue.hpo.studies import completed, copy_into, kind_of, study_names
     ("next_phrase_calls_random_ee_500", "readout_window"),
     ("next_phrase_calls_leak_readout-tail_mean-tail_mean-10_var_hag_1000", "readout_window"),
     ("next_phrase_calls_leak_eh_np_local_random_ei_500", "learning_rules"),
-    ("next_phrase_calls_neh-order2_mean_hag_1000", "learning_rules"),
-    ("next_phrase_calls_nlms-pca-64_random_ee_500", "partial_order2"),
-    ("next_phrase_calls_ridge-random_pairs-2080_var_hag_500", "partial_order2"),
+    ("next_phrase_calls_neh-order2_mean_hag_1000", "expansions"),
+    ("next_phrase_calls_nlms-pca-64_random_ee_500", "expansions"),
+    ("next_phrase_calls_ridge-random_pairs-2080_var_hag_500", "expansions"),
     ("random_ee_500", "phrase_boundaries")])
 def test_kind_of_the_studies_of_canopy(name, kind):
     assert kind_of(name) == (kind, "marron1")

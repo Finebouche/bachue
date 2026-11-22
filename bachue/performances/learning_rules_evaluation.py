@@ -41,20 +41,20 @@ standard deviation 0.01 per unit for random_ee 500), and without this the online
 mean (accuracy at the level of chance). The paper's EH rule needs slowly changing inputs (its filtered baseline
 estimates the noise from the change of the output): on the independent prediction points, it does not learn.
 
-Reservoirs and readout of each condition: those of the studies of the readout (HAG_CANARY_TAIL_HPO=1, with the
-variables of the studies: HAG_CANARY_CALLS, HAG_CANARY_LEAK), with the readout (training rows, decision, tail) of the
+Reservoirs and readout of each condition: those of the studies of the readout (BACHUE_SEARCH_READOUT=1, with the
+variables of the studies: BACHUE_WITH_CALLS, BACHUE_LEAKY_RESERVOIRS), with the readout (training rows, decision, tail) of the
 condition in their evaluation (column hpo of outputs/<study>/performances/<prefix>hpo_readouts.csv, e.g.
-next_phrase_calls_tail_hpo_readouts.csv), or (HAG_CANARY_TAIL_HPO=0) those of the studies of the reservoirs with the
+next_phrase_calls_tail_hpo_readouts.csv), or (BACHUE_SEARCH_READOUT=0) those of the studies of the reservoirs with the
 linear ridge readout, the readout "last" -> "last". The reservoirs are not optimized again for the rules: all the
 rules read the same reservoirs (fold k of the cross-validation: drawn with the seed CV_SEED + k; seed s of the
 evaluation: drawn with the seed s), and only the hyperparameters of each rule (ridge coefficient, alpha, normalized
 learning rate, noise, number of epochs) are chosen, in the 3-fold cross-validation by song of the studies on the train
 songs (out-of-fold accuracy; never on the test songs); then each rule is trained on all the train songs and scored on
-the test songs for each seed (paired comparisons with "ridge"). Rules: HAG_CANARY_READOUT_RULES (comma-separated,
-default all the rules on the states), their configurations trained in HAG_CANARY_RULES_JOBS processes (default 1),
-for at most HAG_CANARY_RULES_MAX_EPOCHS epochs (default the last of EPOCHS).
+the test songs for each seed (paired comparisons with "ridge"). Rules: BACHUE_EVAL_RULES (comma-separated,
+default all the rules on the states), their configurations trained in BACHUE_RULE_PROCESSES processes (default 1),
+for at most BACHUE_ONLINE_MAX_EPOCHS epochs (default the last of EPOCHS).
 These comparisons read reservoirs optimized for the ridge readout: they favor it (CLAUDE.md, fair comparisons). For a
-fair comparison, each rule with its own studies: HAG_CANARY_HPO_RULE=<rule> (bachue.hpo.learning_rules_study;
+fair comparison, each rule with its own studies: BACHUE_STUDY_RULE=<rule> (bachue.hpo.learning_rules_study;
 reservoirs optimized for the rule, slurm/submit_hpo_rules.sh), then its evaluation here with the same variable: the
 reservoirs of its studies, that rule alone, its rate, noise and alpha of the study (the hybrids, without study: those
 of the grid), its number of epochs (and normalization of RLS, coefficient of ridge:<n>) chosen by the cross-validation.
@@ -62,14 +62,13 @@ of the grid), its number of epochs (and normalization of RLS, coefficient of rid
 Results: outputs/<study>/performances/<prefix>readout_rules<suffix>.csv (one row per condition, size, seed and rule),
 <prefix>readout_rules<suffix>_comparisons.csv (each rule - ridge, paired by seed) and <prefix>readout_rules<suffix>_cv.csv
 (out-of-fold accuracy of each configuration and number of epochs: the learning curves), suffix
-HAG_CANARY_RULES_SUFFIX (default none).
-Usage (HAG_CANARY_TASK=next_phrase HAG_CANARY_TAIL_HPO=1, with the variables of the studies):
+BACHUE_EVAL_RULES_SUFFIX (default none).
+Usage (BACHUE_TASK=next_phrase BACHUE_SEARCH_READOUT=1, with the variables of the studies):
   python -m bachue.performances.learning_rules_evaluation run <condition> <size> [nb_seeds]   one condition
                                                        (slurm/submit_readout_rules.sh), results in <name>_parts
   python -m bachue.performances.learning_rules_evaluation merge          results of the parts and the comparisons
   python -m bachue.performances.learning_rules_evaluation list <sizes>   "<condition> <size>" of the conditions (no _proj)
 """
-import os
 import sys
 
 import numpy as np
@@ -82,17 +81,20 @@ from bachue.hpo.learning_rules_study import JOBS, MAX_EPOCHS, choose, frame_song
 from bachue.models.readout_rules.training import normalized, rule_inputs, rule_order, selected_rows, trained
 from bachue.models.reservoirs import build
 from bachue.performances.readout_window_evaluation import NAME, all_conditions
-from bachue.settings import HPO_RULE, SELECTION, STUDY_PREFIX, TAIL_HPO, TAIL_SEPARATE
+from bachue.settings import DATASET_NAME, HPO_RULE, ORDER, SELECTION, STUDY_PREFIX, TAIL_HPO, TAIL_SEPARATE, env
 from bachue.tasks.next_phrase import BASE_READOUT, metrics, prepare, readout_of, song_data
 
-OUTPUTS = OUTPUTS_DIR / "learning_rules" / "performances"
-ANALYSIS = OUTPUTS_DIR / "learning_rules" / "analysis"  # (the paired comparisons)
-READOUT_WINDOW_OUTPUTS = OUTPUTS_DIR / "readout_window" / "performances"  # (the readouts of the studies of HAG_CANARY_TAIL_HPO)
+# (one folder per dataset, e.g. outputs/learning_rules/performances/marron1/; the studies of all the monomials of an
+# order, "<rule>:<n>", in outputs/expansions)
+KIND = "expansions" if ORDER else "learning_rules"
+OUTPUTS = OUTPUTS_DIR / KIND / "performances" / DATASET_NAME
+ANALYSIS = OUTPUTS_DIR / KIND / "analysis" / DATASET_NAME  # (the paired comparisons)
+READOUT_WINDOW_OUTPUTS = OUTPUTS_DIR / "readout_window" / "performances" / DATASET_NAME  # (the readouts of the studies of BACHUE_SEARCH_READOUT)
 
-RULES = os.environ.get("HAG_CANARY_READOUT_RULES", "ridge,rls,lms,eh,eh_np,eh_np_local").split(",")
+RULES = env("BACHUE_EVAL_RULES", "ridge,rls,lms,eh,eh_np,eh_np_local").split(",")
 if HPO_RULE:  # (the studies of the rule, bachue.hpo.learning_rules_study: that rule alone)
     RULES = [HPO_RULE]
-RESULTS = f"{STUDY_PREFIX}readout_rules{os.environ.get('HAG_CANARY_RULES_SUFFIX', '')}"
+RESULTS = f"{STUDY_PREFIX}readout_rules{env("BACHUE_EVAL_RULES_SUFFIX", '')}"
 PARTS = OUTPUTS / f"{RESULTS}_parts"
 
 
@@ -164,10 +166,11 @@ def run(todo, nb_seeds):
 
 if __name__ == "__main__":
     if SELECTION and sys.argv[1:2] != ["list"]:  # (the conditions, listed here for slurm/submit_readout_rules.sh)
-        raise ValueError(f"HAG_CANARY_HPO_RULE={HPO_RULE}: the studies of a selection of products are evaluated by "
+        raise ValueError(f"BACHUE_STUDY_RULE={HPO_RULE}: the studies of a selection of products are evaluated by "
                          "python -m bachue.performances.partial_order2_evaluation studies")
     if TAIL_SEPARATE:
-        raise RuntimeError("HAG_CANARY_TAIL_HPO=0 (studies of the reservoirs) or 1 (studies of the readout) is needed")
+        raise RuntimeError("BACHUE_SEARCH_READOUT=0 (studies of the reservoirs) or 1 (studies of the readout) "
+                           "is needed")
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "list":
         for condition, _, _, _, size in all_conditions([int(s) for s in sys.argv[2].split(",")]):
