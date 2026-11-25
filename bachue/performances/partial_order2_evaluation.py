@@ -9,7 +9,8 @@ trained on all the train songs and scored on the test songs for each seed (reser
 outputs/expansions/performances/<prefix>readout_rules.csv (one row per condition, size and seed) and _cv.csv,
 the paired comparisons with the other conditions in outputs/expansions/analysis (bachue.analysis.comparisons).
 Usage (BACHUE_TASK=next_phrase BACHUE_WITH_CALLS=1 BACHUE_SEARCH_READOUT=0 BACHUE_STUDY_RULE=<rule>:<selection>
-[BACHUE_LEAKY_RESERVOIRS=1]):
+[BACHUE_LEAKY_RESERVOIRS=1]; on a classification dataset, BACHUE_DATASET=<dataset>, also the references
+BACHUE_STUDY_RULE=<rule> and <rule>:<order>, e.g. "nlms" and "ridge:2"):
   python -m bachue.performances.partial_order2_evaluation studies run <condition> <size> [nb_seeds]   (results in _parts)
   python -m bachue.performances.partial_order2_evaluation studies merge
 
@@ -424,7 +425,8 @@ def run_studies_on_instances(todo, nb_seeds):
 
 def studies_command(arguments):
     """The command "studies": run <condition> <size> [nb_seeds], merge."""
-    if not SELECTION:
+    if not SELECTION and SONGS:  # (on a classification dataset: also the references, the rule on the states or on
+        # all the monomials of an order, "nlms", "ridge:2"; on the songs, bachue.performances.learning_rules_evaluation)
         raise ValueError(f"BACHUE_STUDY_RULE={HPO_RULE}: a rule and a selection, <rule>:<selection>")
     command = arguments[0] if arguments else ""
     if command == "run":

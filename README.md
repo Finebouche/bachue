@@ -39,7 +39,7 @@ evaluations and the analyses are separate.
   on the datasets of hag: `python -m bachue.performances.hag_benchmarks_evaluation JapaneseVowels random_ee 10`) and
   `phrase_boundaries_evaluation.py`.
 - `bachue/analysis/`: the paired comparisons of the results, the diagnostics of the selections, and the figure of the
-  studies of the selections (`studies_figure.py`: `outputs/expansions/figures/selections_hpo.html`, updated from
+  studies of the selections (`studies_figure.py`: `visualisations/résultats/selections_hpo.html`, updated from
   the databases of the studies with `python -m bachue.analysis.studies_figure`).
 - `bachue/settings.py`: the task, its variants and the names of the studies, from the variables of the environment.
 - `slurm/`: job scripts for PlaFRIM (`submit_hpo_rules.sh`: the studies of the rules, `DATASETS="marron1 JapaneseVowels"`;
@@ -52,7 +52,10 @@ evaluations and the analyses are separate.
   `hag_benchmarks/`), each with the subfolders of the code: `hpo/` (as in hag, one Optuna database per dataset with
   all its studies, `marron1_db.sqlite3`, `japanese_vowels_db.sqlite3`; `bachue/hpo/studies.py`), `performances/` (the
   result CSVs of the final evaluations), `analysis/` (paired comparisons, diagnostics), both with one subfolder per dataset
-  (`marron1/`, `japanese_vowels/`) and `figures/` (HTML pages).
+  (`marron1/`, `japanese_vowels/`) and `figures/` (figures made by the code of a study).
+- `visualisations/`: the HTML pages, `cours/` (explanations: the kernel trick, the selections of products) and
+  `résultats/` (the results: the studies of the selections, the cost of computation, the rank of Φ), listed in
+  `visualisations/index.html`.
 
 ## Environment
 

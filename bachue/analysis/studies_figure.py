@@ -1,6 +1,6 @@
 """
 Figure of the studies of the rules on selected products (bachue.hpo.partial_order2_study):
-outputs/expansions/figures/selections_hpo.html, the best cross-validation accuracy of each study by selection and
+visualisations/résultats/selections_hpo.html, the best cross-validation accuracy of each study by selection and
 by rule, for a dataset, a reservoir, a size and a leak chosen in the page; a study with less than N_TRIALS completed
 trials is drawn with a dashed outline. Its two references, for the rules RULES of the page:
   - "linear": the rule on the states alone (the studies "<rule>" of bachue.hpo.learning_rules_study, and for ridge
@@ -38,13 +38,13 @@ from bachue.models.reservoirs import PURE_MODELS
 # (and the former kinds of expansions, partial_order2 and kernels, read when copied from an older checkout)
 KINDS = ("expansions", "learning_rules", "readout_window", "partial_order2", "kernels")
 RULES = ("ridge", "nlms", "eh_np_local", "neh")  # (the rules of the page, among those of the references)
-FIGURE = OUTPUTS_DIR / "expansions" / "figures" / "selections_hpo.html"
+FIGURE = OUTPUTS_DIR.parent / "visualisations" / "résultats" / "selections_hpo.html"
 # rows of the cross-validation of each dataset (the prediction points of the train songs, the train instances: the standard
 # error of an accuracy in the page) and number of outputs (the products of the selection "scores")
-ROWS = {"marron1": 10698, "japanese_vowels": 270}  # (marron1: one row per prediction point, calls and the point before
+ROWS = {"marron1": 10698, "japanese_vowels": 270, "insect_sound": 25000}  # (marron1: one row per prediction point, calls and the point before
 # the first phrase included, BACHUE_WITH_CALLS=1)
-TEST_ROWS = {"japanese_vowels": 370}  # (test instances: the binomial standard error of a test accuracy in the page)
-OUTPUTS = {"marron1": 29, "japanese_vowels": 9}
+TEST_ROWS = {"japanese_vowels": 370, "insect_sound": 25000}  # (test instances: the binomial standard error of a test accuracy in the page)
+OUTPUTS = {"marron1": 29, "japanese_vowels": 9, "insect_sound": 10}
 # "[next_phrase_calls_|<dataset>_][leak_]<rule>-<selection>_<model>_<size>" (bachue.settings.STUDY_PREFIX, rule_tag),
 # and the studies on the states alone, "[leak_][<rule>_]<model>_<size>" (without rule: the ridge readout)
 MODEL = "|".join(PURE_MODELS)
