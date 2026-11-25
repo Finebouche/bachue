@@ -1,7 +1,8 @@
 # Environment of bachue (tested on macOS arm64 with Python 3.12; the versions of the comments are those of hag_env on
-# 2026-11-22). hag and reservoirpy are installed afterwards in editable mode, without their dependencies: hag pins
-# reservoirpy to a commit of the main repository, while bachue needs the branch ridge-solvers of the fork (Ridge with
-# solvers, reservoirpy PR #261), and pip refuses two sources for the same package in one installation.
+# 2026-11-22, except jax, pytorch and tensorflow: those of bachue_env). hag and reservoirpy are installed afterwards in
+# editable mode, without their dependencies: hag pins reservoirpy to a commit of the main repository, while bachue
+# needs the branch ridge-solvers of the fork (Ridge with solvers, reservoirpy PR #261), and pip refuses two sources for
+# the same package in one installation.
 #   micromamba create -f environment.yml
 #   micromamba activate bachue_env
 #   git clone -b main git@github.com:Finebouche/hag.git ../hag
@@ -30,12 +31,13 @@ dependencies:
   - imageio          # hag
   - tqdm             # 4.68.4
   - pytest           # 9.1.1
+  - jax              # 0.10.2 (the JAX nodes of hag, the online readout rules)
+  - jaxlib
+  - pytorch          # 2.12.0 (from conda-forge, not pip: the torch of PyPI brings its own libomp, which clashes
+                     # with the llvm-openmp of conda-forge, "OMP: Error #15" at the first import)
+  - torchaudio       # 2.11.0 (bachue.datasets: SPEECHCOMMANDS)
+  - tensorflow       # 2.21.0 (bachue.datasets: reading the WAV files of some datasets; hag)
+  - cmaes            # hag
+  - dcor             # hag
+  - svgpath2mpl      # hag
   - pip
-  - pip:
-      - jax          # 0.11.2 (the JAX nodes of hag, the online readout rules)
-      - torch        # 2.13.0
-      - torchaudio   # 2.11.0 (bachue.datasets: SPEECHCOMMANDS)
-      - tensorflow   # bachue.datasets: reading the WAV files of some datasets; hag
-      - cmaes        # hag
-      - dcor         # hag
-      - svgpath2mpl  # hag

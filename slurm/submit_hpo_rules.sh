@@ -64,7 +64,10 @@ for order in 2 1; do for size in $(printf '%s\n' "${SIZES[@]}" | sort -rn); do f
         case "$rule" in *:*) [ "$order" = 2 ] || continue; memory=" BACHUE_WORKER_MEM_GB=14" ;;
                         *) [ "$order" = 1 ] || continue; memory="" ;; esac
         assignment="BACHUE_STUDY_RULE=$rule "
-        [ "$rule" = ridge ] && assignment=""  # (the studies of the linear ridge readout)
+        # (the studies of the linear ridge readout: on the songs, those of readout_window_study, without rule; on a
+        # classification dataset, those of learning_rules_study with the rule ridge, readout_window_study being for
+        # the songs only)
+        [ "$rule" = ridge ] && [ "$dataset" = marron1 ] && assignment=""
         for model in "${PURE[@]}"; do
             echo "$model $size ${assignment}BACHUE_LEAKY_RESERVOIRS=$leak BACHUE_DATASET=$dataset$memory"
         done

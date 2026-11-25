@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chants ou neurones : le rang de Φ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--bg-neutral:#eceae3;--border-strong:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--bg-neutral:#2c2c2a;--border-strong:#444441}}
+body{background:var(--bg);color:var(--text-primary);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px 56px}
+main{max-width:860px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0 0 6px}
+h2{font-size:17px;font-weight:500;margin:36px 0 6px}
+p{margin:6px 0;color:var(--text-secondary)}
+b{font-weight:500;color:var(--text-primary)}
+.eq{background:var(--bg-neutral);border-radius:8px;padding:6px 18px;margin:10px 0}
+.eq .l{padding:10px 0}
+.eq .l+.l{border-top:0.5px solid var(--border-strong)}
+.eq .l>span:not(.katex-display){display:block;font-size:14px;line-height:1.5;color:var(--text-secondary);margin-top:2px}
+.eq .katex-display{margin:2px 0;text-align:left;overflow-x:auto;overflow-y:hidden;padding:4px 0}
+.eq .katex-display>.katex{text-align:left;font-size:1.22em}
+p .katex{font-size:1.06em}
+.note{font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums;margin:8px 0}
+th,td{padding:5px 8px;border-bottom:0.5px solid var(--border-strong);text-align:right}
+th{font-weight:500;color:var(--text-secondary);vertical-align:bottom}
+td{white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+code{font-family:var(--font-mono);font-size:13px}
+ol,ul{margin:6px 0;padding-left:22px;color:var(--text-secondary)}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Faut-il plus de chants ou plus de neurones ?</h1>
+<p>On veut mieux prédire la phrase suivante sur des chants jamais entendus. Ajouter des chants peut aider le readout à reconnaître une régularité qui se répète d'un chant à l'autre. Ajouter des neurones peut l'aider à distinguer deux contextes qui annoncent des phrases différentes.</p>
+<p>\(\Phi \in \mathbb{R}^{T \times D}\) contient les entrées du readout : une ligne par phrase d'entraînement dont on prédit la suivante, une colonne par variable lue (un neurone, ou un produit de neurones). <b>Un chant de plus ajoute des lignes ; un neurone de plus ajoute une colonne.</b> Les cibles sont \(y \in \mathbb{R}^T\).</p>
+<div class="eq">
+<div class="l">\[\Phi = \sum_{i=1}^{r} \sigma_i\, u_i v_i^\top, \qquad \sigma_1 \ge \dots \ge \sigma_r &gt; 0, \qquad P = \sum_{i=1}^{r} u_i u_i^\top\]<span>la décomposition en valeurs singulières de \(\Phi\), et \(P\) le projecteur sur son image</span></div>
+</div>
+
+<h2>1. Le rang borne ce qu'on peut ajuster, pas la précision en test</h2>
+<div class="eq">
+<div class="l">\[r = \operatorname{rang}\Phi = \operatorname{rang}(\Phi^\top\Phi) = \operatorname{rang}(\Phi\Phi^\top) \le \min(T, D)\]<span>les deux matrices de Gram ont les mêmes \(\sigma_i^2\) non nuls</span></div>
+<div class="l">\[\hat y = \Phi \hat w \in \operatorname{Im}(\Phi), \quad \dim \operatorname{Im}(\Phi) = r\]<span>les valeurs ajustées combinent les colonnes de \(\Phi\)</span></div>
+<div class="l">\[r = T \;\Rightarrow\; P = I_T, \quad \hat y = y\]<span>sans pénalité, le readout reproduit les \(T\) cibles, quelles qu'elles soient</span></div>
+</div>
+<p>La borne compte les directions indépendantes qu'on peut ajuster sur l'entraînement. Même si les \(D\) directions sont déjà présentes, de nouveaux chants aident à mieux estimer leurs poids (section 3). Une direction de plus aide si elle distingue des suites de phrases qu'on retrouvera dans d'autres chants. Le seul rapport \(T/D\) ne donne donc aucun seuil universel de précision en test.</p>
+
+<h2>2. Un neurone de plus ne change l'ajustement que s'il sort de l'espace des colonnes</h2>
+<p>On ajoute une colonne \(c \in \mathbb{R}^T\), l'activité du nouveau neurone sur les \(T\) phrases.</p>
+<div class="eq">
+<div class="l">\[c \in \operatorname{Im}(\Phi) \;\Rightarrow\; \operatorname{Im}([\Phi \;\, c]) = \operatorname{Im}(\Phi)\]<span>\(c\) combine les autres colonnes : \(P\) et \(\hat y\) ne changent pas</span></div>
+<div class="l">\[c \notin \operatorname{Im}(\Phi) \;\Rightarrow\; \dim \operatorname{Im}([\Phi \;\, c]) = r + 1\]<span>\(P\) gagne une direction : l'erreur d'entraînement baisse ou reste égale</span></div>
+<div class="l">\[[\Phi \;\, c][\Phi \;\, c]^\top = \Phi\Phi^\top + c\,c^\top\]<span>avec ridge (\(\rho &gt; 0\)), le noyau change même si \(c \in \operatorname{Im}(\Phi)\), donc aussi les valeurs ajustées</span></div>
+</div>
+
+<h2>3. Un chant de plus réduit le bruit des poids, dès que le rang atteint D</h2>
+<p>On suppose \(y = \Phi w^\star + \varepsilon\), avec \(\mathbb{E}[\varepsilon] = 0\) et \(\operatorname{Var}(\varepsilon) = \sigma^2 I_T\), et \(r = D\).</p>
+<div class="eq">
+<div class="l">\[\hat w = (\Phi^\top\Phi)^{-1}\Phi^\top y\]<span>\(\Phi^\top\Phi\) est inversible : la solution des moindres carrés est unique</span></div>
+<div class="l">\[\hat w - w^\star = (\Phi^\top\Phi)^{-1}\Phi^\top \varepsilon\]<span>on remplace \(y\) par \(\Phi w^\star + \varepsilon\)</span></div>
+<div class="l">\[\operatorname{Var}(\hat w) = \sigma^2 (\Phi^\top\Phi)^{-1}\]<span>chaque ligne ajoutée ajoute un terme \(\varphi\varphi^\top\) à \(\Phi^\top\Phi\) : la variance baisse</span></div>
+<div class="l">\[\Phi(\hat w - w^\star) = P\,\varepsilon, \quad \mathbb{E}\lVert P\varepsilon\rVert^2 = \sigma^2 \operatorname{tr}(P) = \sigma^2 D\]<span>l'erreur sur les exemples est la projection du bruit, sur un sous-espace de rang \(D\)</span></div>
+<div class="l">\[\dfrac{1}{T}\,\mathbb{E}\,\lVert \Phi(\hat w - w^\star) \rVert^2 = \dfrac{\sigma^2 D}{T}\]<span>doubler les chants divise par deux l'erreur due au bruit ; doubler les neurones la double</span></div>
+</div>
+<p class="note">Aucune ligne ne peut augmenter le rang au-delà de \(D\). Un chant de plus n'ajoute pas de direction : il précise les poids des directions existantes.</p>
+
+<h2>4. Avec ridge, doubler les chants revient à diviser la pénalité par deux</h2>
+<div class="eq">
+<div class="l">\[\hat y = \Phi\,(\Phi^\top\Phi + \rho I_D)^{-1}\,\Phi^\top y = \displaystyle\sum_{i \le r} \frac{\sigma_i^2}{\sigma_i^2 + \rho}\; u_i\,(u_i^\top y)\]<span>on remplace \(\Phi\) par sa décomposition : chaque direction est gardée avec un poids entre 0 et 1</span></div>
+<div class="l">\[\mathrm{df}(\rho) = \displaystyle\sum_{i \le r} \frac{\sigma_i^2}{\sigma_i^2 + \rho} \;&lt;\; r\]<span>le nombre effectif de directions ajustées</span></div>
+<div class="l">\[\tfrac{1}{T}\,\Phi^\top\Phi \to \Sigma \;\Rightarrow\; \sigma_i^2 \approx T\,\lambda_i(\Sigma)\]<span>lignes indépendantes de covariance \(\Sigma\), \(D\) fixé : une approximation, pas une égalité</span></div>
+<div class="l">\[\dfrac{\sigma_i^2}{\sigma_i^2 + \rho} \approx \dfrac{\lambda_i}{\lambda_i + \rho / T}\]<span>on divise par \(T\) : doubler \(T\) a le même effet que diviser \(\rho\) par deux</span></div>
+</div>
+<p>Un chant de plus fait donc passer au-dessus de la pénalité des directions déjà présentes, celles dont \(\lambda_i\) est proche de \(\rho/T\). Un neurone de plus change \(\Sigma\) lui-même : il ajoute une valeur propre, ou en déplace plusieurs. Les deux ajouts n'agissent pas sur la même chose.</p>
+
+<h2>5. L'erreur explose quand le nombre de neurones s'approche du nombre de phrases</h2>
+<p>Pour des lignes gaussiennes de covariance \(\Sigma\) et \(T &gt; D + 1\), la matrice \((\Phi^\top\Phi)^{-1}\) suit une loi de Wishart inverse.</p>
+<div class="eq">
+<div class="l">\[\mathbb{E}\big[(\Phi^\top\Phi)^{-1}\big] = \dfrac{\Sigma^{-1}}{T - D - 1}\]<span>l'espérance de la loi de Wishart inverse</span></div>
+<div class="l">\[\mathbb{E}\big[(x^\top(\hat w - w^\star))^2\big] = \sigma^2 \operatorname{tr}\!\big(\Sigma\,\mathbb{E}[(\Phi^\top\Phi)^{-1}]\big) = \dfrac{\sigma^2 D}{T - D - 1}\]<span>l'erreur due au bruit sur un nouvel exemple \(x\), de covariance \(\Sigma\), indépendant de \(\Phi\)</span></div>
+<div class="l">\[\lVert w^\star \rVert^2 \Big(1 - \dfrac{1}{\gamma}\Big) + \dfrac{\sigma^2}{\gamma - 1}, \quad \gamma = \dfrac{D}{T} &gt; 1\]<span>au-delà, la limite de la solution de norme minimale, entrées isotropes (Hastie, Montanari, Rosset et Tibshirani 2022)</span></div>
+</div>
+<table>
+<caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">T = 40 phrases, σ = 0,5, ‖w*‖ = 1, entrées isotropes, sans pénalité. Jusqu'à D = 38 : la formule exacte ; à partir de D = 50 : la limite de Hastie et al., une approximation à cette taille.</caption>
+<thead><tr><th>Neurones D</th><th>5</th><th>10</th><th>20</th><th>30</th><th>35</th><th>38</th><th>50</th><th>80</th><th>120</th><th>200</th></tr></thead>
+<tbody><tr><td>Erreur due au bruit sur un nouvel exemple</td><td>0,04</td><td>0,09</td><td>0,26</td><td>0,83</td><td>2,19</td><td>9,50</td><td>1,20</td><td>0,75</td><td>0,79</td><td>0,86</td></tr></tbody>
+</table>
+<p>Près de \(D = T\), un neurone de plus coûte beaucoup et un chant de plus rapporte beaucoup. Loin de ce pic, l'un comme l'autre change peu l'erreur. Avec une pénalité choisie par validation croisée, le pic disparaît en grande partie.</p>
+
+<h2>6. Sur marron1, le rang monte beaucoup, ridge gagne peu, NLMS gagne beaucoup</h2>
+<table>
+<thead><tr><th>Variables lues (500 neurones, avec fuite)</th><th>D</th><th>Rang mesuré</th><th>Cible dans l'image</th><th>Cible apprise par NLMS</th><th>Ridge</th><th>NLMS</th></tr></thead>
+<tbody>
+<tr><td>États seuls</td><td>507</td><td>507</td><td>71 %</td><td>64 %</td><td>86,1 %</td><td>81,7 %</td></tr>
+<tr><td>États et 2 080 produits tirés au hasard</td><td>2 587</td><td>2 294</td><td>85 %</td><td>81 %</td><td>86,8 %</td><td>86,1 %</td></tr>
+<tr><td>États et tous leurs produits d'ordre 2</td><td>129 285</td><td>6 764</td><td>99 %</td><td>82 %</td><td>86,8 %</td><td>86,2 %</td></tr>
+</tbody>
+</table>
+<p class="note">Rang et énergie de la cible mesurés sur le fold 0 (\(T = 7\,179\) phrases d'entraînement, 244 chants), avec le réservoir de chaque étude NLMS. « Cible apprise par NLMS » : \(\sum_i f_i \lVert u_i^\top Y\rVert^2 / \lVert Y\rVert^2\), avec \(f_i = \min(1, t\,\eta\,\sigma_i^2)\) pour \(t = 3\,000\) époques, une approximation de la section 4 (une descente arrêtée agit comme ridge avec \(\rho \approx 1/(\eta t)\)). Les deux dernières colonnes sont les meilleures précisions de validation croisée, chacune avec sa propre optimisation du réservoir.</p>
+<p>Le passage aux produits multiplie le rang par 13, pour 0,7 point avec ridge. Ridge semble donc disposer déjà, avec 507 directions, de presque tout ce qui généralise. NLMS gagne 4,5 points, parce que les produits aplatissent le spectre : arrêté après 3 000 époques, il n'apprend que 192 des 507 directions des états seuls, et environ 1 400 avec les produits. Cette comparaison garde 500 neurones et tous les chants : elle ne dit pas ce qu'apporterait un réservoir plus grand ou davantage de chants.</p>
+
+<h2>7. Le test qui départage chants et neurones</h2>
+<p>On choisit un point de départ : la moitié des 367 chants d'entraînement et 500 neurones. On mesure le pourcentage de phrases suivantes bien prédites sur les 92 chants test, puis on compare deux gains par rapport à ce point de départ :</p>
+<ol>
+<li><b>Gain des chants</b> : passer de la moitié à la totalité des chants d'entraînement, avec exactement le même réservoir.</li>
+<li><b>Gain des neurones</b> : passer de 500 à 1 000 neurones, avec exactement les mêmes chants.</li>
+</ol>
+<p>On garde la même règle d'apprentissage et les mêmes variables lues. Les hyperparamètres sont réglés sur les seuls chants d'entraînement, et la comparaison est répétée avec plusieurs tirages de chants et plusieurs graines. Si l'un des deux doublements gagne régulièrement plus de points, c'est lui qui aide le plus à cette échelle. Si les gains sont proches au regard de leur incertitude, les mesures ne les départagent pas. Les études de 500 et de 1 000 neurones existent déjà sur tous les chants ; le gain des chants n'a pas encore été mesuré.</p>
+
+<h2>8. La chance qu'un seul ajout améliore le score</h2>
+<p>On note \(A(f)\) la probabilité que le modèle actuel \(f\) prédise correctement la phrase suivante d'un chant nouveau. À partir des mêmes chants et du même réservoir :</p>
+<div class="eq">
+<div class="l">\[q_{\text{chant}} = \Pr\big[A(f_{+\text{chant}}) &gt; A(f)\big]\]<span>un chant tiré dans la population visée, le réservoir gardé, le readout réentraîné</span></div>
+<div class="l">\[q_{\text{neurone}} = \Pr\big[A(f_{+\text{neurone}}) &gt; A(f)\big]\]<span>les connexions existantes gardées, celles du nouveau neurone tirées selon une règle fixée, le readout réentraîné</span></div>
+<div class="l">\[\Delta = 100 \times \dfrac{C - E}{M}\]<span>le gain en points sur un lot de \(M\) phrases de test : \(C\) erreurs corrigées, \(E\) nouvelles erreurs</span></div>
+</div>
+<p>Par exemple, sur 1 000 phrases, un ajout qui corrige 12 erreurs et en introduit 7 gagne 0,5 point. On répète chaque ajout depuis le même point de départ, et on rapporte la fréquence des gains stricts (\(\Delta &gt; 0\), égalités comprises dans le total) et le gain moyen, pertes comprises. Un ajout peut gagner souvent et rapporter peu. Sur un lot fixé, cette fréquence estime la chance de gagner sur ce lot ; pour de nouveaux chants, il faut répéter sur plusieurs lots de chants tenus à l'écart. Les scores agrégés de marron1 ne suffisent pas à chiffrer ces probabilités.</p>
+
+<h2>9. Deux affirmations vont plus loin que ces preuves</h2>
+<ul>
+<li><b>« Les dimensions ajoutées changent seulement la solution choisie parmi celles qui interpolent »</b> n'est exact que sans pénalité, ou à la limite \(\rho \to 0\). Avec \(\rho &gt; 0\), les valeurs ajustées changent à chaque colonne (section 2).</li>
+<li><b>« Passer à l'ordre 3 n'ajouterait aucune direction ajustable sur marron1 »</b> est faux sur le fold 0 : le rang de l'ordre 2 y est de 6 764, sous \(T = 7\,179\). L'ordre 3 peut donc encore ajouter jusqu'à 415 directions. Avec le \(\rho\) choisi par validation croisée, le readout n'interpole pas, et l'ordre 3 modifierait de toute façon le noyau.</li>
+</ul>
+</main>
+<script>
+renderMathInElement(document.body, {delimiters: [{left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]});
+</script>
+</body>
+</html>
