@@ -24,8 +24,8 @@ same reservoirs: from the least to the most biologically plausible,
     decorrelated rule of Burms, Caluwaerts & Dambre 2015). Which version is which: bachue.models.readout_rules.
 Each rule can read the monomials of the state up to degree n instead of the state ("<rule>:<n>", e.g. "nlms:2"; the
 features of the generalized readout of Ohkubo & Inubushi 2024): "ridge:n" the generalized readout
-(bachue.models.generalized_readout), "nlms:n" and "neh:n" trained in their dual form on the kernel of the monomials
-(bachue.models.readout_rules.kernel, the same weights as on the monomials themselves).
+(bachue.models.readout_rules.generalized_readout), "nlms:n" and "neh:n" trained in their dual form on the kernel of
+the monomials (bachue.models.readout_rules.lms_dual and eh_dual, the same weights as on the monomials themselves).
 Each rule can also read the state and selected products of degree 2 ("<rule>:<selection>", a selection of
 bachue.performances.partial_order2_evaluation chosen on the training rows before the training of the readout, e.g.
 "nlms:pca:64": the 2080 products of the 64 first principal components; "eh_np_local:scores": the 435 products of the

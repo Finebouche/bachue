@@ -8,14 +8,15 @@ bachue.performances.learning_rules_evaluation.
 import jax.numpy as jnp
 import numpy as np
 
-from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.models.readout_rules.generalized_readout import GeneralizedRidge
 from bachue.models.product_selection import Selection
 from bachue.models.readout_rules.eh import EH
+from bachue.models.readout_rules.eh_dual import KernelEH
 from bachue.models.readout_rules.eh_numpy import version_options
-from bachue.models.readout_rules.kernel import KernelEH, KernelLMS
 from bachue.models.readout_rules.lms import LMS
+from bachue.models.readout_rules.lms_dual import KernelLMS
 from bachue.models.readout_rules.rls import RLS
-from bachue.models.ridge_readouts import fitted_readouts
+from bachue.models.readout_rules.ridge_readouts import fitted_readouts
 
 NORMALIZED_RULES = ("nlms", "neh")  # (the rules which can read the monomials of the state: order > 1, with ridge)
 

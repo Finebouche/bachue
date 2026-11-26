@@ -19,8 +19,8 @@ Readout: ridge regression on the one-hot next label at the prediction points (re
 BACHUE_RIDGE_SOLVER, default "svd": the singular value decomposition of the centered states, stable with the
 smallest coefficients), its coefficient chosen by the 3-fold cross-validation by song on the train songs (out-of-fold
 accuracy), then trained on all the train songs and scored on the test songs for each seed. With BACHUE_READOUT_ORDER=n (n >= 2), the generalized
-readout of Ohkubo & Inubushi (2024) instead (bachue.models.generalized_readout.GeneralizedRidge: ridge regression on all the
-monomials of the state up to degree n, the quadratic form for n = 2), its coefficient always chosen by the same
+readout of Ohkubo & Inubushi (2024) instead (GeneralizedRidge of bachue.models.readout_rules.generalized_readout:
+ridge regression on all the monomials of the state up to degree n, the quadratic form for n = 2), its coefficient always chosen by the same
 cross-validation (the coefficients of the studies are those of the linear readout).
 Training rows of the readout (BACHUE_READOUT_TRAINING_ROWS), from the states of the window of each point: those of the frames of
 the phrase ending there, up to the point (from the first frame of the song for the point before the first phrase; the
@@ -69,7 +69,7 @@ from sklearn.metrics import f1_score
 
 from bachue.datasets.load_categorical_forecasting import SONGS_SAMPLING_RATE, annotations_of_songs, canary_mfcc_config, song_phrases
 from bachue.models.reservoirs import CHUNK, state_chunks, states
-from bachue.models.ridge_readouts import READOUT_ORDER
+from bachue.models.readout_rules.ridge_readouts import READOUT_ORDER
 from bachue.settings import CALLS, HPO_READOUT, MAX_TAIL, RESET, TAIL_HPO, TAIL_SEPARATE, env
 
 START, END = "START", "END"

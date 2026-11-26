@@ -1,6 +1,6 @@
 """
-Selection of the monomials of degree 2 of the generalized readout (bachue.models.generalized_readout, "ridge:2" of
-bachue.performances.learning_rules_evaluation: N + N (N + 1) / 2 monomials of the N units, 502 502 at 1001 units): can a
+Selection of the monomials of degree 2 of the generalized readout (bachue.models.readout_rules.generalized_readout,
+"ridge:2" of bachue.performances.learning_rules_evaluation: N + N (N + 1) / 2 monomials of the N units, 502 502 at 1001 units): can a
 few hundred or thousand products, chosen before the regression, replace all of them? Exploratory: all the readouts
 read the same reservoirs, those of the studies of the variables of the environment (BACHUE_STUDY_RULE=ridge:2: the
 reservoirs optimized for the full readout of order 2, which they approximate), not reservoirs optimized for each.
@@ -72,7 +72,7 @@ from functools import cached_property
 import numpy as np
 from sklearn.model_selection import GroupKFold
 
-from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.models.readout_rules.generalized_readout import GeneralizedRidge
 from bachue.settings import env
 
 SIZES = [int(m) for m in env("BACHUE_SELECTION_SIZES", "32,64,128").split(",")]

@@ -3,8 +3,8 @@ import itertools as it
 import numpy as np
 import pytest
 
-from bachue.models.generalized_readout import GeneralizedRidge
-from bachue.models.kernel_ridge import KernelRidge
+from bachue.models.readout_rules.generalized_readout import GeneralizedRidge
+from bachue.models.readout_rules.kernel_ridge import KernelRidge
 from bachue.models.volterra_kernel import (clipped, lagged_instances, lagged_points, max_norm, parameters,
                                            volterra_gram)
 

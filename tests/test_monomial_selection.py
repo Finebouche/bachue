@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.models.readout_rules.generalized_readout import GeneralizedRidge
 from bachue.analysis.selection_diagnostics import selection_diagnostics
 from bachue.performances.partial_order2_evaluation import correct_counts, ridges_of
 from bachue.models.product_selection import Selection

@@ -1,8 +1,8 @@
 """
 Kernel ridge regression on a precomputed kernel (bachue.models.volterra_kernel), with an unpenalized bias: the kernel
 of the centered features, centered with the means of the training rows (as the dual GeneralizedRidge of
-bachue.models.generalized_readout). The spectrum of the centered training kernel is kept: the coefficients of another
-ridge coefficient cost one product (choice of the coefficient by cross-validation).
+generalized_readout, in this folder). The spectrum of the centered training kernel is kept: the coefficients of
+another ridge coefficient cost one product (choice of the coefficient by cross-validation).
 
 Example (kernels K of the training rows, K_test of the test rows with them):
     >>> readout = KernelRidge(K, Y)

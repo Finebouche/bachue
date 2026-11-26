@@ -16,7 +16,7 @@ log-uniform in MEMORIES (lambda = mu sqrt(1 - theta^2): the weight lambda^j of t
 (unpenalized bias) is chosen in KERNEL_RIDGES in the cross-validation (user attribute "readout" of the trial, with tau
 and lambda). Objective: the out-of-fold accuracy of the 3-fold cross-validation (by song on the train songs, by instance
 on the train instances, the folds of the other studies). The kernel of all the train rows is computed once per trial
-(it has no fitted parameter), the readout of each fold solved in dual form (bachue.models.kernel_ridge).
+(it has no fitted parameter), the readout of each fold solved in dual form (bachue.models.readout_rules.kernel_ridge).
 
 Usage (final evaluation: bachue.performances.kernels_evaluation):
   BACHUE_KERNEL=volterra BACHUE_DATASET=JapaneseVowels python -m bachue.hpo.kernel_study volterra 32
@@ -28,7 +28,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 from bachue.hpo.studies import FOLD_SEED, run_study
-from bachue.models.kernel_ridge import KernelRidge
+from bachue.models.readout_rules.kernel_ridge import KernelRidge
 from bachue.models.volterra_kernel import lagged_instances, lagged_points, max_norm, parameters, volterra_gram
 from bachue.settings import CALLS, KERNEL, LEAK, N_FOLDS, TASK
 

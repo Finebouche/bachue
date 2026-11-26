@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EH en forme duale</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+/* (the style of lms_forme_duale.html) same tokens as astuce_du_noyau.html: green for what belongs to the primal form (the monomials, the weights W), pink
+   for what the dual form keeps (the coefficients a_j) */
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--bg-neutral:#eceae3;--border:#e1e0d9;--border-strong:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace;--primal:#1D9E75;--dual:#D4537E;--primal-bg:#e6f4ee;--dual-bg:#fbeaf0}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--bg-neutral:#232321;--border:#2c2c2a;--border-strong:#444441;--primal:#3FC79A;--dual:#EC7FA4;--primal-bg:#12281f;--dual-bg:#2e1620}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text-primary);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px 56px}
+main{max-width:1120px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0 0 6px}
+h2{font-size:17px;font-weight:600;margin:34px 0 6px}
+p{margin:0 0 10px;max-width:820px}
+p.note,.why{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.why{margin-top:3px}
+code{font-family:var(--font-mono);font-size:.92em}
+.eq{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.eq .katex{font-size:1.04em}
+.eq .katex-display{margin:0;text-align:left}.eq .katex-display>.katex{text-align:left}
+.p{color:var(--primal);font-weight:600}.d{color:var(--dual);font-weight:600}
+
+/* the notations: one line each */
+.nota{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:6px 22px;background:var(--bg-neutral);border-radius:10px;padding:12px 16px;margin:10px 0 0}
+.nota div{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--text-secondary)}
+.nota .katex{font-size:1.02em;color:var(--text-primary)}
+.nota .eq{flex:none;overflow:visible;white-space:nowrap;padding:0}
+
+/* the two writings side by side, one row per line of the calculation */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 18px;margin-top:8px}
+.head{font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px 10px 0 0}
+.head small{display:block;font-weight:400;color:var(--text-secondary)}
+.head.primal{background:var(--primal-bg);color:var(--primal)}.head.dual{background:var(--dual-bg);color:var(--dual)}
+.step{grid-column:1 / -1;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text-secondary);margin:16px 0 4px}
+.step::after{content:"";flex:1;border-top:1px solid var(--border)}
+.cell{padding:9px 14px;border-left:3px solid var(--border-strong);min-width:0}
+.cell.primal{border-left-color:var(--primal)}.cell.dual{border-left-color:var(--dual)}
+.cell + .cell{margin-top:0}
+/* what the code computes at a step (colored block), apart from the value it gets, expanded by hand */
+.calc{border-radius:8px;padding:5px 10px 6px}
+.cell.primal .calc{background:var(--primal-bg)}.cell.dual .calc{background:var(--dual-bg)}
+.tag{display:block;font-size:11px;font-weight:600}
+.cell.primal .calc .tag{color:var(--primal)}.cell.dual .calc .tag{color:var(--dual)}
+.val{padding:6px 10px 0}
+.val .tag{font-weight:400;color:var(--text-muted)}
+.val .eq .katex{font-size:.94em}
+.mem{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:var(--text-muted)}
+.chip{border:1px solid var(--border-strong);border-radius:6px;padding:0 7px;line-height:1.6;color:var(--text-muted)}
+.chip .katex{font-size:1em}
+.chip.set{color:var(--text-primary)}
+.cell.primal .chip.now{background:var(--primal);border-color:var(--primal);color:#fff}
+.cell.dual .chip.now{background:var(--dual);border-color:var(--dual);color:#fff}
+.key{background:var(--bg-neutral);border-radius:10px;padding:14px 16px;margin-top:10px}
+table{border-collapse:collapse;font-size:14px;margin-top:8px;max-width:100%}
+th,td{text-align:left;padding:7px 14px 7px 0;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-weight:600;color:var(--text-secondary);font-size:13px}
+td:first-child{color:var(--text-secondary)}
+pre{background:var(--bg-neutral);border-radius:8px;padding:10px 12px;font:12.5px/1.5 var(--font-mono);overflow-x:auto;margin:6px 0 0}
+/* the estimator of the costs of the two forms */
+.est{background:var(--bg-neutral);border-radius:10px;padding:14px 16px;margin-top:8px}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:13px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-right:6px}
+.presets button{font:inherit;font-size:13px;padding:4px 11px;border-radius:999px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text-primary);cursor:pointer}
+.presets button[aria-pressed="true"]{background:var(--text-primary);border-color:var(--text-primary);color:var(--bg)}
+.ctl label{display:flex;align-items:center;gap:6px;color:var(--text-secondary);font-style:italic}
+.ctl input{font:inherit;font-style:normal;font-variant-numeric:tabular-nums;width:86px;padding:3px 6px;border:1px solid var(--border-strong);border-radius:6px;background:var(--bg);color:var(--text-primary)}
+.ctl input[readonly]{background:transparent;color:var(--text-secondary);cursor:default;outline:none}
+.charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 28px;margin-top:6px}
+.charts h3{font-size:13px;font-weight:600;margin:0 0 6px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;font-size:13px;margin-bottom:7px}
+.bar .name{grid-column:1 / -1;color:var(--text-secondary);font-size:12px}
+.bar .track{height:14px;border-radius:4px;background:var(--bg)}
+.bar .fill{display:block;height:100%;min-width:2px;border-radius:4px}
+.cell.primal .fill{background:var(--primal)}.cell.dual .fill{background:var(--dual)}
+.total{font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.est .two{margin-top:10px}.est .head{border-radius:10px}.est .step{color:var(--text-primary);margin-top:14px}
+.bar .value{font-variant-numeric:tabular-nums;min-width:96px;text-align:right}
+#verdict{font-size:14px;margin:12px 0 0;max-width:none}
+.est .f{color:var(--text-muted);font-style:italic;white-space:nowrap;margin-left:4px}
+.line{font-size:12px;color:var(--text-secondary);margin:-2px 0 4px}
+a{color:inherit}
+/* section 12: the published works, grouped, with a verdict per work */
+.biblio td{font-size:13px}
+.biblio td:last-child{min-width:110px}
+.tested{color:var(--text-muted)}.tested.yes{color:var(--text-primary)}
+.biblio td:first-child{color:var(--text-primary);min-width:170px}
+.biblio tr.group th{padding-top:16px;font-size:13px;color:var(--text-primary);border-bottom:1px solid var(--border-strong)}
+.verdict{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:0 8px;margin:0 4px 2px 0;border:1px solid var(--border-strong);color:var(--text-secondary);white-space:nowrap}
+.verdict.same{background:var(--text-primary);border-color:var(--text-primary);color:var(--bg)}
+.verdict.row{border-color:var(--text-primary);color:var(--text-primary)}
+.verdict.write{border-style:dashed}
+.legend-verdicts{display:flex;flex-wrap:wrap;gap:4px 6px;margin:4px 0 2px}
+ul.found{margin:0;padding-left:20px;font-size:14px}ul.found li{margin-bottom:4px}
+@media (max-width:820px){.charts{grid-template-columns:minmax(0,1fr)}.est .f{white-space:normal}}
+.codes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 18px}
+.codes h3{font-size:13px;margin:0;font-weight:600}
+@media (max-width:820px){.two,.codes{grid-template-columns:minmax(0,1fr)}.head.dual{margin-top:14px}.cell.dual{margin-top:8px}.head{border-radius:10px}}
+</style>
+</head>
+<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style>
+<main>
+<style>
+/* the mean step of EH (section 8) */
+.meanplot svg{display:block;width:100%;max-width:620px;height:auto;background:var(--bg);border-radius:8px}
+.meanplot text{font:11px system-ui,sans-serif;fill:var(--text-secondary)}
+.meanplot .grid{stroke:var(--border)}.meanplot .axis{stroke:var(--border-strong)}
+.meanplot .mark{stroke:var(--text-muted);stroke-dasharray:3 3}
+.legend-line{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text-secondary);margin:0 0 6px}
+.legend-line i{display:inline-block;width:14px;border-top:2px solid;vertical-align:middle;margin-right:5px}
+</style>
+<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>La règle EH en forme duale, sur trois exemples</h1>
+
+<h2>1. Les notations</h2>
+<div class="nota">
+<div><span class="eq" data-tex="\textcolor{#1D9E75}{\varphi_j} = \varphi(x_j)"></span><span>les monômes de l'état de l'exemple j</span></div>
+<div><span class="eq" data-tex="y_j"></span><span>ses cibles, une composante par sortie</span></div>
+<div><span class="eq" data-tex="\xi_j"></span><span>son bruit d'exploration, tiré uniformément dans [−σ, σ] pour chaque sortie</span></div>
+<div><span class="eq" data-tex="o_j"></span><span>sa sortie sans bruit</span></div>
+<div><span class="eq" data-tex="M_j"></span><span>sa modulation : 1 sur les sorties que le bruit a rapprochées de la cible, 0 ailleurs</span></div>
+<div><span class="eq" data-tex="\eta_j"></span><span>le pas de l'exemple j, un nombre</span></div>
+<div><span class="eq" data-tex="W,\; b"></span><span>les poids, une ligne par sortie, et le biais</span></div>
+<div><span class="eq" data-tex="K_{j\ell} = \varphi_j^{\top} \varphi_\ell"></span><span>le noyau, un nombre par paire d'exemples</span></div>
+<div><span class="eq" data-tex="\odot"></span><span>le produit composante par composante</span></div>
+</div>
+
+<h2>2. La règle</h2>
+<p>EH n'a pas de professeur : la sortie explore avec un bruit, et les poids gardent ce bruit quand il a rapproché la sortie de sa cible. Ce cours suit la version neh, celle de la règle <code>neh:2</code>.</p>
+<div class="eq" data-d="1" data-tex="o_\ell = W\, \textcolor{#1D9E75}{\varphi_\ell} + b \qquad M_\ell = \mathbf{1}\big[ (o_\ell + \xi_\ell - y_\ell)^2 < (o_\ell - y_\ell)^2 \big] \qquad W \leftarrow W + \eta_\ell\, (\xi_\ell \odot M_\ell)\, \textcolor{#1D9E75}{\varphi_\ell^{\top}} \qquad b \leftarrow b + \eta_\ell\, \xi_\ell \odot M_\ell"></div>
+<p class="why">Comme pour LMS, chaque pas ajoute à W un vecteur, <span class="d">η ξ ⊙ M</span>, multiplié par une ligne, <span class="p">φᵀ</span>. Ce vecteur est le bruit, gardé seulement sur les sorties qu'il a améliorées. La cible n'entre que dans la modulation, par une comparaison.</p>
+<p class="why">Les autres versions de EH changent ce vecteur, pas sa forme. La base filtrée remplace ξ par z − z̄, et la récompense globale donne la même modulation à toutes les sorties. Leur forme duale se construit de la même façon.</p>
+
+<h2>3. Trois pas, deux écritures</h2>
+<p>Les poids et le biais partent de zéro, et les exemples 1, 2 et 3 sont vus dans cet ordre, avec les bruits ξ₁, ξ₂ et ξ₃. À gauche, on met W à jour. À droite, on ne garde que les <span class="d">coefficients</span> a₁, a₂ et a₃, les vecteurs qui multiplient les <span class="p">φᵀ</span> dans W.</p>
+<div class="two">
+<div class="head primal">Forme primale<small>en mémoire : W et b</small></div>
+<div class="head dual">Forme duale<small>en mémoire : a₁, a₂, a₃, b et le noyau K</small></div>
+
+<div class="step">Pas 1, sur l'exemple 1</div>
+<div class="cell primal">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_1 = W\, \textcolor{#1D9E75}{\varphi_1} + b"></div><div class="eq" data-tex="M_1 = \mathbf{1}\big[ (o_1 + \xi_1 - y_1)^2 < (o_1 - y_1)^2 \big]"></div><div class="eq" data-tex="W \leftarrow W + \eta_1\, (\xi_1 \odot M_1)\, \textcolor{#1D9E75}{\varphi_1^{\top}} \qquad b \leftarrow b + \eta_1\, \xi_1 \odot M_1"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main (jamais calculée)</span><div class="eq" data-tex="o_1 = 0 \qquad M_1 = \mathbf{1}\big[ (\xi_1 - y_1)^2 < y_1^2 \big]"></div><div class="eq" data-tex="W = \textcolor{#D4537E}{\eta_1\, \xi_1 \odot M_1}\; \textcolor{#1D9E75}{\varphi_1^{\top}} \qquad b = \eta_1\, \xi_1 \odot M_1"></div></div>
+<div class="mem">modifié : <span class="chip now">tous les poids de W</span><span class="chip now">b</span></div>
+</div>
+<div class="cell dual">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_1 = a_1 K_{11} + a_2 K_{21} + a_3 K_{31} + b"></div><div class="eq" data-tex="M_1 = \mathbf{1}\big[ (o_1 + \xi_1 - y_1)^2 < (o_1 - y_1)^2 \big]"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_1} \leftarrow a_1 + \eta_1\, \xi_1 \odot M_1 \qquad b \leftarrow b + \eta_1\, \xi_1 \odot M_1"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main (jamais calculée)</span><div class="eq" data-tex="o_1 = 0 \qquad M_1 = \mathbf{1}\big[ (\xi_1 - y_1)^2 < y_1^2 \big]"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_1} = \textcolor{#D4537E}{\eta_1\, \xi_1 \odot M_1} \qquad b = \eta_1\, \xi_1 \odot M_1"></div></div>
+<div class="mem">modifié : <span class="chip now" data-tex="a_1"></span><span class="chip" data-tex="a_2"></span><span class="chip" data-tex="a_3"></span><span class="chip now">b</span></div>
+</div>
+
+<div class="step">Pas 2, sur l'exemple 2</div>
+<div class="cell primal">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_2 = W\, \textcolor{#1D9E75}{\varphi_2} + b"></div><div class="eq" data-tex="M_2 = \mathbf{1}\big[ (o_2 + \xi_2 - y_2)^2 < (o_2 - y_2)^2 \big]"></div><div class="eq" data-tex="W \leftarrow W + \eta_2\, (\xi_2 \odot M_2)\, \textcolor{#1D9E75}{\varphi_2^{\top}} \qquad b \leftarrow b + \eta_2\, \xi_2 \odot M_2"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main</span><div class="eq" data-tex="o_2 = \eta_1 \big( \varphi_1^{\top} \varphi_2 + 1 \big)\, \xi_1 \odot M_1"></div><div class="eq" data-tex="W = \textcolor{#D4537E}{\eta_1\, \xi_1 \odot M_1}\; \textcolor{#1D9E75}{\varphi_1^{\top}} + \textcolor{#D4537E}{\eta_2\, \xi_2 \odot M_2}\; \textcolor{#1D9E75}{\varphi_2^{\top}}"></div></div>
+<div class="mem">modifié : <span class="chip now">tous les poids de W</span><span class="chip now">b</span></div>
+</div>
+<div class="cell dual">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_2 = a_1 K_{12} + a_2 K_{22} + a_3 K_{32} + b"></div><div class="eq" data-tex="M_2 = \mathbf{1}\big[ (o_2 + \xi_2 - y_2)^2 < (o_2 - y_2)^2 \big]"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_2} \leftarrow a_2 + \eta_2\, \xi_2 \odot M_2 \qquad b \leftarrow b + \eta_2\, \xi_2 \odot M_2"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main</span><div class="eq" data-tex="o_2 = \eta_1 (K_{12} + 1)\, \xi_1 \odot M_1"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_2} = \textcolor{#D4537E}{\eta_2\, \xi_2 \odot M_2}"></div></div>
+<div class="mem">modifié : <span class="chip set" data-tex="a_1"></span><span class="chip now" data-tex="a_2"></span><span class="chip" data-tex="a_3"></span><span class="chip now">b</span></div>
+</div>
+
+<div class="step">Pas 3, sur l'exemple 3</div>
+<div class="cell primal">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_3 = W\, \textcolor{#1D9E75}{\varphi_3} + b"></div><div class="eq" data-tex="M_3 = \mathbf{1}\big[ (o_3 + \xi_3 - y_3)^2 < (o_3 - y_3)^2 \big]"></div><div class="eq" data-tex="W \leftarrow W + \eta_3\, (\xi_3 \odot M_3)\, \textcolor{#1D9E75}{\varphi_3^{\top}} \qquad b \leftarrow b + \eta_3\, \xi_3 \odot M_3"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main</span><div class="eq" data-d="1" data-tex="\begin{aligned} o_3 = \;& \eta_1 \big( \varphi_1^{\top} \varphi_3 + 1 \big)\, \xi_1 \odot M_1 \\ & + \eta_2 \big( \varphi_2^{\top} \varphi_3 + 1 \big)\, \xi_2 \odot M_2 \end{aligned}"></div></div>
+<div class="mem">modifié : <span class="chip now">tous les poids de W</span><span class="chip now">b</span></div>
+</div>
+<div class="cell dual">
+<div class="calc"><span class="tag">calculé à ce pas</span><div class="eq" data-tex="o_3 = a_1 K_{13} + a_2 K_{23} + a_3 K_{33} + b"></div><div class="eq" data-tex="M_3 = \mathbf{1}\big[ (o_3 + \xi_3 - y_3)^2 < (o_3 - y_3)^2 \big]"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_3} \leftarrow a_3 + \eta_3\, \xi_3 \odot M_3 \qquad b \leftarrow b + \eta_3\, \xi_3 \odot M_3"></div></div>
+<div class="val"><span class="tag">valeur obtenue, développée à la main</span><div class="eq" data-d="1" data-tex="\begin{aligned} o_3 = \;& \eta_1 (K_{13} + 1)\, \xi_1 \odot M_1 \\ & + \eta_2 (K_{23} + 1)\, \xi_2 \odot M_2 \end{aligned}"></div><div class="eq" data-tex="\textcolor{#D4537E}{a_3} = \textcolor{#D4537E}{\eta_3\, \xi_3 \odot M_3}"></div></div>
+<div class="mem">modifié : <span class="chip set" data-tex="a_1"></span><span class="chip set" data-tex="a_2"></span><span class="chip now" data-tex="a_3"></span><span class="chip now">b</span></div>
+</div>
+</div>
+<p class="why" style="margin-top:12px">Les « + 1 » viennent du biais : après chaque pas, il a reçu le même ajout que le coefficient. Avec les mêmes bruits, les deux colonnes calculent les mêmes sorties et les mêmes modulations, puisque K₁₂ = φ₁ᵀφ₂.</p>
+
+<h2>4. Après ces trois pas</h2>
+<div class="two">
+<div class="cell primal">
+<div class="eq" data-d="1" data-tex="\begin{aligned} W = \;& \textcolor{#D4537E}{\eta_1\, \xi_1 \odot M_1}\; \textcolor{#1D9E75}{\varphi_1^{\top}} \\ & + \textcolor{#D4537E}{\eta_2\, \xi_2 \odot M_2}\; \textcolor{#1D9E75}{\varphi_2^{\top}} \\ & + \textcolor{#D4537E}{\eta_3\, \xi_3 \odot M_3}\; \textcolor{#1D9E75}{\varphi_3^{\top}} \end{aligned}"></div>
+<div class="why">En mémoire, une matrice de nombres : un poids par monôme et par sortie.</div>
+</div>
+<div class="cell dual">
+<div class="eq" data-d="1" data-tex="\begin{aligned} \textcolor{#D4537E}{a_1} &= \eta_1\, \xi_1 \odot M_1 \\ \textcolor{#D4537E}{a_2} &= \eta_2\, \xi_2 \odot M_2 \\ \textcolor{#D4537E}{a_3} &= \eta_3\, \xi_3 \odot M_3 \\ b &= a_1 + a_2 + a_3 \end{aligned}"></div>
+<div class="why">En mémoire, trois vecteurs de nombres : un coefficient par exemple et par sortie.</div>
+</div>
+</div>
+<div class="key">
+<div class="eq" data-d="1" data-tex="W = \textcolor{#D4537E}{a_1}\, \textcolor{#1D9E75}{\varphi_1^{\top}} + \textcolor{#D4537E}{a_2}\, \textcolor{#1D9E75}{\varphi_2^{\top}} + \textcolor{#D4537E}{a_3}\, \textcolor{#1D9E75}{\varphi_3^{\top}}"></div>
+<div class="why">Contrairement à LMS, un coefficient ne contient pas les précédents. Après un passage, a<sub>j</sub> ne dépend que de son bruit ξ<sub>j</sub> et de sa modulation M<sub>j</sub>. Les exemples précédents n'agissent que par M<sub>j</sub>, à travers la sortie o<sub>j</sub>, et la cible y<sub>j</sub> aussi.</div>
+<div class="eq" style="margin-top:12px" data-d="1" data-tex="\begin{aligned} \hat{y}(x) &= W\, \textcolor{#1D9E75}{\varphi(x)} + b \\ &= \textcolor{#D4537E}{a_1}\, \textcolor{#1D9E75}{\varphi_1^{\top} \varphi(x)} + \textcolor{#D4537E}{a_2}\, \textcolor{#1D9E75}{\varphi_2^{\top} \varphi(x)} + \textcolor{#D4537E}{a_3}\, \textcolor{#1D9E75}{\varphi_3^{\top} \varphi(x)} + b \\ &= \textcolor{#D4537E}{a_1}\, k(x_1, x) + \textcolor{#D4537E}{a_2}\, k(x_2, x) + \textcolor{#D4537E}{a_3}\, k(x_3, x) + b \end{aligned}"></div>
+<div class="why">La sortie ŷ(x) sur un état x s'écrit sans le vert, comme pour LMS. Après l'entraînement, elle se calcule sans bruit.</div>
+</div>
+
+<h2>5. W n'est jamais mis à jour</h2>
+<p>La forme duale ne garde pas W, donc aucun pas ne le met à jour. Modifier le coefficient a<sub>ℓ</sub> revient pourtant à faire le pas de EH sur W, sans le calculer.</p>
+<div class="two">
+<div class="cell dual" style="grid-column:1 / -1">
+<div class="eq" data-d="1" data-tex="\begin{aligned} W &= \sum_j \textcolor{#D4537E}{a_j}\, \textcolor{#1D9E75}{\varphi_j^{\top}} && \text{W, s'il était formé} \\ \textcolor{#D4537E}{a_\ell} &\leftarrow a_\ell + \eta_\ell\, \xi_\ell \odot M_\ell && \text{le pas dual, sur un seul coefficient} \\ W_{\text{après}} &= \sum_{j \neq \ell} \textcolor{#D4537E}{a_j}\, \textcolor{#1D9E75}{\varphi_j^{\top}} + \textcolor{#D4537E}{(a_\ell + \eta_\ell\, \xi_\ell \odot M_\ell)}\, \textcolor{#1D9E75}{\varphi_\ell^{\top}} && \text{W, formé après ce pas} \\ &= W + \eta_\ell\, (\xi_\ell \odot M_\ell)\, \textcolor{#1D9E75}{\varphi_\ell^{\top}} && \text{le pas de EH sur W} \end{aligned}"></div>
+<div class="why">La modulation M<sub>ℓ</sub> ne demande que la sortie o<sub>ℓ</sub>, qui s'écrit avec les coefficients et le noyau. Le pas se passe donc de W, comme la prédiction. Dans le code, <code>KernelEH</code> ne forme jamais W.</div>
+</div>
+</div>
+
+<h2>6. Au second passage</h2>
+<div class="two">
+<div class="cell dual" style="grid-column:1 / -1">
+<div class="eq" data-tex="o_1 = a_1 K_{11} + a_2 K_{21} + a_3 K_{31} + b \qquad M_1' = \mathbf{1}\big[ (o_1 + \xi_1' - y_1)^2 < (o_1 - y_1)^2 \big] \qquad \textcolor{#D4537E}{a_1} \leftarrow a_1 + \eta_1\, \xi_1' \odot M_1'"></div>
+<div class="why">Quand l'exemple 1 revient, un nouveau bruit ξ<sub>1</sub>′ est tiré, et sa sortie lit les trois coefficients. Chaque coefficient cumule les bruits gardés sur son exemple, à tous les passages.</div>
+</div>
+</div>
+
+<h2>7. Le pas normalisé</h2>
+<div class="eq" data-d="1" data-tex="\eta_\ell = \frac{c}{K_{\ell\ell} + 1} \qquad \text{car } K_{\ell\ell} = \lVert \varphi_\ell \rVert^2"></div>
+<p class="why">neh est eh_np_local avec ce pas, celui de NLMS. Il est indispensable sur les monômes, dont les normes varient beaucoup plus d'un exemple à l'autre que celles des états.</p>
+
+<h2>8. En moyenne, un LMS sur une erreur déformée</h2>
+<p>Pour une sortie, notons e = o − y son erreur sans bruit. Le bruit est gardé quand il la réduit, c'est-à-dire quand ξ tombe entre 0 et −2e. En moyenne sur le bruit, le pas est donc celui de LMS, avec g(e) à la place de e :</p>
+<div class="eq" data-d="1" data-tex="\mathbb{E}_\xi\big[ \xi\, M \big] = -\, g(e), \qquad g(e) = \begin{cases} e\, |e| / \sigma & \text{si } |e| \le \sigma / 2 \\ (\sigma / 4)\, \operatorname{signe}(e) & \text{sinon} \end{cases} \qquad\quad \text{en moyenne :} \;\; \textcolor{#D4537E}{a_\ell} \leftarrow a_\ell - \eta_\ell\, g(e_\ell)"></div>
+<div class="figure meanplot">
+<div class="legend-line"><span><i style="border-color:var(--dual)"></i>g(e), le pas moyen de EH</span><span><i style="border-color:var(--text-muted);border-top-style:dashed"></i>e, le pas de LMS</span></div>
+<div id="meanplot"></div>
+<p class="why" style="margin:6px 0 0">Pour σ = 0,5. Les deux pas sont nuls à e = 0 ; ensuite, celui de EH est quadratique, puis plafonne à σ/4.</p>
+</div>
+<p class="why">Près de la cible, g(e) ≈ e|e|/σ est bien plus petit que e : le pas moyen ralentit à mesure que l'erreur diminue. Loin de la cible, il plafonne à σ/4 : une grande erreur ne pousse pas plus qu'une erreur de σ/2. Quand l'erreur est nulle, aucun bruit ne la réduit, donc M = 0 et le pas est nul. Ces moyennes sont vérifiées par simulation sur 2 millions de tirages.</p>
+
+<h2>9. Un passage ne se calcule pas d'un coup</h2>
+<p><b>Pour LMS, un passage est un système triangulaire</b> (<a href="lms_forme_duale.html">cours LMS, section 9</a>). Pour EH, la modulation M<sub>ℓ</sub> compare deux erreurs. Elle dépend des coefficients déjà modifiés par un seuil, et d'un bruit tiré à ce pas. Les pas ne sont pas linéaires en A : il n'y a pas de système à résoudre, et il faut les faire un par un.</p>
+<p class="why">Les pas s'arrêtent seulement quand toutes les erreurs d'entraînement sont nulles, puisqu'alors M = 0 pour tout bruit. C'est la limite de LMS, <span data-tex="\tilde{K} A = Y"></span>, qui n'existe que si les monômes sont plus nombreux que les exemples. Rien ne garantit que EH l'atteigne en un nombre fini de passages, puisque son pas moyen diminue comme le carré de l'erreur.</p>
+
+<h2>10. Ce que coûte chaque forme</h2>
+<p class="why">Un pas de EH fait les mêmes calculs qu'un pas de LMS, plus le tirage de m bruits et la comparaison de deux erreurs : les coûts sont ceux de LMS.</p>
+<div class="est">
+<div class="ctl">
+<div class="presets" id="presets"></div>
+<label title="dimension de l'état lu par le readout">N<input id="in-N" type="number" min="2" step="1"></label>
+<label title="nombre de passages sur les exemples">E<input id="in-E" type="number" min="1" step="1"></label>
+<label title="nombre d'exemples d'entraînement, fixé par le jeu de données">n<input id="in-n" type="text" readonly aria-readonly="true"></label>
+<label title="nombre de sorties, fixé par le jeu de données">m<input id="in-m" type="text" readonly aria-readonly="true"></label>
+</div>
+<p class="why" id="sizes"></p>
+<div class="two" id="compare"></div>
+<p id="verdict"></p>
+</div>
+
+<h2>11. Ce qui est déjà publié</h2>
+<p><b>EH et sa forme duale ont des précédents proches, mais pas cette règle en forme duale.</b> La règle vient de la perturbation des sorties et de REINFORCE ; sa forme duale rejoint REINFORCE dans un espace à noyau (2003).</p>
+<div class="legend-verdicts"><span class="verdict same">Même règle</span><span class="verdict row">Même règle, autre réglage</span><span class="verdict limit">Même famille de règles</span><span class="verdict write">Même écriture, autre règle</span></div>
+<div style="overflow-x:auto">
+<table class="biblio">
+<thead><tr><th>Publication</th><th>Ce qu'elle fait</th><th>Lien avec ce cours</th><th>Évaluée sur un réservoir</th></tr></thead>
+<tbody>
+<tr class="group"><th colspan="4">La règle EH et ses sources</th></tr>
+<tr><td><a href="https://doi.org/10.1007/BF00992696">Williams (1992)</a>, REINFORCE</td><td>Une unité bruitée, et un pas proportionnel au bruit et à la récompense, moins une base.</td><td><span class="verdict limit">Même famille de règles</span> La famille de EH : le pas suit en moyenne le gradient de la récompense.</td><td><span class="tested">Non</span></td></tr>
+<tr><td><a href="https://doi.org/10.1162/089976605774320539">Werfel, Xie et Seung (2005)</a></td><td>La perturbation des sorties contre la descente de gradient, sur un perceptron linéaire.</td><td><span class="verdict limit">Même famille de règles</span> Elle est plus lente que le gradient d'un facteur égal au nombre de sorties.</td><td><span class="tested">Non</span></td></tr>
+<tr><td><a href="https://arxiv.org/abs/q-bio/0601028">Fiete et Seung (2006)</a></td><td>Le bruit injecté est connu : la sortie sans bruit sert de base.</td><td><span class="verdict row">Même règle, autre réglage</span> La base « sample » de neh : z − z̄ = ξ exactement.</td><td><span class="tested">Non</span></td></tr>
+<tr><td><a href="https://www.jneurosci.org/content/30/25/8400">Legenstein, Chase, Schwartz et Maass (2010)</a></td><td>La règle EH : le produit de l'entrée et de la fluctuation de la sortie, modulé par la récompense.</td><td><span class="verdict row">Même règle, autre réglage</span> L'origine de EH, avec une base filtrée et une modulation continue.</td><td><span class="tested">Non</span></td></tr>
+<tr><td><a href="https://doi.org/10.1093/cercor/bhs348">Hoerzer, Legenstein et Maass (2014)</a></td><td>EH avec une modulation binaire, pour entraîner les lectures d'un réseau récurrent chaotique.</td><td><span class="verdict row">Même règle, autre réglage</span> La version « eh » du code, sur des séries temporelles lentes.</td><td><span class="tested yes">Oui : lectures d'un réseau récurrent chaotique, avec retour, sur des séries temporelles.</span></td></tr>
+<tr><td><a href="https://www.frontiersin.org/articles/10.3389/fnbot.2015.00009/full">Burms, Caluwaerts et Dambre (2015)</a></td><td>EH et une règle « décorrélée » proche de ridge, pour contrôler un robot souple.</td><td><span class="verdict row">Même règle, autre réglage</span> Leur règle de base est eh_np ; leur règle décorrélée a le pas de neh pour un essai d'un seul pas.</td><td><span class="tested yes">Oui : le corps d'un robot à tenségrité, utilisé comme réservoir.</span></td></tr>
+<tr><td><a href="https://elifesciences.org/articles/20899">Miconi (2017)</a></td><td>Une règle de type EH avec une récompense retardée, pour les poids récurrents.</td><td><span class="verdict limit">Même famille de règles</span> La même famille, appliquée aux poids récurrents plutôt qu'à la lecture.</td><td><span class="tested">Non</span></td></tr>
+<tr class="group"><th colspan="4">Règles de récompense en forme duale</th></tr>
+<tr><td><a href="https://publications.ri.cmu.edu/policy-search-in-reproducing-kernel-hilbert-space">Bagnell et Schneider (2003)</a></td><td>REINFORCE dans un espace à noyau : chaque pas ajoute un noyau centré sur l'état visité, avec un coefficient tiré de la récompense. La régularisation réduit tous les coefficients.</td><td><span class="verdict write">Même écriture, autre règle</span> La forme duale d'une règle de récompense, la plus proche trouvée. Leur politique choisit entre des actions discrètes, sur des épisodes d'un processus de décision.</td><td><span class="tested">Non</span></td></tr>
+<tr><td><a href="https://proceedings.mlr.press/v38/lever15.html">Lever et Stafford (2015)</a></td><td>Une politique dans un espace à noyau à valeurs vectorielles, apprise par le gradient de son retour.</td><td><span class="verdict write">Même écriture, autre règle</span> La même écriture, avec un dictionnaire réduit.</td><td><span class="tested">Non</span></td></tr>
+<tr class="group"><th colspan="4">Forme duale de LMS</th></tr>
+<tr><td><a href="https://www.esann.org/sites/default/files/proceedings/legacy/es1999-457.pdf">Frieß et Harrison (1999)</a>, <i>kernel Adaline</i></td><td>LMS en forme duale, en passages répétés, avec le biais.</td><td><span class="verdict write">Même écriture, autre règle</span> Le pas moyen de neh est ce pas, avec g(e) à la place de e (section 8).</td><td><span class="tested">Non</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="key" style="margin-top:12px">
+<p style="margin:0 0 6px"><b>Ce qui n'a pas été trouvé publié</b></p>
+<ul class="found">
+<li><b>La perturbation des sorties avec un coefficient par exemple</b>, sur des cibles fixes et en passages répétés. La seule forme duale trouvée d'une règle de récompense, celle de Bagnell et Schneider, porte sur des actions discrètes dans un processus de décision.</li>
+<li><b>EH sur le noyau exact des monômes</b>, ou sur tout noyau, comme lecture d'un réservoir.</li>
+<li><b>Le pas moyen g(e) de neh</b> a été calculé ici. Il n'a pas été cherché dans les publications sur la perturbation des sorties.</li>
+</ul>
+<p class="why" style="margin:6px 0 0">Ces absences viennent de recherches ciblées, pas d'une revue exhaustive. Le rapport de Bagnell et Schneider a été lu ; les autres lignes reposent sur les résumés. La dernière colonne dit si la publication évalue sa méthode sur un réservoir.</p>
+</div>
+</main>
+<script>
+// (the colors of the equations follow the theme: the hex codes of \textcolor replaced by the variables of the page)
+const themed = html => html.replace(/color:\s*#1D9E75/gi, 'color:var(--primal)').replace(/color:\s*#D4537E/gi, 'color:var(--dual)');
+document.querySelectorAll('[data-tex]').forEach(el => {
+  el.innerHTML = themed(katex.renderToString(el.dataset.tex, {displayMode: !!el.dataset.d, throwOnError: false}));
+});
+
+// ---- estimator of the costs (section 10, as in lms_forme_duale.html): the dominant term of each step, in numbers kept (8 bytes each, float64) and
+// in multiplications. N: dimension of the state, n: training examples, m: outputs, E: passes over the examples;
+// P = N (N + 1) / 2 products, D = N + P monomials of order 2 (the conventions of résultats/cout_calcul.html).
+const PRESETS = [  // (N: 500 neurons rounded up to a multiple of the input channels, 13, 12 and 20)
+  ['marron1', {N: 507, n: 10698, m: 29, E: 3000}],
+  ['JapaneseVowels', {N: 504, n: 270, m: 9, E: 3000}],
+  ['InsectSound', {N: 500, n: 25000, m: 10, E: 3000}],
+  ['SPEECHCOMMANDS', {N: 500, n: 94824, m: 35, E: 3000}],  // (v0.02, training and validation lists together as load_SPEECHCOMMANDS: 84 843 + 9 981 utterances, 20 MFCC)
+];
+const KEYS = ['N', 'E'];  // (the sizes typed in: n and m are those of the dataset)
+let dataset = 0;  // (index of the dataset in PRESETS)
+const input = key => document.getElementById('in-' + key);
+const french = (value, digits) => value.toLocaleString('fr-FR', {maximumFractionDigits: digits, minimumFractionDigits: 0});
+function count(value) {  // (a count: plain below a million, a power of 10 above)
+  if (value < 1e6) return french(Math.round(value), 0);
+  let exponent = Math.floor(Math.log10(value));
+  if (Math.round(value / 10 ** (exponent - 1)) >= 100) exponent++;  // (9,96 × 10^12 is shown as 1 × 10^13)
+  return `${french(value / 10 ** exponent, 1)} × 10<sup>${exponent}</sup>`;
+}
+function bytes(numbers) {  // (the memory of numbers float64)
+  let value = 8 * numbers, unit = 0;
+  while (value >= 1000 && unit < 4) { value /= 1000; unit++; }
+  return `${french(value, value < 10 ? 1 : 0)} ${['o', 'ko', 'Mo', 'Go', 'To'][unit]}`;
+}
+const times = ratio => french(ratio, ratio < 10 ? 1 : 0);
+function bars(rows, largest, format) {  // (rows of [name, value]: bars on a linear scale, largest the full width)
+  return rows.map(([name, value]) =>
+    `<div class="bar"><span class="name">${name}</span><span class="track"><span class="fill" style="width:${100 * value / largest}%"></span></span><span class="value">${format(value)}</span></div>`).join('');
+}
+function compared(title, left, right, format, leftAfter, rightAfter) {  // (a row of the grid: the same cost in the two forms, on the same scale; after: the lines under the bars)
+  const largest = Math.max(...left.concat(right).map(row => row[1]));
+  return `<div class="step">${title}</div>` +
+    `<div class="cell primal">${bars(left, largest, format)}${leftAfter}</div>` +
+    `<div class="cell dual">${bars(right, largest, format)}${rightAfter}</div>`;
+}
+function estimate() {
+  const v = Object.fromEntries(KEYS.map(key => [key, Math.max(1, Math.floor(+input(key).value || 1))]));
+  const {N, E} = v, {n, m} = PRESETS[dataset][1], P = N * (N + 1) / 2, D = N + P;
+  input('n').value = french(n, 0);  // (read-only fields: the sizes of the dataset)
+  input('m').value = french(m, 0);
+  const primal = {weights: D * m, rows: n * D, before: n * P, step: 2 * D * m};
+  const dual = {weights: n * m, kernel: n * n, before: 2 * n * n * N, step: n * m};
+  primal.training = primal.before + E * n * primal.step;
+  dual.training = dual.before + E * n * dual.step;
+  document.querySelectorAll('#presets button').forEach((button, i) =>
+    button.setAttribute('aria-pressed', i === dataset));
+  document.getElementById('sizes').innerHTML = `État de dimension N = ${count(N)}, donc D = N + N (N + 1) / 2 = ${count(D)} monômes d'ordre 2.`;
+  const f = formula => ` <span class="f">${formula}</span>`, total = html => `<div class="total">${html}</div>`, line = html => `<div class="line">${html}</div>`;
+  document.getElementById('compare').innerHTML =
+    '<div class="head primal">Forme primale</div><div class="head dual">Forme duale</div>' +
+    compared('Mémoire',
+             [['les poids W' + f('D m'), primal.weights], ['les monômes de tous les exemples, s\'ils sont gardés' + f('n D'), primal.rows]],
+             [['les coefficients' + f('n m'), dual.weights], ['le noyau' + f('n²'), dual.kernel]], bytes,
+             total(`Total : <b>${bytes(primal.weights)}</b>, ou <b>${bytes(primal.weights + primal.rows)}</b> avec les monômes`),
+             total(`Total : <b>${bytes(dual.weights + dual.kernel)}</b>`)) +
+    compared('Un pas, en multiplications',
+             [['la sortie, la modulation et la mise à jour' + f('2 D m'), primal.step]], [['la sortie, la modulation et la mise à jour' + f('n m'), dual.step]], count,
+             line('Il lit les D monômes de l\'exemple et modifie les D m poids.') +
+             total(`Un passage sur les n exemples : <b>${count(n * primal.step)}</b>` + f('2 n D m')),
+             line('Il lit la ligne du noyau de l\'exemple, n nombres, et modifie un coefficient, m nombres.') +
+             total(`Un passage sur les n exemples : <b>${count(n * dual.step)}</b>` + f('n² m'))) +
+    compared('Entraînement complet, en multiplications',
+             [['avant l\'entraînement : les monômes' + f('n N (N + 1) / 2'), primal.before], [`${count(E)} passages` + f('2 E n D m'), E * n * primal.step]],
+             [['avant l\'entraînement : le noyau' + f('2 n² N'), dual.before], [`${count(E)} passages` + f('E n² m'), E * n * dual.step]], count,
+             total(`Total : <b>${count(primal.training)}</b>`), total(`Total : <b>${count(dual.training)}</b>`));
+  const work = primal.training / dual.training, memory = (dual.weights + dual.kernel) / primal.weights;
+  const stored = (primal.weights + primal.rows) / (dual.weights + dual.kernel);
+  document.getElementById('verdict').innerHTML =
+    `La forme duale fait <b>${work >= 1 ? times(work) + ' fois moins' : times(1 / work) + ' fois plus'}</b> de multiplications que la forme primale. ` +
+    `Elle garde <b>${memory >= 1 ? times(memory) + ' fois plus' : times(1 / memory) + ' fois moins'}</b> de mémoire que W seul, ` +
+    `et ${stored >= 1 ? times(stored) + ' fois moins' : times(1 / stored) + ' fois plus'} que W avec les monômes de tous les exemples.`;
+}
+document.getElementById('presets').innerHTML = PRESETS.map(([name], i) => `<button type="button" data-preset="${i}">${name}</button>`).join('');
+document.getElementById('presets').addEventListener('click', event => {
+  const index = event.target.dataset.preset;
+  if (index === undefined) return;
+  dataset = +index;
+  KEYS.forEach(key => { input(key).value = PRESETS[dataset][1][key]; });
+  estimate();
+});
+KEYS.forEach(key => { input(key).value = PRESETS[0][1][key]; input(key).addEventListener('input', estimate); });
+estimate();
+
+// ---- the mean step of EH, g(e), against the step of LMS, e (section 8), with a crosshair
+(function () {
+  const sigma = 0.5, W = 620, H = 260, L = 46, R = 16, T = 12, B = 34, x0 = -1, x1 = 1, y0 = -0.6, y1 = 0.6;
+  const X = v => L + (v - x0) / (x1 - x0) * (W - L - R), Y = v => H - B - (v - y0) / (y1 - y0) * (H - T - B);
+  const g = e => Math.abs(e) <= sigma / 2 ? e * Math.abs(e) / sigma : sigma / 4 * Math.sign(e);
+  const points = Array.from({length: 401}, (_, i) => x0 + i * (x1 - x0) / 400);
+  const path = f => 'M' + points.filter(e => f(e) >= y0 && f(e) <= y1).map(e => X(e).toFixed(1) + ',' + Y(f(e)).toFixed(1)).join('L');
+  let svg = '';
+  for (const t of [-0.5, -0.25, 0, 0.25, 0.5]) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end">${french(t, 2)}</text>`;
+  for (const t of [-1, -0.5, 0, 0.5, 1]) svg += `<text x="${X(t)}" y="${H - B + 15}" text-anchor="middle">${french(t, 1)}</text>`;
+  svg += `<line class="axis" x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${H - B}"/><text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">erreur e = o − y</text>`;
+  for (const v of [-sigma / 2, sigma / 2]) svg += `<line class="mark" x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}"/>`;
+  svg += `<text x="${X(sigma / 2) + 5}" y="${T + 10}">σ/2</text><text x="${X(1) - 4}" y="${Y(sigma / 4) - 7}" text-anchor="end">plafond σ/4</text>`;
+  svg += `<path d="${path(e => e)}" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  svg += `<path d="${path(g)}" fill="none" stroke="var(--dual)" stroke-width="2"/>`;
+  svg += `<line class="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--text-muted)" style="display:none"/>`;
+  const plot = document.getElementById('meanplot');
+  plot.innerHTML = `<div class="plot" style="position:relative"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pas moyen de EH g(e) comparé au pas de LMS e, pour sigma 0,5">${svg}</svg><div class="tip" style="position:absolute;top:8px;display:none;pointer-events:none;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;padding:4px 8px;font-size:12px;line-height:1.5;white-space:nowrap;color:var(--text-secondary)"></div></div>`;
+  const chart = plot.querySelector('svg'), cross = chart.querySelector('.cross'), tip = plot.querySelector('.tip');
+  chart.addEventListener('pointermove', event => {
+    const box = chart.getBoundingClientRect();
+    const e = Math.round(Math.min(x1, Math.max(x0, x0 + ((event.clientX - box.left) / box.width * W - L) / (W - L - R) * (x1 - x0))) * 100) / 100;
+    cross.setAttribute('x1', X(e)); cross.setAttribute('x2', X(e)); cross.style.display = '';
+    tip.replaceChildren();
+    for (const [label, value] of [['e = ', e], ['g(e) = ', g(e)]]) {
+      const row = document.createElement('div'), number = document.createElement('b');
+      number.textContent = french(value, 3); number.style.color = 'var(--text-primary)';
+      row.append(label, number); tip.append(row);
+    }
+    tip.style.display = 'block';
+    const left = X(e) / W * box.width;
+    tip.style.left = (left > box.width / 2 ? left - tip.offsetWidth - 10 : left + 10) + 'px';
+  });
+  chart.addEventListener('pointerleave', () => { cross.style.display = 'none'; tip.style.display = 'none'; });
+})();
+</script>
+</body>
+</html>

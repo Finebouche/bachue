@@ -1,135 +1,341 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chants ou neurones : le rang de Φ</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Une dimension ou un exemple de plus ? De Cover à l’exactitude en test</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <style>
-:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--bg-neutral:#eceae3;--border-strong:#c3c2b7;--font-mono:ui-monospace,Menlo,Consolas,monospace}
-@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--bg-neutral:#2c2c2a;--border-strong:#444441}}
-body{background:var(--bg);color:var(--text-primary);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px 56px}
+/* the tokens of the other pages; --example and --dimension: the two additions compared (blue and orange, a pair checked
+   for color-blind readers on both surfaces) */
+:root{--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--bg:#fcfcfb;--bg-neutral:#eceae3;--border:#e1e0d9;--border-strong:#c3c2b7;--example:#2a78d6;--dimension:#eb6834}
+@media (prefers-color-scheme: dark){:root{--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--bg:#151515;--bg-neutral:#232321;--border:#2c2c2a;--border-strong:#444441;--example:#3987e5;--dimension:#d95926}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text-primary);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:24px 16px 56px}
 main{max-width:860px;margin:0 auto}
-h1{font-size:22px;font-weight:500;margin:0 0 6px}
-h2{font-size:17px;font-weight:500;margin:36px 0 6px}
-p{margin:6px 0;color:var(--text-secondary)}
-b{font-weight:500;color:var(--text-primary)}
-.eq{background:var(--bg-neutral);border-radius:8px;padding:6px 18px;margin:10px 0}
-.eq .l{padding:10px 0}
-.eq .l+.l{border-top:0.5px solid var(--border-strong)}
-.eq .l>span:not(.katex-display){display:block;font-size:14px;line-height:1.5;color:var(--text-secondary);margin-top:2px}
-.eq .katex-display{margin:2px 0;text-align:left;overflow-x:auto;overflow-y:hidden;padding:4px 0}
-.eq .katex-display>.katex{text-align:left;font-size:1.22em}
-p .katex{font-size:1.06em}
-.note{font-size:13px}
-table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums;margin:8px 0}
-th,td{padding:5px 8px;border-bottom:0.5px solid var(--border-strong);text-align:right}
-th{font-weight:500;color:var(--text-secondary);vertical-align:bottom}
-td{white-space:nowrap}
-th:first-child,td:first-child{text-align:left;white-space:normal}
-code{font-family:var(--font-mono);font-size:13px}
-ol,ul{margin:6px 0;padding-left:22px;color:var(--text-secondary)}
-li{margin:4px 0}
+h1{font-size:22px;font-weight:600;margin:0 0 6px}
+h2{font-size:17px;font-weight:600;margin:34px 0 6px}
+h3{font-size:15px;font-weight:600;margin:20px 0 4px}
+p{margin:0 0 10px}
+a{color:inherit}
+.note,caption{font-size:13px;color:var(--text-secondary);text-align:left}
+.eq{border-left:3px solid var(--border-strong);padding:8px 14px;margin:10px 0;overflow-x:auto;overflow-y:hidden}
+.eq .katex{font-size:1.04em}
+.eq .katex-display{margin:0;text-align:left}.eq .katex-display>.katex{text-align:left}
+nav{background:var(--bg-neutral);border-radius:10px;padding:12px 16px;margin:12px 0 0;font-size:14px}
+nav ol{columns:2;padding-left:22px;margin:4px 0 0}nav li{break-inside:avoid}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums;margin:8px 0 10px}
+th,td{text-align:left;padding:7px 14px 7px 0;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{font-weight:600;color:var(--text-secondary);font-size:13px}
+tbody th{font-weight:400;color:var(--text-secondary)}
+caption{padding-bottom:4px}
+details{margin:10px 0;border:1px solid var(--border);border-radius:10px;padding:8px 14px}
+details[open]{padding-bottom:10px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+.controls{display:flex;flex-wrap:wrap;gap:8px 24px;margin:10px 0;font-size:13px;color:var(--text-secondary)}
+.controls label{display:grid;gap:2px}
+input[type=range]{accent-color:var(--text-primary);width:210px}
+output{font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:600}
+/* the figures */
+.figure{background:var(--bg-neutral);border-radius:10px;padding:12px 14px;margin:12px 0}
+.figure h4{font-size:13px;font-weight:600;margin:0 0 2px}
+.figure .sub{font-size:12px;color:var(--text-secondary);margin:0 0 6px}
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text-secondary);margin:0 0 4px}
+.legend i,.tip i{display:inline-block;width:14px;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.plot{position:relative}
+.plot svg{display:block;width:100%;height:auto;background:var(--bg);border-radius:8px;touch-action:none}
+.plot text{font:11px system-ui,sans-serif;fill:var(--text-secondary)}
+.plot .grid{stroke:var(--border)}.plot .axis{stroke:var(--border-strong)}
+.plot .mark{stroke:var(--text-muted);stroke-dasharray:3 3}.plot .cross{stroke:var(--text-muted)}
+.tip{position:absolute;top:8px;pointer-events:none;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;padding:4px 8px;font-size:12px;line-height:1.5;white-space:nowrap;display:none;font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+.tip b{font-weight:600;color:var(--text-primary)}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;font-size:13px;margin-bottom:7px}
+.hbar .name{grid-column:1 / -1;color:var(--text-secondary);font-size:12px}
+.hbar .track{height:14px;border-radius:4px;background:var(--bg)}
+.hbar .fill{display:block;height:100%;min-width:2px;border-radius:4px;background:var(--example)}
+.hbar .value{font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
+@media (max-width:640px){.panels{grid-template-columns:minmax(0,1fr)}nav ol{columns:1}}
+@media print{.home-link,.controls{display:none}details{break-inside:avoid}}
 </style>
 </head>
-<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style>
-<main>
-<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>Faut-il plus de chants ou plus de neurones ?</h1>
-<p>On veut mieux prédire la phrase suivante sur des chants jamais entendus. Ajouter des chants peut aider le readout à reconnaître une régularité qui se répète d'un chant à l'autre. Ajouter des neurones peut l'aider à distinguer deux contextes qui annoncent des phrases différentes.</p>
-<p>\(\Phi \in \mathbb{R}^{T \times D}\) contient les entrées du readout : une ligne par phrase d'entraînement dont on prédit la suivante, une colonne par variable lue (un neurone, ou un produit de neurones). <b>Un chant de plus ajoute des lignes ; un neurone de plus ajoute une colonne.</b> Les cibles sont \(y \in \mathbb{R}^T\).</p>
-<div class="eq">
-<div class="l">\[\Phi = \sum_{i=1}^{r} \sigma_i\, u_i v_i^\top, \qquad \sigma_1 \ge \dots \ge \sigma_r &gt; 0, \qquad P = \sum_{i=1}^{r} u_i u_i^\top\]<span>la décomposition en valeurs singulières de \(\Phi\), et \(P\) le projecteur sur son image</span></div>
-</div>
+<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style><main>
+<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>Une dimension ou un exemple de plus&nbsp;?</h1>
+<p>Quelle est la probabilité qu’un ajout améliore l’exactitude sur de nouvelles observations&nbsp;? Le théorème de Cover donne un point de départ géométrique. Pour passer à la classification en test, il faut aussi préciser comment les classes sont produites, comment le classifieur apprend et comment l’ajout est tiré.</p>
 
-<h2>1. Le rang borne ce qu'on peut ajuster, pas la précision en test</h2>
-<div class="eq">
-<div class="l">\[r = \operatorname{rang}\Phi = \operatorname{rang}(\Phi^\top\Phi) = \operatorname{rang}(\Phi\Phi^\top) \le \min(T, D)\]<span>les deux matrices de Gram ont les mêmes \(\sigma_i^2\) non nuls</span></div>
-<div class="l">\[\hat y = \Phi \hat w \in \operatorname{Im}(\Phi), \quad \dim \operatorname{Im}(\Phi) = r\]<span>les valeurs ajustées combinent les colonnes de \(\Phi\)</span></div>
-<div class="l">\[r = T \;\Rightarrow\; P = I_T, \quad \hat y = y\]<span>sans pénalité, le readout reproduit les \(T\) cibles, quelles qu'elles soient</span></div>
-</div>
-<p>La borne compte les directions indépendantes qu'on peut ajuster sur l'entraînement. Même si les \(D\) directions sont déjà présentes, de nouveaux chants aident à mieux estimer leurs poids (section 3). Une direction de plus aide si elle distingue des suites de phrases qu'on retrouvera dans d'autres chants. Le seul rapport \(T/D\) ne donne donc aucun seuil universel de précision en test.</p>
+<nav aria-label="Sommaire"><strong>Sommaire</strong><ol><li><a href="#cover">Séparabilité de Cover</a></li><li><a href="#critere">Gain de classification</a></li><li><a href="#loi-de-la-dimension">Construction d’une dimension</a></li><li><a href="#contextes">Seuil et calcul interactif</a></li><li><a href="#gaussien">Comparaison gaussienne</a></li><li><a href="#estimation">Estimation hors échantillon</a></li><li><a href="#application">Application aux chants</a></li></ol></nav>
+<h2 id="cover">Ce que Cover permet de calculer exactement</h2>
+<p>Prenons <i>n</i> points en position générale dans ℝ<sup>d</sup>, des séparateurs linéaires passant par l’origine et des étiquettes binaires tirées indépendamment à pile ou face. Le théorème de dénombrement de Cover donne la probabilité que toutes ces étiquettes soient séparables&nbsp;:</p>
+<div class="eq" data-tex="P_{\text{sep}}(n, d) = 2^{\,1-n} \sum_{k=0}^{d-1} \binom{n-1}{k}"></div>
+<p><b>Ces <i>n</i> points sont ceux qu’on classe.</b> Le séparateur est ajusté sur eux, et il doit les classer tous sans erreur. Être séparable, c’est donc atteindre 100&nbsp;% sur les points d’entraînement eux-mêmes. Aucune observation nouvelle n’intervient.</p>
+<p>Ajoutons une coordonnée en conservant les anciennes et la position générale. Toute séparation antérieure reste possible. La différence des deux probabilités donne donc la <b>chance qu’une seule dimension rende séparable un étiquetage qui ne l’était pas</b>, avant de connaître les étiquettes&nbsp;:</p>
+<div class="eq" data-tex="P_{\text{sep}}(n, d+1) - P_{\text{sep}}(n, d) = \frac{1}{2^{\,n-1}} \binom{n-1}{d}"></div>
+<p>Un point de plus à classer agit en sens inverse. Son étiquette est une contrainte de plus, et la probabilité de séparabilité baisse&nbsp;:</p>
+<div class="eq" data-tex="P_{\text{sep}}(n+1, d) - P_{\text{sep}}(n, d) = -\frac{1}{2^{\,n}} \binom{n-1}{d-1}"></div>
+<div class="figure"><div class="panels">
+<div><h4>Probabilité que n étiquettes tirées au hasard soient séparables</h4><p class="sub">Pour d = 25 dimensions : elle vaut ½ à n = 2d points à classer.</p><div class="plot" id="cover-separable"></div></div>
+<div><h4>Effet d’un ajout sur cette probabilité</h4><p class="sub">Pour d = 25 : une dimension l’augmente, un point à classer la diminue.</p><div class="legend"><span><i style="border-color:var(--dimension)"></i>une dimension de plus</span><span><i style="border-color:var(--example)"></i>un point de plus à classer</span></div><div class="plot" id="cover-gain"></div></div>
+</div></div>
+<p>Si l’on sait déjà que les points sont inséparables, on divise cette différence par 1 − P<sub>sep</sub>(n,d), lorsque ce dénominateur est positif. En revanche, si l’étiquette du prochain point est elle aussi une pièce équilibrée indépendante de ses coordonnées et de l’entraînement, tout classifieur a une exactitude en test de ½. La probabilité d’améliorer strictement cette exactitude est alors zéro, même lorsque le gain de séparabilité est probable. <a href="https://isl.stanford.edu/~cover/papers/paper2.pdf">Cover, 1965, théorème 1</a>.</p>
 
-<h2>2. Un neurone de plus ne change l'ajustement que s'il sort de l'espace des colonnes</h2>
-<p>On ajoute une colonne \(c \in \mathbb{R}^T\), l'activité du nouveau neurone sur les \(T\) phrases.</p>
-<div class="eq">
-<div class="l">\[c \in \operatorname{Im}(\Phi) \;\Rightarrow\; \operatorname{Im}([\Phi \;\, c]) = \operatorname{Im}(\Phi)\]<span>\(c\) combine les autres colonnes : \(P\) et \(\hat y\) ne changent pas</span></div>
-<div class="l">\[c \notin \operatorname{Im}(\Phi) \;\Rightarrow\; \dim \operatorname{Im}([\Phi \;\, c]) = r + 1\]<span>\(P\) gagne une direction : l'erreur d'entraînement baisse ou reste égale</span></div>
-<div class="l">\[[\Phi \;\, c][\Phi \;\, c]^\top = \Phi\Phi^\top + c\,c^\top\]<span>avec ridge (\(\rho &gt; 0\)), le noyau change même si \(c \in \operatorname{Im}(\Phi)\), donc aussi les valeurs ajustées</span></div>
-</div>
+<p><b>Dans la suite, «&nbsp;un exemple de plus&nbsp;» change de sens.</b> Chez Cover, le point ajouté doit être classé, et il rend la séparation moins probable. À partir de la section suivante, l’exemple ajouté sert à l’entraînement, et <i>n</i> compte les exemples d’entraînement. Le score se mesure sur de nouvelles observations, qui ne sont pas comptées dans <i>n</i>. Un exemple de plus peut alors améliorer le score.</p>
 
-<h2>3. Un chant de plus réduit le bruit des poids, dès que le rang atteint D</h2>
-<p>On suppose \(y = \Phi w^\star + \varepsilon\), avec \(\mathbb{E}[\varepsilon] = 0\) et \(\operatorname{Var}(\varepsilon) = \sigma^2 I_T\), et \(r = D\).</p>
-<div class="eq">
-<div class="l">\[\hat w = (\Phi^\top\Phi)^{-1}\Phi^\top y\]<span>\(\Phi^\top\Phi\) est inversible : la solution des moindres carrés est unique</span></div>
-<div class="l">\[\hat w - w^\star = (\Phi^\top\Phi)^{-1}\Phi^\top \varepsilon\]<span>on remplace \(y\) par \(\Phi w^\star + \varepsilon\)</span></div>
-<div class="l">\[\operatorname{Var}(\hat w) = \sigma^2 (\Phi^\top\Phi)^{-1}\]<span>chaque ligne ajoutée ajoute un terme \(\varphi\varphi^\top\) à \(\Phi^\top\Phi\) : la variance baisse</span></div>
-<div class="l">\[\Phi(\hat w - w^\star) = P\,\varepsilon, \quad \mathbb{E}\lVert P\varepsilon\rVert^2 = \sigma^2 \operatorname{tr}(P) = \sigma^2 D\]<span>l'erreur sur les exemples est la projection du bruit, sur un sous-espace de rang \(D\)</span></div>
-<div class="l">\[\dfrac{1}{T}\,\mathbb{E}\,\lVert \Phi(\hat w - w^\star) \rVert^2 = \dfrac{\sigma^2 D}{T}\]<span>doubler les chants divise par deux l'erreur due au bruit ; doubler les neurones la double</span></div>
-</div>
-<p class="note">Aucune ligne ne peut augmenter le rang au-delà de \(D\). Un chant de plus n'ajoute pas de direction : il précise les poids des directions existantes.</p>
+<h2 id="critere">Un critère exact pour toute règle de classification</h2>
+<p>Fixons les données d’entraînement, le modèle courant <i>f</i> et sa règle d’apprentissage. Un ajout aléatoire <i>U</i> produit un classifieur <i>g</i><sub>U</sub>. Pour une dimension, on précise sa loi et son calcul sur les observations futures. Pour un exemple, on précise la loi du couple entrée–étiquette ajouté. Si l’entraînement est aléatoire, sa graine peut être fixée ou incluse dans <i>U</i>.</p>
+<p>Sur une nouvelle observation, notons η<sub>k</sub>(x) la probabilité réelle de la classe <i>k</i> connaissant les caractéristiques complètes. Elles comprennent la nouvelle coordonnée quand elle existe. Pour un ajout fixé <i>u</i>, on évalue les deux classifieurs sur la même population indépendante de l’entraînement. Écrivons <i>B</i><sub>u</sub> = {x&nbsp;: <i>g</i><sub>u</sub>(x) ≠ <i>f</i>(x)} pour la région où la décision change. Alors le gain d’exactitude en population vaut exactement</p>
+<div class="eq" data-tex="G(u) = \int_{B_u} \big[ \eta_{g_u(x)}(x) - \eta_{f(x)}(x) \big]\, dP_X(x) \qquad\quad q = \Pr_U\big[ G(U) > 0 \big]"></div>
+<p>En effet, conditionnellement à <i>x</i>, choisir la classe <i>k</i> réussit avec probabilité η<sub>k</sub>(x). En soustrayant les deux probabilités, toutes les observations où la décision reste identique disparaissent de l’intégrale. En binaire, chaque décision renversée pèse ainsi <b>|2η(x) − 1|</b>, avec un signe positif si elle rejoint la classe la plus probable. Un déplacement de frontière dans une région où les classes sont presque équiprobables peut donc changer beaucoup de prédictions pour un gain minime.</p>
 
-<h2>4. Avec ridge, doubler les chants revient à diviser la pénalité par deux</h2>
-<div class="eq">
-<div class="l">\[\hat y = \Phi\,(\Phi^\top\Phi + \rho I_D)^{-1}\,\Phi^\top y = \displaystyle\sum_{i \le r} \frac{\sigma_i^2}{\sigma_i^2 + \rho}\; u_i\,(u_i^\top y)\]<span>on remplace \(\Phi\) par sa décomposition : chaque direction est gardée avec un poids entre 0 et 1</span></div>
-<div class="l">\[\mathrm{df}(\rho) = \displaystyle\sum_{i \le r} \frac{\sigma_i^2}{\sigma_i^2 + \rho} \;&lt;\; r\]<span>le nombre effectif de directions ajustées</span></div>
-<div class="l">\[\tfrac{1}{T}\,\Phi^\top\Phi \to \Sigma \;\Rightarrow\; \sigma_i^2 \approx T\,\lambda_i(\Sigma)\]<span>lignes indépendantes de covariance \(\Sigma\), \(D\) fixé : une approximation, pas une égalité</span></div>
-<div class="l">\[\dfrac{\sigma_i^2}{\sigma_i^2 + \rho} \approx \dfrac{\lambda_i}{\lambda_i + \rho / T}\]<span>on divise par \(T\) : doubler \(T\) a le même effet que diviser \(\rho\) par deux</span></div>
-</div>
-<p>Un chant de plus fait donc passer au-dessus de la pénalité des directions déjà présentes, celles dont \(\lambda_i\) est proche de \(\rho/T\). Un neurone de plus change \(\Sigma\) lui-même : il ajoute une valeur propre, ou en déplace plusieurs. Les deux ajouts n'agissent pas sur la même chose.</p>
+<h3>Pourquoi les tailles seules laissent la probabilité indéterminée</h3>
+<p>Voici un contre-exemple valable à tailles d’entraînement et de représentation identiques. La classe est un bit équilibré, indépendant des anciennes coordonnées. Avec probabilité θ, le capteur ajouté révèle parfaitement la classe sur chaque observation. Sinon, il mesure un bit équilibré, indépendant de la classe. Un classifieur optimal connaissant le type du capteur passe de ½ à 1 dans le premier cas et reste à ½ dans le second. La probabilité de gain vaut <b>exactement θ</b>, pour tout θ entre 0 et 1. Dans les deux cas, la nouvelle colonne a même distribution marginale. C’est son lien avec la cible qui fait la différence.</p>
+<p>Pour un exemple de plus, imaginons deux entrées possibles, 0 et 1, dont les classes sont respectivement 0 et 1. Le classifieur mémorise les étiquettes rencontrées et répond 0 ailleurs. Après <i>n</i> observations de l’entrée 0, le prochain exemple améliore l’exactitude exactement s’il présente l’entrée 1. Sa probabilité peut prendre toute valeur de 0 à presque 1, en gardant ce même historique possible et le même algorithme. Aucun seuil fondé uniquement sur <i>n</i> et <i>d</i> ne peut donc départager les ajouts en général.</p>
 
-<h2>5. L'erreur explose quand le nombre de neurones s'approche du nombre de phrases</h2>
-<p>Pour des lignes gaussiennes de covariance \(\Sigma\) et \(T &gt; D + 1\), la matrice \((\Phi^\top\Phi)^{-1}\) suit une loi de Wishart inverse.</p>
-<div class="eq">
-<div class="l">\[\mathbb{E}\big[(\Phi^\top\Phi)^{-1}\big] = \dfrac{\Sigma^{-1}}{T - D - 1}\]<span>l'espérance de la loi de Wishart inverse</span></div>
-<div class="l">\[\mathbb{E}\big[(x^\top(\hat w - w^\star))^2\big] = \sigma^2 \operatorname{tr}\!\big(\Sigma\,\mathbb{E}[(\Phi^\top\Phi)^{-1}]\big) = \dfrac{\sigma^2 D}{T - D - 1}\]<span>l'erreur due au bruit sur un nouvel exemple \(x\), de covariance \(\Sigma\), indépendant de \(\Phi\)</span></div>
-<div class="l">\[\lVert w^\star \rVert^2 \Big(1 - \dfrac{1}{\gamma}\Big) + \dfrac{\sigma^2}{\gamma - 1}, \quad \gamma = \dfrac{D}{T} &gt; 1\]<span>au-delà, la limite de la solution de norme minimale, entrées isotropes (Hastie, Montanari, Rosset et Tibshirani 2022)</span></div>
-</div>
+<section id="loi-de-la-dimension">
+<h2>Si l’on impose comment tirer la nouvelle dimension</h2>
+<p>Écrivons la dimension ajoutée sous la forme <i>Z</i> = <i>h</i><sub>ω</sub>(<i>V</i>), où ω est tiré une fois et conservé pour l’entraînement et le test. Il importe de préciser ce que le générateur reçoit. Si <i>V</i> contient exactement les entrées déjà visibles, connaître <i>Z</i> ne change aucune probabilité de classe pour un classifieur optimal connaissant la distribution. Un readout linéaire peut cependant bénéficier d’une transformation non linéaire de ces mêmes entrées. Par exemple, pour deux bits de signe indépendants, leur produit rend leur parité directement lisible.</p>
+<h3>Le critère de gain strict pour une dimension quelconque</h3>
+<p>En classification binaire, fixons le tirage ω. Avec les anciennes entrées <i>X</i>, notons η = Pr(<i>Y</i> = 1 | <i>X</i>). Après ajout, écrivons η′ = Pr(<i>Y</i> = 1 | <i>X</i>, <i>Z</i>). L’exactitude optimale vaut ½ + 𝔼|η − ½|. Comme η = 𝔼[η′ | <i>X</i>], le gain d’exactitude optimale est positif ou nul. Il est <b>strictement positif si et seulement si</b>, pour un ensemble de valeurs de <i>X</i> de probabilité positive, η′ tombe avec probabilité positive de chaque côté de ½. C’est la condition d’inégalité stricte dans l’inégalité triangulaire conditionnelle. La probabilité cherchée pour un classifieur optimal est donc la masse des tirages ω qui vérifient ce critère. Une dimension peut préciser les probabilités sans améliorer l’exactitude si la même classe reste toujours favorite.</p>
+
+<h3>Une projection aléatoire et une probabilité calculable en test</h3>
+<p>Considérons un signal brut <i>V</i> gaussien standard de dimension trois. La vraie classe est le signe de <i>w</i>·<i>V</i>, pour une direction unitaire fixe <i>w</i>. Le classifieur de départ prédit une classe constante et réussit une fois sur deux. On lui fournit une seule mesure supplémentaire <i>Z</i> = <i>u</i>·<i>V</i>, où <i>u</i> est uniforme sur la sphère et indépendant des observations. Il peut désormais prédire soit signe(<i>Z</i>), soit son opposé.</p>
+<p>Pour une projection tirée, posons <i>r</i> = |<i>u</i>·<i>w</i>|. Une fois la meilleure orientation choisie, l’exactitude sur de nouvelles observations est <i>p</i>(<i>r</i>) = ½ + arcsin(<i>r</i>)/π. En effet, les deux séparateurs orientés diffèrent sur une fraction arccos(<i>r</i>)/π des directions du signal. En dimension trois, <i>r</i> est uniforme sur [0,1] par la formule d’aire d’une bande sphérique. <a href="https://elliotpaquette.github.io/high-dimensional-probability/lectures/14-semidefinite-relaxations.html">Identité angle–désaccord pour un signal gaussien</a>.</p>
+<div class="eq" data-tex="\text{Orientation connue :} \quad \Pr(\text{gain} > \varepsilon) = 1 - \sin(\pi \varepsilon), \qquad 0 \le \varepsilon \le \tfrac12"></div>
+<p>Le gain s’exprime ici en proportion de bonnes réponses. La chance d’un gain strict vaut 1 et celle de gagner plus de dix points vaut environ 69,1&nbsp;%. La différence tient aux projections presque orthogonales à la vraie direction&nbsp;: elles aident très peu.</p>
+<p><b>Orientation apprise sur un seul exemple étiqueté.</b> On choisit le signe qui classe cet exemple correctement. À <i>r</i> fixé, cet exemple désigne la meilleure orientation avec probabilité <i>p</i>(<i>r</i>). Le score en population passe alors de ½ à <i>p</i>(<i>r</i>). Sinon il tombe à 1 − <i>p</i>(<i>r</i>). En moyennant sur la projection et l’exemple, la probabilité de gain strict devient</p>
+<div class="eq" data-tex="\Pr(\text{gain} > 0) = \int_0^1 \Big[ \tfrac12 + \frac{\arcsin r}{\pi} \Big]\, dr = 1 - \frac{1}{\pi} \approx 68{,}2\ \%"></div>
+<p>Avec un nombre impair <i>n</i> d’exemples indépendants, la majorité choisit la meilleure orientation avec probabilité Pr[Bin(<i>n</i>, <i>p</i>(<i>r</i>)) &gt; <i>n</i>/2]. L’intégrale de cette quantité sur <i>r</i> de 0 à 1 donne la probabilité exacte d’amélioration. Elle tend vers 1 quand <i>n</i> augmente. Ces probabilités moyennent sur les entraînements et les projections possibles. Avec la même projection aléatoire mais des classes tirées à pile ou face indépendamment du signal, tout modèle reste à ½ en population&nbsp;: la loi de génération de la dimension, à elle seule, laisse le problème ouvert.</p>
+<div class="figure"><div class="panels">
+<div><h4>Chance de gagner plus de ε, orientation connue</h4><p class="sub">Presque toutes les projections aident, peu aident beaucoup.</p><div class="plot" id="projection-gain"></div></div>
+<div><h4>Chance d’un gain strict, orientation apprise sur n exemples</h4><p class="sub">Vote majoritaire, n impair : 68,2 % pour un seul exemple.</p><div class="plot" id="projection-examples"></div></div>
+</div></div>
+</section>
+
+<h2 id="contextes">Un théorème de seuil pour un modèle où les deux ajouts se comparent</h2>
+<p>Supposons qu’une observation appartienne à l’un de <i>m</i> contextes équiprobables. Chaque contexte reçoit une étiquette binaire permanente, tirée une fois à pile ou face, indépendamment des autres. Une dimension est un détecteur qui reconnaît exactement un contexte. Avec <i>d</i> détecteurs distincts, le classifieur mémorise l’étiquette de chaque contexte détectable déjà rencontré et prédit 0 partout ailleurs.</p>
+<p>On tire <i>n</i> exemples indépendants. Pour <b>+1 exemple</b>, on en tire un autre de la même population. Pour <b>+1 dimension</b>, on tire uniformément un détecteur parmi les <i>m − d</i> restants et on l’applique aussi aux exemples d’entraînement conservés. Les probabilités suivantes moyennent sur les historiques et les étiquettes, avec 0 &lt; <i>d</i> &lt; <i>m</i>. Le score est l’exactitude réelle sur un prochain contexte.</p>
+<div class="eq" data-tex="a = \Big( 1 - \frac{1}{m} \Big)^{n} \qquad\quad q_{\text{exemple}} = \frac{d}{2m}\, a \qquad\quad q_{\text{dimension}} = \tfrac12\, (1 - a)"></div>
+<p><b>Preuve.</b> Un contexte donné a une probabilité <i>a</i> d’être absent des <i>n</i> exemples. Pour qu’un exemple aide, il doit tomber dans un contexte détectable (probabilité <i>d</i>/<i>m</i>), encore absent (<i>a</i>) et de classe 1 (½). Pour qu’un détecteur aide, son contexte doit au contraire avoir déjà été observé (1 − <i>a</i>) et être de classe 1 (½). Dans les deux cas, l’ajout corrige alors ce contexte entier et laisse les autres prédictions intactes. Chaque succès rapporte exactement 1/<i>m</i> d’exactitude&nbsp;: le gain moyen est donc <i>q</i>/<i>m</i>.</p>
+<p><b>Le seuil.</b> Ici, l’exemple a davantage de chances d’aider tant que <i>n</i> est inférieur à la valeur suivante. Au-dessus, le nouveau détecteur gagne plus souvent.</p>
+<div class="eq" data-tex="n_\star = \frac{\ln(1 + d/m)}{-\ln(1 - 1/m)}"></div>
+<p>Avec peu de données, un détecteur déjà en place attend souvent son premier exemple. Avec beaucoup de données, un nouveau détecteur peut exploiter immédiatement les exemples conservés. Ce renversement repose sur trois propriétés explicites du modèle&nbsp;: l’absence de bruit d’étiquette, la spécialisation des détecteurs et l’accès aux entrées d’entraînement après l’ajout.</p>
+<details><summary>Si l’historique d’entraînement est déjà connu</summary>
+<p>La formule précédente moyenne sur des entraînements possibles. Pour l’entraînement effectivement obtenu, compter <i>v</i>, le nombre de contextes détectables encore jamais vus, et <i>h</i>, le nombre de contextes sans détecteur qui ont déjà été observés avec l’étiquette 1. Sous le même modèle, conditionnellement à l’historique brut, <b>q<sub>exemple</sub> = v/(2m)</b> et <b>q<sub>dimension</sub> = h/(m−d)</b>. Le facteur ½ concerne les étiquettes encore inconnues. Si elles étaient elles aussi fixées et connues, il suffirait de compter directement les contextes de classe 1 parmi les <i>v</i>.</p>
+</details>
+
+<h3>Explorer le seuil pour 100 contextes</h3>
+<p>Avec 50 détecteurs, l’exemple gagne plus souvent jusqu’à 40 observations incluses. Dès la 41<sup>e</sup> observation acquise, c’est la dimension supplémentaire qui a la plus grande chance d’améliorer le score.</p>
+<div class="controls">
+<label for="n">Exemples acquis <output id="nValue" for="n">40</output><input id="n" type="range" min="0" max="300" value="40"></label>
+<label for="d">Détecteurs disponibles <output id="dValue" for="d">50</output><input id="d" type="range" min="1" max="99" value="50"></label></div>
+<div class="figure"><h4>Chance de gain selon le nombre d’exemples déjà acquis</h4><p class="sub">Modèle des 100 contextes, pour le nombre de détecteurs choisi. Les deux courbes se croisent au seuil.</p><div class="legend"><span><i style="border-color:var(--example)"></i>un exemple de plus</span><span><i style="border-color:var(--dimension)"></i>un détecteur de plus</span></div><div class="plot" id="contexts"></div></div>
+<table><caption>Calcul exact dans le modèle des 100 contextes. Les gains moyens incluent les ajouts sans effet.</caption>
+<thead><tr><th>Ajout</th><th>Chance de gain</th><th>Gain moyen en points</th></tr></thead>
+<tbody><tr><th>Un exemple</th><td id="qe">16,72 %</td><td id="ge">0,1672</td></tr><tr><th>Un détecteur</th><td id="qd">16,55 %</td><td id="gd">0,1655</td></tr></tbody></table>
+<p id="threshold" aria-live="polite">Seuil théorique à 40,34 exemples.</p>
+
+<section id="gaussien">
+<h2>Comparer les deux ajouts pour un classifieur gaussien déjà entraîné</h2>
+<p>Fixons cette fois les observations d’entraînement effectivement obtenues. On compare les chances qu’un exemple supplémentaire ou une nouvelle mesure améliore strictement l’exactitude du même classifieur sur la population.</p>
+<h3>Le modèle et sa règle d’apprentissage</h3>
+<p>Les classes <i>Y</i> = ±1 sont équiprobables. Dans <i>d</i> dimensions, <i>X</i> = <i>Yμ</i> + ξ, où ξ est un bruit gaussien standard indépendant de la classe. Les exemples sont indépendants. Le classifieur estime μ par la moyenne signée <i>h</i> = (1/<i>n</i>)∑ <i>YᵢXᵢ</i> et prédit le signe de <i>h</i>·<i>X</i>. C’est un cas d’analyse discriminante gaussienne à covariance identité. <a href="https://web.stanford.edu/class/stats202/notes/Classification/LDA.html">Analyse discriminante linéaire, Stanford</a>.</p>
+<p>Écrivons <i>R</i> = ‖<i>h</i>‖ et <i>c</i> = (<i>h</i>·μ)/<i>R</i>. On suppose <i>R</i> &gt; 0 et <i>c</i> &gt; 0. Le score signé <i>Yh</i>·<i>X</i> est gaussien de moyenne <i>Rc</i> et de variance <i>R</i>². L’exactitude initiale vaut donc <b><i>F</i>(<i>c</i>)</b>, où <i>F</i> désigne la fonction de répartition de la normale standard.</p>
+<h3>Une dimension supplémentaire</h3>
+<p>Le capteur mesure <i>Z</i> = <i>Ys</i> + ε, avec un bruit gaussien standard indépendant des anciennes coordonnées et de la classe. Ses moyennes dans les deux classes sont +<i>s</i> et −<i>s</i>. Par symétrie on prend <i>s</i> ≥ 0. On applique le capteur aussi aux <i>n</i> observations conservées. Son poids estimé <i>b</i> = (1/<i>n</i>)∑ <i>YᵢZᵢ</i> suit une loi normale de moyenne <i>s</i> et de variance 1/<i>n</i>. Avec cette règle d’apprentissage, les anciens poids restent égaux à <i>h</i>.</p>
+<div class="eq" data-tex="A_+(b) = F\!\left[ \frac{Rc + sb}{\sqrt{R^2 + b^2}} \right]"></div>
+<table><caption>Poids appris pour lequel l’exactitude en population augmente strictement.</caption>
+<thead><tr><th>Signal du capteur</th><th>Condition sur le poids</th></tr></thead><tbody>
+<tr><td>s = 0</td><td>Aucun poids ne donne de gain strict.</td></tr>
+<tr><td>0 &lt; s &lt; c</td><td>0 &lt; b &lt; b<sub>max</sub>, avec b<sub>max</sub> = 2Rcs / (c² − s²).</td></tr>
+<tr><td>s ≥ c</td><td>b &gt; 0.</td></tr></tbody></table>
+<p>Une dimension faiblement informative peut dégrader le score même avec un poids du bon signe. Au-delà de <i>b</i><sub>max</sub>, le bruit qu’elle ajoute l’emporte sur le signal utile à la décision.</p>
+<details><summary>Preuve et probabilité exacte</summary>
+<p>La croissance de <i>F</i> donne la condition <i>sb</i> &gt; <i>c</i>[√(<i>R</i>² + <i>b</i>²) − <i>R</i>]. Elle exige <i>b</i> &gt; 0. Dans ce cas, les deux côtés de <i>Rc</i> + <i>sb</i> &gt; <i>c</i>√(<i>R</i>² + <i>b</i>²) sont positifs. Élever au carré et diviser par <i>b</i> donne 2<i>Rcs</i> &gt; (<i>c</i>² − <i>s</i>²)<i>b</i>. En intégrant la loi de <i>b</i> sur les intervalles du tableau, on obtient</p>
+<div class="eq" data-tex="q_{\text{dim}}(s) = \begin{cases} 0 & \text{si } s = 0 \\ F\big( \sqrt{n}\, (b_{\max} - s) \big) - F\big( -\sqrt{n}\, s \big) & \text{si } 0 < s < c \\ F\big( \sqrt{n}\, s \big) & \text{si } s \ge c \end{cases}"></div>
+<p>Si le capteur est tiré selon une loi connue, on moyenne <i>q</i><sub>dim</sub>(|<i>s</i>|) sous cette loi, sous les mêmes hypothèses d’indépendance conditionnelle. Sélectionner le capteur après avoir vu ses valeurs d’entraînement change la loi de son poids.</p></details>
+<h3>Un exemple supplémentaire</h3>
+<p>Un nouvel exemple ajoute <i>YX</i> = μ + ξ′ à la somme des entrées signées. Le vecteur appris est donc proportionnel à <i>V</i> = <i>nh</i> + μ + ξ′. Le gain est strict si <i>V</i> fait avec μ un angle plus petit que <i>h</i>.</p>
+<div class="eq" data-tex="q_{\text{ex}} = \Pr\big[ \mu \cdot V > c\, \lVert V \rVert \big], \qquad V \sim \mathcal{N}(nh + \mu,\ I)"></div>
+<p>Cette probabilité est la masse gaussienne d’un cône. Si <i>h</i> est déjà orienté dans le sens de μ, le classifieur atteint l’exactitude optimale dans les dimensions actuelles et la probabilité de l’améliorer par un exemple est nulle.</p>
+<h3>Le point de bascule dans un cas calculable</h3>
+<p>Avec μ = (1, 0), dix exemples et une moyenne signée observée <i>h</i> = (0,9&nbsp;; 0,3), l’exactitude initiale est de 82,86&nbsp;%.</p>
+<table><caption>Probabilités conditionnelles d’améliorer strictement cette exactitude.</caption><thead><tr><th>Ajout</th><th>Probabilité de gain</th></tr></thead><tbody>
+<tr><td>Un exemple</td><td>62,41&nbsp;%</td></tr><tr><td>Une dimension avec s = 0,10</td><td>25,09&nbsp;%</td></tr><tr><td>Une dimension avec s = 0,20</td><td>49,18&nbsp;%</td></tr><tr><td>Une dimension avec s = 0,30</td><td>70,55&nbsp;%</td></tr></tbody></table>
+<div class="figure"><h4>Chance de gain selon le signal s du capteur ajouté</h4><p class="sub">Dix exemples, h = (0,9 ; 0,3). Le capteur gagne plus souvent qu’un exemple au-dessus de s ≈ 0,26.</p><div class="legend"><span><i style="border-color:var(--example)"></i>un exemple de plus</span><span><i style="border-color:var(--dimension)"></i>une dimension de signal s</span></div><div class="plot" id="gaussian"></div></div>
+<p>Les probabilités sont égales à <b>s ≈ 0,2596</b> pour ce point de départ. Le capteur gagne plus souvent au-dessus du seuil. Pour comparer les gains moyens, il faudrait moyenner les différences d’exactitude, en tenant compte aussi des pertes.</p>
+<details><summary>Vérification du croisement</summary><p>Les composantes <i>V₁</i> et <i>V₂</i> sont indépendantes et de lois normales 𝒩(10, 1) et 𝒩(3, 1). La condition de gain devient <i>V₁</i> &gt; 3|<i>V₂</i>|. L’intégrale de <i>F</i>(10 − 3|<i>t</i>|) contre la densité de 𝒩(3, 1) vaut 0,62408518. Résoudre <i>q</i><sub>dim</sub>(<i>s</i>) = 0,62408518 donne 0,25960769. Ici <i>R</i> = <i>c</i>, donc <i>b</i><sub>max</sub> − <i>s</i> = <i>s</i>(<i>c</i>² + <i>s</i>²)/(<i>c</i>² − <i>s</i>²) croît pour 0 &lt; <i>s</i> &lt; <i>c</i> et le croisement est unique. Une simulation directe de 500 000 ajouts par cas a retrouvé les probabilités du tableau à moins de 0,1 point.</p></details>
+<p class="note">μ et <i>s</i> sont des paramètres de population connus pour ce calcul théorique. Une utilisation sur des données réelles doit tenir compte de l’incertitude sur leurs estimations.</p>
+</section>
+
+<h2 id="estimation">Comment approcher cette probabilité dans un problème quelconque&nbsp;?</h2>
+<p>Choisir une loi d’ajout, fixer l’entraînement initial, puis tirer plusieurs ajouts indépendants. Pour chaque ajout, comparer les deux modèles sur les mêmes observations de test et compter les erreurs corrigées <i>C</i> et introduites <i>E</i>. Le signe de <i>C − E</i> donne exactement le signe du gain sur ce lot. Si les observations sont groupées ou temporellement dépendantes, former les lots avec des unités indépendantes, par exemple des séquences entières.</p>
+<p>Un test fini peut donner le mauvais signe à un gain minuscule. On peut même <b>encadrer la probabilité en population</b> au lieu d’assimiler chaque signe observé au signe réel. Voici une borne conservatrice pour des observations de test indépendantes.</p>
+<details><summary>Un encadrement sans modèle des classes</summary>
+<p>Choisir <i>J</i> ajouts indépendants, évalués sur un lot commun de <i>M</i> observations indépendantes et tenu à l’écart de tout réglage. Pour chaque ajout, la différence appariée de réussite vaut −1, 0 ou 1. Noter <i>g</i> = (<i>C</i> − <i>E</i>)/<i>M</i> son gain empirique en proportion. Pour un risque d’erreur total α, poser</p>
+<div class="eq" data-tex="\varepsilon = \sqrt{\frac{2 \ln(4J / \alpha)}{M}}, \qquad \delta = \sqrt{\frac{\ln(4 / \alpha)}{2J}}"></div>
+<p>Soient <i>L</i> la fraction des ajouts avec <i>g</i> &gt; ε et <i>U</i> la fraction avec <i>g</i> &gt; −ε. Avec probabilité au moins 1 − α,</p>
+<div class="eq" data-tex="\max(0,\ L - \delta) \;\le\; \Pr[G > 0] \;\le\; \min(1,\ U + \delta)"></div>
+<p>En effet, l’inégalité de Hoeffding appliquée aux différences dans [−1,1], puis une borne d’union sur les <i>J</i> ajouts, donnent simultanément |<i>g</i> − <i>G</i>| ≤ ε sauf avec probabilité α/2. Les vrais gains stricts sont alors au moins aussi nombreux que les gains observés au-dessus de ε, et au plus aussi nombreux que ceux au-dessus de −ε. Une seconde application de Hoeffding, aux <i>J</i> indicatrices de gain réel, donne δ avec le risque restant α/2. Le même lot peut servir à tous les ajouts car la première étape utilise une borne d’union. Lorsque de nombreux gains sont proches de zéro, l’intervalle peut rester large&nbsp;: davantage de candidats précise la fréquence, tandis que davantage d’observations de test précise le signe de chaque gain.</p>
+</details>
+<section id="application"><h2>Application aux chants de canari</h2><details><summary>Rang, résultats de marron1 et protocole expérimental</summary>
+<h3>Ce que borne le rang</h3>
+<div class="eq" data-tex="\operatorname{rang}(\Phi) \le \min(T, D)"></div>
+<p>Chaque ligne de Φ correspond à une phrase d’entraînement pour laquelle on prédit la suivante. Il y a <i>T</i> lignes et <i>D</i> colonnes, une par variable fournie au modèle de sortie. Plusieurs phrases peuvent venir du même chant.</p>
+<p>Cette borne compte les directions indépendantes qu’on peut ajuster sur l’entraînement. Même si les <i>D</i> directions sont déjà présentes, de nouveaux chants peuvent aider à mieux estimer leurs poids. À l’inverse, une direction supplémentaire peut aider si elle distingue des suites de phrases qu’on retrouvera dans d’autres chants. Le seul rapport <i>T</i>/<i>D</i> ne donne donc aucun seuil universel de précision en test.</p>
+<h3>Sur marron1, que montre le passage aux produits&nbsp;?</h3>
 <table>
-<caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">T = 40 phrases, σ = 0,5, ‖w*‖ = 1, entrées isotropes, sans pénalité. Jusqu'à D = 38 : la formule exacte ; à partir de D = 50 : la limite de Hastie et al., une approximation à cette taille.</caption>
-<thead><tr><th>Neurones D</th><th>5</th><th>10</th><th>20</th><th>30</th><th>35</th><th>38</th><th>50</th><th>80</th><th>120</th><th>200</th></tr></thead>
-<tbody><tr><td>Erreur due au bruit sur un nouvel exemple</td><td>0,04</td><td>0,09</td><td>0,26</td><td>0,83</td><td>2,19</td><td>9,50</td><td>1,20</td><td>0,75</td><td>0,79</td><td>0,86</td></tr></tbody>
-</table>
-<p>Près de \(D = T\), un neurone de plus coûte beaucoup et un chant de plus rapporte beaucoup. Loin de ce pic, l'un comme l'autre change peu l'erreur. Avec une pénalité choisie par validation croisée, le pic disparaît en grande partie.</p>
-
-<h2>6. Sur marron1, le rang monte beaucoup, ridge gagne peu, NLMS gagne beaucoup</h2>
-<table>
-<thead><tr><th>Variables lues (500 neurones, avec fuite)</th><th>D</th><th>Rang mesuré</th><th>Cible dans l'image</th><th>Cible apprise par NLMS</th><th>Ridge</th><th>NLMS</th></tr></thead>
+<caption>Réservoirs de 500 neurones, avec fuite. Rang mesuré sur le fold 0 (7 179 prédictions d’entraînement) et précision de ridge en validation croisée.</caption>
+<thead><tr><th scope="col">Variables lues</th><th scope="col">Dimensions <i>D</i></th><th scope="col">Rang mesuré</th><th scope="col">Précision de ridge</th></tr></thead>
 <tbody>
-<tr><td>États seuls</td><td>507</td><td>507</td><td>71 %</td><td>64 %</td><td>86,1 %</td><td>81,7 %</td></tr>
-<tr><td>États et 2 080 produits tirés au hasard</td><td>2 587</td><td>2 294</td><td>85 %</td><td>81 %</td><td>86,8 %</td><td>86,1 %</td></tr>
-<tr><td>États et tous leurs produits d'ordre 2</td><td>129 285</td><td>6 764</td><td>99 %</td><td>82 %</td><td>86,8 %</td><td>86,2 %</td></tr>
+<tr><th scope="row">États seuls</th><td>507</td><td>507</td><td>86,1&nbsp;%</td></tr>
+<tr><th scope="row">États et tous leurs produits d’ordre 2</th><td>129 285</td><td>6 764</td><td>86,8&nbsp;%</td></tr>
 </tbody>
 </table>
-<p class="note">Rang et énergie de la cible mesurés sur le fold 0 (\(T = 7\,179\) phrases d'entraînement, 244 chants), avec le réservoir de chaque étude NLMS. « Cible apprise par NLMS » : \(\sum_i f_i \lVert u_i^\top Y\rVert^2 / \lVert Y\rVert^2\), avec \(f_i = \min(1, t\,\eta\,\sigma_i^2)\) pour \(t = 3\,000\) époques, une approximation de la section 4 (une descente arrêtée agit comme ridge avec \(\rho \approx 1/(\eta t)\)). Les deux dernières colonnes sont les meilleures précisions de validation croisée, chacune avec sa propre optimisation du réservoir.</p>
-<p>Le passage aux produits multiplie le rang par 13, pour 0,7 point avec ridge. Ridge semble donc disposer déjà, avec 507 directions, de presque tout ce qui généralise. NLMS gagne 4,5 points, parce que les produits aplatissent le spectre : arrêté après 3 000 époques, il n'apprend que 192 des 507 directions des états seuls, et environ 1 400 avec les produits. Cette comparaison garde 500 neurones et tous les chants : elle ne dit pas ce qu'apporterait un réservoir plus grand ou davantage de chants.</p>
-
-<h2>7. Le test qui départage chants et neurones</h2>
-<p>On choisit un point de départ : la moitié des 367 chants d'entraînement et 500 neurones. On mesure le pourcentage de phrases suivantes bien prédites sur les 92 chants test, puis on compare deux gains par rapport à ce point de départ :</p>
+<div class="figure"><h4>Rang mesuré, parmi les 7 179 prédictions d’entraînement du fold 0</h4><p class="sub">La barre pleine vaut T = 7 179, le plus grand rang possible ici.</p><div class="hbar" title="États seuls : rang 507 pour 507 dimensions"><span class="name">États seuls, D = 507</span><span class="track"><span class="fill" style="width:7.06%"></span></span><span class="value">507</span></div><div class="hbar" title="États et produits d’ordre 2 : rang 6 764 pour 129 285 dimensions"><span class="name">États et tous leurs produits d’ordre 2, D = 129 285</span><span class="track"><span class="fill" style="width:94.22%"></span></span><span class="value">6 764</span></div></div>
+<p>Le rang augmente fortement, pour un écart de <strong>0,7 point</strong> en validation. Les produits augmentent le nombre de variables lues tout en gardant 500 neurones. Cette comparaison laisse donc ouverte la question du gain qu’apporterait un réservoir plus grand ou davantage de chants.</p>
+<p class="note">Les rangs proviennent des réservoirs optimisés pour NLMS. Les scores de ridge proviennent d’optimisations distinctes.</p>
+<h3>Le test qui départage les deux</h3>
+<p>Choisir un point de départ, par exemple la moitié des chants d’entraînement disponibles et 500 neurones. Mesurer le pourcentage de phrases suivantes correctement prédites sur un même lot de chants tenus à l’écart, puis comparer deux gains par rapport à ce point de départ.</p>
 <ol>
-<li><b>Gain des chants</b> : passer de la moitié à la totalité des chants d'entraînement, avec exactement le même réservoir.</li>
-<li><b>Gain des neurones</b> : passer de 500 à 1 000 neurones, avec exactement les mêmes chants.</li>
+<li><strong>Gain des chants.</strong> Passer de la moitié à la totalité des chants d’entraînement en gardant exactement le même réservoir.</li>
+<li><strong>Gain des neurones.</strong> Passer de 500 à 1 000 neurones en gardant exactement les mêmes chants d’entraînement.</li>
 </ol>
-<p>On garde la même règle d'apprentissage et les mêmes variables lues. Les hyperparamètres sont réglés sur les seuls chants d'entraînement, et la comparaison est répétée avec plusieurs tirages de chants et plusieurs graines. Si l'un des deux doublements gagne régulièrement plus de points, c'est lui qui aide le plus à cette échelle. Si les gains sont proches au regard de leur incertitude, les mesures ne les départagent pas. Les études de 500 et de 1 000 neurones existent déjà sur tous les chants ; le gain des chants n'a pas encore été mesuré.</p>
-
-<h2>8. La chance qu'un seul ajout améliore le score</h2>
-<p>On note \(A(f)\) la probabilité que le modèle actuel \(f\) prédise correctement la phrase suivante d'un chant nouveau. À partir des mêmes chants et du même réservoir :</p>
-<div class="eq">
-<div class="l">\[q_{\text{chant}} = \Pr\big[A(f_{+\text{chant}}) &gt; A(f)\big]\]<span>un chant tiré dans la population visée, le réservoir gardé, le readout réentraîné</span></div>
-<div class="l">\[q_{\text{neurone}} = \Pr\big[A(f_{+\text{neurone}}) &gt; A(f)\big]\]<span>les connexions existantes gardées, celles du nouveau neurone tirées selon une règle fixée, le readout réentraîné</span></div>
-<div class="l">\[\Delta = 100 \times \dfrac{C - E}{M}\]<span>le gain en points sur un lot de \(M\) phrases de test : \(C\) erreurs corrigées, \(E\) nouvelles erreurs</span></div>
-</div>
-<p>Par exemple, sur 1 000 phrases, un ajout qui corrige 12 erreurs et en introduit 7 gagne 0,5 point. On répète chaque ajout depuis le même point de départ, et on rapporte la fréquence des gains stricts (\(\Delta &gt; 0\), égalités comprises dans le total) et le gain moyen, pertes comprises. Un ajout peut gagner souvent et rapporter peu. Sur un lot fixé, cette fréquence estime la chance de gagner sur ce lot ; pour de nouveaux chants, il faut répéter sur plusieurs lots de chants tenus à l'écart. Les scores agrégés de marron1 ne suffisent pas à chiffrer ces probabilités.</p>
-
-<h2>9. Deux affirmations vont plus loin que ces preuves</h2>
+<p>Garder la même règle d’apprentissage et le même type de variables lues. Régler les hyperparamètres sur les seuls chants d’entraînement et répéter la comparaison avec plusieurs tirages de chants et plusieurs initialisations.</p>
+<p>Si l’un des deux doublements gagne régulièrement plus de points, c’est celui qui améliore le plus la précision à cette échelle. Si les deux gains sont proches au regard de leur incertitude, les mesures ne permettent pas de les départager.</p>
+<h3>Quelle chance a un seul ajout d’améliorer le score&nbsp;?</h3>
+<p>Partons du modèle actuel <i>f</i>. On note <i>A</i>(<i>f</i>) la probabilité qu’il prédise correctement la phrase suivante sur des chants nouveaux. À partir des mêmes chants d’entraînement et du même réservoir initial, on définit deux probabilités.</p>
 <ul>
-<li><b>« Les dimensions ajoutées changent seulement la solution choisie parmi celles qui interpolent »</b> n'est exact que sans pénalité, ou à la limite \(\rho \to 0\). Avec \(\rho &gt; 0\), les valeurs ajustées changent à chaque colonne (section 2).</li>
-<li><b>« Passer à l'ordre 3 n'ajouterait aucune direction ajustable sur marron1 »</b> est faux sur le fold 0 : le rang de l'ordre 2 y est de 6 764, sous \(T = 7\,179\). L'ordre 3 peut donc encore ajouter jusqu'à 415 directions. Avec le \(\rho\) choisi par validation croisée, le readout n'interpole pas, et l'ordre 3 modifierait de toute façon le noyau.</li>
+<li><strong>Un chant de plus.</strong> <i>q</i><sub>chant</sub> = Pr[<i>A</i>(<i>f</i><sub>+chant</sub>) &gt; <i>A</i>(<i>f</i>)]. On tire un chant supplémentaire dans la population visée, on garde le réservoir et on réentraîne le modèle de sortie.</li>
+<li><strong>Un neurone de plus.</strong> <i>q</i><sub>neurone</sub> = Pr[<i>A</i>(<i>f</i><sub>+neurone</sub>) &gt; <i>A</i>(<i>f</i>)]. On garde les chants et les connexions existantes, on tire les connexions du neurone ajouté selon une règle fixée à l’avance, puis on réentraîne le modèle de sortie.</li>
 </ul>
+<p>Pour chaque essai, comparer les prédictions avant et après l’ajout sur les <strong>mêmes phrases de test</strong>. Si <i>C</i> erreurs sont corrigées, que <i>E</i> nouvelles erreurs apparaissent et que le lot contient <i>M</i> phrases à prédire, le gain observé en points de pourcentage vaut exactement</p>
+<div class="eq" data-tex="\Delta = 100 \times \frac{C - E}{M}"></div>
+<p>Par exemple, sur 1 000 phrases, un ajout qui corrige 12 erreurs et en introduit 7 gagne 0,5 point. Si l’ajout corrige autant d’erreurs qu’il en introduit, le score reste identique.</p>
+<p>Répéter chaque type d’ajout depuis le même point de départ. Rapporter la <strong>fréquence des gains stricts</strong> (essais où Δ &gt; 0 divisés par le nombre total d’essais, égalités comprises) et le <strong>gain moyen</strong> en points, calculé sur tous les essais, pertes comprises. Un ajout peut gagner souvent et rapporter peu de points.</p>
+<p class="note">Sur un lot de test fixé, cette fréquence estime la chance de gagner sur ce lot. Pour évaluer l’incertitude sur de nouveaux chants, répéter la comparaison sur plusieurs lots de chants entiers tenus à l’écart. Les scores agrégés de marron1 ne suffisent pas à chiffrer ces probabilités.</p></details></section>
 </main>
 <script>
-renderMathInElement(document.body, {delimiters: [{left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]});
-</script>
-</body>
-</html>
+const element = id => document.getElementById(id);
+const format = (x, digits) => x.toLocaleString('fr-FR', {minimumFractionDigits:digits, maximumFractionDigits:digits});
+const percent = digits => v => format(100 * v, digits) + ' %';
+document.querySelectorAll('[data-tex]').forEach(el => { el.innerHTML = katex.renderToString(el.dataset.tex, {displayMode: true, throwOnError: false}); });
+
+// A line chart in SVG (o: x and y ranges, ticks, series of {name, color, points, label}, dashed vertical marks vlines,
+// labelled dots), with a crosshair which snaps to the nearest point and a tooltip which lists every series.
+function lineChart(id, o) {
+  const W = o.half ? 390 : 780, H = o.half ? 230 : 270, L = 48, R = 18, T = 14, B = 38;  // (half: one of two panels side by side; one unit of the viewBox is about one pixel)
+  const [x0, x1] = o.x, [y0, y1] = o.y, fx = o.fx || (v => format(v, 0)), fy = o.fy || percent(0);
+  const X = v => L + (v - x0) / (x1 - x0) * (W - L - R), Y = v => H - B - (v - y0) / (y1 - y0) * (H - T - B);
+  let svg = '';
+  for (const t of o.yTicks) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end">${fy(t)}</text>`;
+  for (const t of o.xTicks) svg += `<text x="${X(t)}" y="${H - B + 15}" text-anchor="middle">${fx(t)}</text>`;
+  svg += `<line class="axis" x1="${L}" x2="${W - R}" y1="${Y(y0)}" y2="${Y(y0)}"/><text x="${(L + W - R) / 2}" y="${H - 5}" text-anchor="middle">${o.xLabel}</text>`;
+  for (const v of o.vlines || []) svg += `<line class="mark" x1="${X(v.x)}" x2="${X(v.x)}" y1="${T}" y2="${Y(y0)}"/><text x="${X(v.x) + (v.left ? -5 : 5)}" y="${T + 9 + (v.dy || 0)}" text-anchor="${v.left ? 'end' : 'start'}">${v.label}</text>`;
+  for (const serie of o.series) {
+    svg += `<path d="M${serie.points.map(([a, b]) => X(a).toFixed(1) + ',' + Y(b).toFixed(1)).join('L')}" fill="none" stroke="var(${serie.color})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (serie.label) svg += `<text x="${X(serie.label.x)}" y="${Y(serie.label.y) + (serie.label.dy || -7)}" text-anchor="${serie.label.anchor || 'end'}">${serie.name}</text>`;
+  }
+  for (const dot of o.dots || []) svg += `<circle cx="${X(dot.x)}" cy="${Y(dot.y)}" r="4.5" fill="var(${dot.color})" stroke="var(--bg)" stroke-width="2"/><text x="${X(dot.x) + (dot.left ? -9 : 9)}" y="${Y(dot.y) + (dot.dy || 4)}" text-anchor="${dot.left ? 'end' : 'start'}">${dot.label}</text>`;
+  const plot = element(id);
+  plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label}">${svg}<line class="cross" y1="${T}" y2="${Y(y0)}" style="display:none"/></svg><div class="tip"></div>`;
+  const chart = plot.firstChild, cross = chart.querySelector('.cross'), tip = plot.lastChild;
+  chart.addEventListener('pointermove', event => {
+    const box = chart.getBoundingClientRect(), pointer = (event.clientX - box.left) / box.width * W;
+    const value = Math.min(x1, Math.max(x0, x0 + (pointer - L) / (W - L - R) * (x1 - x0)));
+    const nearest = serie => serie.points.reduce((best, point) => Math.abs(point[0] - value) < Math.abs(best[0] - value) ? point : best);
+    const at = nearest(o.series[0])[0];
+    cross.setAttribute('x1', X(at)); cross.setAttribute('x2', X(at)); cross.style.display = '';
+    tip.replaceChildren();
+    const head = document.createElement('div'); head.textContent = o.xName + ' = ' + fx(at); tip.append(head);
+    for (const serie of o.series) {
+      const row = document.createElement('div'), key = document.createElement('i'), number = document.createElement('b');
+      key.style.borderColor = `var(${serie.color})`; number.textContent = (o.ft || fy)(nearest(serie)[1]);
+      row.append(key, number, ' ' + serie.name); tip.append(row);
+    }
+    tip.style.display = 'block';
+    const left = X(at) / W * box.width;
+    tip.style.left = (left > box.width / 2 ? left - tip.offsetWidth - 10 : left + 10) + 'px';
+  });
+  chart.addEventListener('pointerleave', () => { cross.style.display = 'none'; tip.style.display = 'none'; });
+}
+const range = (from, to, step = 1) => Array.from({length: Math.floor((to - from) / step + 1e-9) + 1}, (_, i) => from + i * step);
+
+// ---- Cover: P_sep(n, d) = Pr[Bin(n - 1, 1/2) <= d - 1], and the gain of one more dimension, Pr[Bin(n - 1, 1/2) = d]
+function binomialHalf(N) {  // (the probabilities of Bin(N, 1/2))
+  const pmf = [0.5 ** N];
+  for (let k = 0; k < N; k++) pmf.push(pmf[k] * (N - k) / (k + 1));
+  return pmf;
+}
+const D = 25, counts = range(1, 100);
+const separable = counts.map(n => [n, binomialHalf(n - 1).slice(0, D).reduce((a, b) => a + b, 0)]);
+const added = counts.map(n => [n, binomialHalf(n - 1)[D] || 0]);
+const removed = counts.map(n => [n, -(binomialHalf(n - 1)[D - 1] || 0) / 2]);  // (one more point to classify: -C(n - 1, d - 1) / 2^n)
+lineChart('cover-separable', {half: true, x: [1, 100], y: [0, 1], xTicks: [1, 25, 50, 75, 100], yTicks: [0, 0.5, 1], xLabel: 'nombre de points n', xName: 'n', ft: percent(1),
+  label: 'Probabilité de séparabilité de Cover selon le nombre de points, pour 25 dimensions', series: [{name: 'séparable', color: '--example', points: separable}],
+  vlines: [{x: 2 * D, label: 'n = 2d'}]});
+lineChart('cover-gain', {half: true, x: [1, 100], y: [-0.06, 0.12], xTicks: [1, 25, 50, 75, 100], yTicks: [-0.06, 0, 0.06, 0.12], xLabel: 'nombre de points n', xName: 'n', ft: percent(2),
+  label: 'Variation de la probabilité de séparabilité pour une dimension de plus et pour un point de plus, selon le nombre de points',
+  series: [{name: 'une dimension de plus', color: '--dimension', points: added}, {name: 'un point de plus à classer', color: '--example', points: removed}],
+  vlines: [{x: 2 * D, label: 'n = 2d', left: true}]});
+
+// ---- random projection: Pr(gain > eps) = 1 - sin(pi eps), and the chance of a strict gain after a majority vote of n examples
+lineChart('projection-gain', {half: true, x: [0, 0.5], y: [0, 1], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [0, 0.5, 1], xLabel: 'gain ε, en points d’exactitude', xName: 'ε',
+  fx: v => format(100 * v, 0), ft: percent(1), label: 'Probabilité qu’une projection aléatoire gagne plus de epsilon',
+  series: [{name: 'chance de gagner plus de ε', color: '--dimension', points: range(0, 0.5, 0.005).map(e => [e, 1 - Math.sin(Math.PI * e)])}],
+  dots: [{x: 0.1, y: 1 - Math.sin(0.1 * Math.PI), color: '--dimension', label: '69,1 % pour 10 points'}]});
+function majority(n) {  // (integral over r of Pr[Bin(n, 1/2 + arcsin(r) / pi) > n / 2], midpoint rule)
+  let total = 0;
+  const steps = 400;
+  for (let i = 0; i < steps; i++) {
+    const p = 0.5 + Math.asin((i + 0.5) / steps) / Math.PI;
+    let term = (1 - p) ** n, tail = 0;
+    for (let k = 0; k <= n; k++) { if (k > n / 2) tail += term; term *= (n - k) / (k + 1) * p / (1 - p); }
+    total += tail / steps;
+  }
+  return total;
+}
+const votes = range(1, 51, 2).map(n => [n, majority(n)]);
+lineChart('projection-examples', {half: true, x: [1, 51], y: [0.5, 1], xTicks: [1, 11, 21, 31, 41, 51], yTicks: [0.5, 0.75, 1], xLabel: 'nombre d’exemples étiquetés n', xName: 'n', ft: percent(1),
+  label: 'Probabilité de gain strict selon le nombre d’exemples qui fixent l’orientation', series: [{name: 'gain strict', color: '--dimension', points: votes}],
+  dots: [{x: 1, y: votes[0][1], color: '--dimension', label: '68,2 %'}]});
+
+// ---- Gaussian classifier: mu = (1, 0), n = 10, h = (0.9, 0.3), so R = c = sqrt(0.9)
+function normal(z) {  // (the standard normal distribution function, Abramowitz and Stegun 7.1.26)
+  const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x);
+  const erf = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return z >= 0 ? 0.5 * (1 + erf) : 0.5 * (1 - erf);
+}
+const C = Math.sqrt(0.9), EXAMPLE = 0.62408518, CROSSING = 0.25960769;
+const sensor = s => s <= 0 ? 0 : s >= C ? normal(Math.sqrt(10) * s) : normal(Math.sqrt(10) * (2 * C * C * s / (C * C - s * s) - s)) - normal(-Math.sqrt(10) * s);
+lineChart('gaussian', {x: [0, 0.6], y: [0, 1], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6], yTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: 'signal s du capteur ajouté', xName: 's',
+  fx: v => format(v, 2), ft: percent(1), label: 'Probabilité de gain d’une dimension selon son signal, comparée à celle d’un exemple',
+  series: [{name: 'un exemple de plus', color: '--example', points: range(0, 0.6, 0.005).map(s => [s, EXAMPLE]), label: {x: 0.6, y: EXAMPLE, dy: 14}},
+           {name: 'une dimension de signal s', color: '--dimension', points: range(0, 0.6, 0.005).map(s => [s, sensor(s)]), label: {x: 0.6, y: sensor(0.6), dy: 15}}],
+  dots: [{x: CROSSING, y: EXAMPLE, color: '--dimension', label: 's ≈ 0,26', left: true, dy: -8}]});
+
+// ---- contexts: the two chances of gain, for the sliders
+function update() {
+  const m = 100;
+  const n = Number(element('n').value);
+  const d = Number(element('d').value);
+  const absent = (1 - 1/m) ** n;
+  const example = (d / (2*m)) * absent;
+  const dimension = (1 - absent) / 2;
+  element('nValue').value = n;
+  element('dValue').value = d;
+  element('qe').textContent = format(100*example, 2) + ' %';
+  element('qd').textContent = format(100*dimension, 2) + ' %';
+  element('ge').textContent = format(100*example/m, 4);
+  element('gd').textContent = format(100*dimension/m, 4);
+  const boundary = Math.log1p(d/m) / -Math.log1p(-1/m);
+  element('threshold').textContent = 'Seuil théorique à ' + format(boundary, 2) + ' exemples.';
+  const acquired = range(0, 300), absentAt = k => (1 - 1/m) ** k;
+  lineChart('contexts', {x: [0, 300], y: [0, 0.5], xTicks: [0, 50, 100, 150, 200, 250, 300], yTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], xLabel: 'exemples déjà acquis n', xName: 'n', ft: percent(2),
+    label: 'Chance de gain d’un exemple et d’un détecteur de plus selon le nombre d’exemples acquis',
+    series: [{name: 'un exemple de plus', color: '--example', points: acquired.map(k => [k, d / (2*m) * absentAt(k)]), label: {x: 300, y: d / (2*m) * absentAt(300), dy: -7}},
+             {name: 'un détecteur de plus', color: '--dimension', points: acquired.map(k => [k, (1 - absentAt(k)) / 2]), label: {x: 300, y: (1 - absentAt(300)) / 2, dy: 15}}],
+    vlines: [{x: boundary, label: 'seuil', left: boundary > 150, dy: 0}, {x: n, label: 'n = ' + n, left: n > 150, dy: 14}]});
+}
+element('n').addEventListener('input', update);
+element('d').addEventListener('input', update);
+update();
+</script></body></html>

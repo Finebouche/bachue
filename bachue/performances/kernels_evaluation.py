@@ -18,7 +18,7 @@ import pandas as pd
 from bachue.common import OUTPUTS_DIR
 from bachue.hpo.kernel_study import KERNELS, instance_rows, kernel_of, song_rows, train_rows
 from bachue.hpo.studies import best_trial, instances_data, next_phrase_data, study_name_of
-from bachue.models.kernel_ridge import KernelRidge
+from bachue.models.readout_rules.kernel_ridge import KernelRidge
 from bachue.models.volterra_kernel import clipped, max_norm, volterra_gram
 from bachue.settings import DATASET_NAME, KERNEL, STUDY_KIND, TASK
 

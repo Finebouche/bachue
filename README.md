@@ -19,11 +19,12 @@ evaluations and the analyses are separate.
   `bachue/datasets/datasets/` (not tracked): downloaded at their first use (the audio of marron1 from Zenodo, the
   datasets of hag), except the corrected annotations of marron1, not published yet, to copy by hand into
   `bachue/datasets/datasets/marron1/annotations/` (from our computer to PlaFRIM, for instance).
-- `bachue/models/`: the reservoirs, from hag (`reservoirs.py`); the readouts trained online, `readout_rules/` (LMS and
-  NLMS, recursive least squares with the bias as the weight of a constant input, the exploratory Hebbian rule and its
-  versions, their dual forms on the monomials, and `training.py`: a readout trained by a rule from its label
-  `<rule>`, `<rule>:2` or `<rule>:<selection>`); the generalized readout of order 2 (`generalized_readout.py`); the
-  selections of products of degree 2 (`product_selection.py`: random pairs, principal components, linear scores,
+- `bachue/models/`: the reservoirs, from hag (`reservoirs.py`); the rules which train a readout, `readout_rules/` (LMS
+  and NLMS, recursive least squares with the bias as the weight of a constant input, the exploratory Hebbian rule and
+  its versions, their dual forms on the monomials, the ridge readouts (`ridge_readouts.py`), the generalized readout
+  of order 2 (`generalized_readout.py`), the
+  ridge regression on a kernel (`kernel_ridge.py`), and `training.py`: a readout trained by a rule from its label
+  `<rule>`, `<rule>:2` or `<rule>:<selection>`); the selections of products of degree 2 (`product_selection.py`: random pairs, principal components, linear scores,
   published alternatives).
 - `bachue/tasks/`: the prediction of the next phrase (`next_phrase.py`: prediction points, readouts, metrics), the
   phrase boundaries, and the classification of instances.

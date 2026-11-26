@@ -127,13 +127,15 @@ class GeneralizedRidge(ParallelNode):
             F -= self.feature_mean
             gram = F.T @ F
             projected = F.T @ Yc
-        else:
+        elif self.fitted_solver == "dual":
             self.samples = X
             gram = monomial_kernel(X, X, self.order)
             if self.fit_bias:  # kernel of the centered monomials
                 self.kernel_column_means, self.kernel_mean = gram.mean(axis=0), gram.mean()
                 gram += self.kernel_mean - self.kernel_column_means[:, None] - self.kernel_column_means[None]
             projected = Yc
+        else:
+            raise ValueError(f"Unknown solver: must be 'auto', 'primal' or 'dual'.")
         self.eigenvalues, self.eigenvectors = np.linalg.eigh(gram)
         self.eigenvalues = np.maximum(self.eigenvalues, 0)  # (rounding errors of a positive semidefinite matrix)
         self.projected = self.eigenvectors.T @ projected

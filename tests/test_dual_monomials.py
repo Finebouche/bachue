@@ -1,10 +1,11 @@
 import numpy as np
 import pytest
 
-from bachue.models.generalized_readout import monomials
+from bachue.models.readout_rules.generalized_readout import monomials
 from bachue.models.readout_rules.eh import EH
-from bachue.models.readout_rules.kernel import KernelEH, KernelLMS
+from bachue.models.readout_rules.eh_dual import KernelEH
 from bachue.models.readout_rules.lms import LMS
+from bachue.models.readout_rules.lms_dual import KernelLMS
 
 
 def data(rng, n=80, d=6, k=3):
@@ -18,12 +19,13 @@ def centered_monomials(X, X_test, order):
     return F - mean, F_test - mean
 
 
+@pytest.mark.parametrize("at_once", [False, True])
 @pytest.mark.parametrize("order", [1, 2, 3])
-def test_kernel_lms_matches_nlms_on_the_monomials(order):
+def test_kernel_lms_matches_nlms_on_the_monomials(order, at_once):
     rng = np.random.default_rng(0)
     (X, Y), (X_test, _) = data(rng), data(rng, n=20)
     F, F_test = centered_monomials(X, X_test, order)
-    dual, primal = KernelLMS(X, order, learning_rate=0.3), LMS(learning_rate=0.3, normalized=True)
+    dual, primal = KernelLMS(X, order, learning_rate=0.3, at_once=at_once), LMS(learning_rate=0.3, normalized=True)
     for _ in range(3):
         rows = rng.permutation(len(X))
         dual.partial_fit(Y, rows)

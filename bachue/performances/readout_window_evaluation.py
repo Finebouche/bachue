@@ -35,7 +35,7 @@ from bachue.common import OUTPUTS_DIR, load_dataset, pretrain_phrases
 from bachue.hpo.readout_window_study import choose_ridges
 from bachue.hpo.studies import best_trial, study_name_of
 from bachue.models.reservoirs import ESN_MODELS, HAG_MODELS, PURE_MODELS, build, parts
-from bachue.models.ridge_readouts import READOUT_ORDER, fit_readout
+from bachue.models.readout_rules.ridge_readouts import READOUT_ORDER, fit_readout
 from bachue.settings import CALLS, DATASET_NAME, HPO_READOUT, STUDY_PREFIX, TAIL_HPO, TASK
 from bachue.tasks.next_phrase import (BASE_READOUT, READOUTS, START, decision_of, metrics, point_data, prepare,
                                       readout_name, readout_of_params, training_of)

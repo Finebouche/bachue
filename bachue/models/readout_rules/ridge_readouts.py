@@ -1,12 +1,12 @@
 """
 Ridge readouts fitted on rows and their labels: reservoirpy's Ridge (solver BACHUE_RIDGE_SOLVER, default "svd":
 the singular value decomposition of the centered states, stable with the smallest coefficients) or, with
-BACHUE_READOUT_ORDER=n (n >= 2), the generalized readout of order n (bachue.models.generalized_readout).
+BACHUE_READOUT_ORDER=n (n >= 2), the generalized readout of order n (generalized_readout, in this folder).
 """
 
 from reservoirpy.nodes import Ridge
 
-from bachue.models.generalized_readout import GeneralizedRidge
+from bachue.models.readout_rules.generalized_readout import GeneralizedRidge
 from bachue.settings import env
 
 READOUT_ORDER = int(env("BACHUE_READOUT_ORDER", "1"))  # 1: linear ridge readout, n: generalized readout

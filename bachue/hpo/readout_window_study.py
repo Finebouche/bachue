@@ -28,7 +28,7 @@ from sklearn.model_selection import KFold
 from bachue.common import RIDGES, pretrain_phrases
 from bachue.hpo.studies import CV_SEED, FOLD_SEED, reservoir_parameters, run_study
 from bachue.models.reservoirs import build
-from bachue.models.ridge_readouts import fitted_readouts
+from bachue.models.readout_rules.ridge_readouts import fitted_readouts
 from bachue.settings import HPO_RULE, N_FOLDS
 from bachue.tasks.next_phrase import READOUTS, decision_of, point_data, training_of
 

@@ -16,8 +16,9 @@ The two versions differ only by the learning rate eta (rules of bachue.performan
     epsilon = 1), stable for a learning rate below 2 whatever the norms of the rows. In reservoir computing, the same
     step is in the BPDC rule of Steil (2004, as a decorrelation, with a backpropagated error term), and an NLMS
     readout of an echo state network is evaluated by Yuenyong (2014, PhD thesis, Tokyo Tech: worse than RLS).
-  - dual=True (lms_epoch, bachue.models.readout_rules.kernel): the same rule on the features of a kernel, written on
-    the coefficients of the training rows: kernel LMS (Liu, Pokharel & Principe 2008), normalized in "nlms:<n>".
+The same rule on the features of a kernel, written on the coefficients of the training rows ("nlms:<n>"), is in
+bachue.models.readout_rules.lms_dual (KernelLMS). The learning rate of each row (row_rates) is shared with it and
+with eh: bachue.models.readout_rules._utils.
 
 Example (rows of all the training songs, the order of the rows at each epoch):
     >>> readout = LMS(learning_rate=1e-3)
@@ -25,34 +26,23 @@ Example (rows of all the training songs, the order of the rows at each epoch):
     ...     readout.partial_fit(X, Y, rng.permutation(len(X)))
     >>> scores = readout.run(X_test)
 """
-from functools import partial
-
 import jax
 import jax.numpy as jnp
 import numpy as np
 
+from bachue.models.readout_rules._utils import row_rates
+
 jax.config.update("jax_enable_x64", True)  # float64, to match reservoirpy
 
 
-@partial(jax.jit, static_argnames=("dual",))
-def lms_epoch(W, b, X, Y, order, rates, dual=False):
-    """(W, b) after the LMS steps on the rows order of (X, Y), the learning rate of row i rates[i]. dual: the rule in
-    its dual form, X the kernel of the training rows (n, n) and W the coefficients of the rows (n, outputs), the
-    weights sum_j phi(x_j) W[j] on the features phi of the kernel (bachue.models.readout_rules.kernel): the update
-    -eta phi(x_i) e^T of the weights is that of the coefficient of row i."""
+@jax.jit
+def lms_epoch(W, b, X, Y, order, rates):
+    """(W, b) after the LMS steps on the rows order of (X, Y), the learning rate of row i rates[i]."""
     def step(carry, i):
         W, b = carry
         error = X[i] @ W + b - Y[i]
-        W = W.at[i].add(-rates[i] * error) if dual else W - rates[i] * jnp.outer(X[i], error)
-        return (W, b - rates[i] * error), None
+        return (W - rates[i] * jnp.outer(X[i], error), b - rates[i] * error), None
     return jax.lax.scan(step, (W, b), order)[0]
-
-
-def row_rates(learning_rate, squared_norms, normalized):
-    """Learning rate of each row: learning_rate (LMS, EH), or learning_rate / (squared norm + 1) (normalized: NLMS,
-    and the step of neh)."""
-    squared_norms = jnp.asarray(squared_norms)
-    return learning_rate / (squared_norms + 1) if normalized else jnp.full(squared_norms.shape, learning_rate)
 
 
 class LMS:
