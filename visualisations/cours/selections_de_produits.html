@@ -59,9 +59,9 @@ table.mx td.us small{color:#185FA5}table.mx td.us span{color:var(--text-secondar
 details.notes{margin:6px 0 12px}details.notes summary{cursor:pointer;font-size:13px;color:var(--text-secondary)}
 </style>
 </head>
-<body>
+<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style>
 <main>
-<h1>Le readout d'ordre 2 complet et ses deux formes</h1>
+<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>Le readout d'ordre 2 complet et ses deux formes</h1>
 <p class="note">Sur marron1, un fold d'entraînement a T ≈ 6 700 lignes : une par phrase des chants d'entraînement, avec l'état du réservoir à la fin de la phrase et, pour cible, l'étiquette de la phrase suivante parmi 29 classes. L'état x a N = 507 valeurs, une par neurone. Le readout d'ordre 2 complet (règle <code>ridge:2</code>) lit ses D = 129 285 monômes : ces 507 valeurs et leurs 128 778 produits x<sub>i</sub> x<sub>j</sub> avec i ≤ j. C'est une régression ridge sur Φ, la matrice T × D des monômes centrés. Elle a deux formes, qui donnent les mêmes poids pour ρ &gt; 0 :</p>
 <p class="note" style="font-family:var(--font-mono);color:var(--text-primary)">W = (Φ<sup>⊤</sup> Φ + ρ I)<sup>−1</sup> Φ<sup>⊤</sup> Y = Φ<sup>⊤</sup> (Φ Φ<sup>⊤</sup> + ρ I)<sup>−1</sup> Y</p>
 <svg viewBox="0 0 680 250" role="img" aria-label="Les matrices des deux formes à la même échelle : 129 285 de côté pour la forme primale, 6 700 pour la forme duale" style="width:100%;height:auto;display:block;margin:0 0 10px">

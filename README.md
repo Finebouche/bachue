@@ -53,7 +53,7 @@ evaluations and the analyses are separate.
   all its studies, `marron1_db.sqlite3`, `japanese_vowels_db.sqlite3`; `bachue/hpo/studies.py`), `performances/` (the
   result CSVs of the final evaluations), `analysis/` (paired comparisons, diagnostics), both with one subfolder per dataset
   (`marron1/`, `japanese_vowels/`) and `figures/` (figures made by the code of a study).
-- `visualisations/`: the HTML pages, `cours/` (explanations: the kernel trick, the selections of products) and
+- `visualisations/`: the HTML pages, `cours/` (explanations and state of the art: the kernel trick, the selections of products) and
   `résultats/` (the results: the studies of the selections, the cost of computation, the rank of Φ), listed in
   `visualisations/index.html`.
 

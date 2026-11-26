@@ -20,7 +20,7 @@ select{font:inherit;font-size:15px;color:var(--text-primary);background:var(--bg
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-secondary);margin:0 0 4px}
 .lg span{display:flex;align-items:center;gap:5px}
 #best{font-size:13px;color:var(--text-secondary);margin:0 0 6px}
-.cv{position:relative}
+.cv{position:relative}.ds{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;margin-top:10px;font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden}.ds b{font-weight:600;color:var(--text-primary)}.ds span{background:rgba(127,127,127,.12);border-radius:6px;padding:1px 7px;overflow:hidden;text-overflow:ellipsis}.ds b{margin-right:2px}.ds i{font-style:normal;opacity:.6}
 code{font-family:var(--font-mono);font-size:12px}
 .ct label.cb{flex-direction:row;align-items:center;gap:6px;align-self:flex-end;padding-bottom:8px}
 .ct label.cb input{width:auto;margin:0}
@@ -30,9 +30,9 @@ a{color:#185FA5}
 @media (prefers-color-scheme: dark){a{color:#85B7EB}}
 </style>
 </head>
-<body>
+<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style>
 <main>
-<h1>Études des réservoirs par sélection de produits et par règle</h1>
+<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>Études des réservoirs par sélection de produits et par règle</h1>
 <p class="note"><span id="what">Meilleure exactitude de validation croisée de chaque étude HPO : un maximum sur ses essais, pas un score de test.</span> <span id="date"></span> Mise à jour : <code>python -m bachue.analysis.studies_figure</code>.</p>
 <div class="panel">
 <div class="ct">
@@ -47,10 +47,11 @@ a{color:#185FA5}
 <h2 id="title" hidden></h2>
 <div id="best" hidden></div>
 <div class="cv" id="frame"><canvas id="chart" role="img"></canvas></div>
+<div class="ds" id="dataset-info"></div>
 </div>
 </main>
 <script id="data" type="application/json">
-{"date":"2026-11-25 15:56","n_trials":400,"rows":{"marron1":10698,"japanese_vowels":270,"insect_sound":25000},"outputs":{"marron1":29,"japanese_vowels":9,"insect_sound":10},"test_rows":{"japanese_vowels":370,"insect_sound":25000},"studies":[["insect_sound",0,"ridge","half_squares","mean_hag",500,71.05,412],
+{"date":"2026-11-25 17:58","n_trials":400,"rows":{"marron1":10698,"japanese_vowels":270,"insect_sound":25000},"outputs":{"marron1":29,"japanese_vowels":9,"insect_sound":10},"test_rows":{"japanese_vowels":370,"insect_sound":25000},"studies":[["insect_sound",0,"ridge","half_squares","mean_hag",500,71.05,412],
 ["insect_sound",0,"ridge","half_squares","random_ee",500,67.53,412],
 ["insect_sound",0,"ridge","half_squares","random_ei",500,69.11,412],
 ["insect_sound",0,"ridge","half_squares","var_hag",500,70.74,412],
@@ -1128,6 +1129,10 @@ a{color:#185FA5}
 ["japanese_vowels",0,"eh_np_local","leverage:2080","random_ee",500,96.49,10,0.25],
 ["japanese_vowels",0,"eh_np_local","leverage:2080","random_ei",500,98.41,10,0.24],
 ["japanese_vowels",0,"eh_np_local","leverage:2080","var_hag",500,97.68,10,0.32],
+["japanese_vowels",0,"eh_np_local","linear","mean_hag",500,98.14,10,0.55],
+["japanese_vowels",0,"eh_np_local","linear","random_ee",500,94.05,10,0.67],
+["japanese_vowels",0,"eh_np_local","linear","random_ei",500,97.68,10,0.23],
+["japanese_vowels",0,"eh_np_local","linear","var_hag",500,98.7,10,0.31],
 ["japanese_vowels",0,"eh_np_local","maclaurin:2080","mean_hag",500,97.49,10,0.34],
 ["japanese_vowels",0,"eh_np_local","maclaurin:2080","random_ee",500,96.19,10,0.45],
 ["japanese_vowels",0,"eh_np_local","maclaurin:2080","random_ei",500,97.62,10,0.52],
@@ -1180,6 +1185,14 @@ a{color:#185FA5}
 ["japanese_vowels",0,"eh_np_local","weights_low:64","random_ee",500,95.97,10,0.55],
 ["japanese_vowels",0,"eh_np_local","weights_low:64","random_ei",500,96.46,10,1.02],
 ["japanese_vowels",0,"eh_np_local","weights_low:64","var_hag",500,97.08,10,0.75],
+["japanese_vowels",0,"neh","linear","mean_hag",500,97.86,10,0.62],
+["japanese_vowels",0,"neh","linear","random_ee",500,92.84,10,0.91],
+["japanese_vowels",0,"neh","linear","random_ei",500,97.65,10,0.31],
+["japanese_vowels",0,"neh","linear","var_hag",500,98.32,10,0.51],
+["japanese_vowels",0,"neh","order2","mean_hag",500,95.19,10,0.47],
+["japanese_vowels",0,"neh","order2","random_ee",500,94.49,10,0.56],
+["japanese_vowels",0,"neh","order2","random_ei",500,94.32,10,0.64],
+["japanese_vowels",0,"neh","order2","var_hag",500,96.57,10,0.74],
 ["japanese_vowels",0,"nlms","half_squares","mean_hag",500,97.49,10,0.48],
 ["japanese_vowels",0,"nlms","half_squares","random_ee",500,95.51,10,0.6],
 ["japanese_vowels",0,"nlms","half_squares","random_ei",500,97.89,10,0.63],
@@ -1188,6 +1201,10 @@ a{color:#185FA5}
 ["japanese_vowels",0,"nlms","leverage:2080","random_ee",500,96.3,10,0.36],
 ["japanese_vowels",0,"nlms","leverage:2080","random_ei",500,97.24,10,1.0],
 ["japanese_vowels",0,"nlms","leverage:2080","var_hag",500,98.41,10,0.09],
+["japanese_vowels",0,"nlms","linear","mean_hag",500,96.14,10,0.79],
+["japanese_vowels",0,"nlms","linear","random_ee",500,93.11,10,0.19],
+["japanese_vowels",0,"nlms","linear","random_ei",500,96.86,10,0.63],
+["japanese_vowels",0,"nlms","linear","var_hag",500,96.89,10,0.48],
 ["japanese_vowels",0,"nlms","maclaurin:2080","mean_hag",500,98.14,10,0.15],
 ["japanese_vowels",0,"nlms","maclaurin:2080","random_ee",500,96.46,10,0.43],
 ["japanese_vowels",0,"nlms","maclaurin:2080","random_ei",500,96.84,10,0.87],
@@ -1204,6 +1221,10 @@ a{color:#185FA5}
 ["japanese_vowels",0,"nlms","nystrom:2080","random_ee",500,91.19,10,0.46],
 ["japanese_vowels",0,"nlms","nystrom:2080","random_ei",500,97.3,10,0.48],
 ["japanese_vowels",0,"nlms","nystrom:2080","var_hag",500,96.46,10,0.64],
+["japanese_vowels",0,"nlms","order2","mean_hag",500,95.59,10,0.31],
+["japanese_vowels",0,"nlms","order2","random_ee",500,93.68,10,1.33],
+["japanese_vowels",0,"nlms","order2","random_ei",500,94.38,10,0.81],
+["japanese_vowels",0,"nlms","order2","var_hag",500,93.19,10,0.49],
 ["japanese_vowels",0,"nlms","pca:64","mean_hag",500,96.57,10,0.56],
 ["japanese_vowels",0,"nlms","pca:64","random_ee",500,92.43,10,0.77],
 ["japanese_vowels",0,"nlms","pca:64","random_ei",500,94.35,10,0.69],
@@ -1248,6 +1269,10 @@ a{color:#185FA5}
 ["japanese_vowels",0,"ridge","leverage:2080","random_ee",500,96.95,10,0.29],
 ["japanese_vowels",0,"ridge","leverage:2080","random_ei",500,98.16,10,0.28],
 ["japanese_vowels",0,"ridge","leverage:2080","var_hag",500,97.68,10,0.39],
+["japanese_vowels",0,"ridge","linear","mean_hag",500,99.22,10,0.35],
+["japanese_vowels",0,"ridge","linear","random_ee",500,97.14,10,0.29],
+["japanese_vowels",0,"ridge","linear","random_ei",500,97.73,10,0.29],
+["japanese_vowels",0,"ridge","linear","var_hag",500,97.65,10,0.26],
 ["japanese_vowels",0,"ridge","maclaurin:2080","mean_hag",500,98.16,10,0.28],
 ["japanese_vowels",0,"ridge","maclaurin:2080","random_ee",500,97.16,10,0.14],
 ["japanese_vowels",0,"ridge","maclaurin:2080","random_ei",500,98.32,10,0.38],
@@ -1264,6 +1289,10 @@ a{color:#185FA5}
 ["japanese_vowels",0,"ridge","nystrom:2080","random_ee",500,89.92,10,0.46],
 ["japanese_vowels",0,"ridge","nystrom:2080","random_ei",500,97.62,10,0.4],
 ["japanese_vowels",0,"ridge","nystrom:2080","var_hag",500,98.14,10,0.43],
+["japanese_vowels",0,"ridge","order2","mean_hag",500,98.49,10,0.14],
+["japanese_vowels",0,"ridge","order2","random_ee",500,97.03,10,0.13],
+["japanese_vowels",0,"ridge","order2","random_ei",500,98.19,10,0.65],
+["japanese_vowels",0,"ridge","order2","var_hag",500,98.11,10,0.34],
 ["japanese_vowels",0,"ridge","pca:64","mean_hag",500,96.76,10,0.36],
 ["japanese_vowels",0,"ridge","pca:64","random_ee",500,94.05,10,0.72],
 ["japanese_vowels",0,"ridge","pca:64","random_ei",500,94.62,10,0.84],
@@ -1309,6 +1338,10 @@ a{color:#185FA5}
 ["japanese_vowels",1,"eh_np_local","leverage:2080","random_ee",500,97.97,10,0.26],
 ["japanese_vowels",1,"eh_np_local","leverage:2080","random_ei",500,97.81,10,0.39],
 ["japanese_vowels",1,"eh_np_local","leverage:2080","var_hag",500,97.57,10,0.18],
+["japanese_vowels",1,"eh_np_local","linear","mean_hag",500,96.97,10,1.13],
+["japanese_vowels",1,"eh_np_local","linear","random_ee",500,96.65,10,0.39],
+["japanese_vowels",1,"eh_np_local","linear","random_ei",500,99.08,10,0.19],
+["japanese_vowels",1,"eh_np_local","linear","var_hag",500,98.32,10,0.31],
 ["japanese_vowels",1,"eh_np_local","maclaurin:2080","mean_hag",500,97.76,10,0.26],
 ["japanese_vowels",1,"eh_np_local","maclaurin:2080","random_ee",500,96.57,10,1.16],
 ["japanese_vowels",1,"eh_np_local","maclaurin:2080","random_ei",500,98.14,10,0.59],
@@ -1361,6 +1394,14 @@ a{color:#185FA5}
 ["japanese_vowels",1,"eh_np_local","weights_low:64","random_ee",500,96.86,10,0.76],
 ["japanese_vowels",1,"eh_np_local","weights_low:64","random_ei",500,97.62,10,0.42],
 ["japanese_vowels",1,"eh_np_local","weights_low:64","var_hag",500,96.95,10,0.42],
+["japanese_vowels",1,"neh","linear","mean_hag",500,98.19,10,0.38],
+["japanese_vowels",1,"neh","linear","random_ee",500,98.62,10,0.37],
+["japanese_vowels",1,"neh","linear","random_ei",500,98.24,10,0.46],
+["japanese_vowels",1,"neh","linear","var_hag",500,98.05,10,0.87],
+["japanese_vowels",1,"neh","order2","mean_hag",500,94.65,10,0.33],
+["japanese_vowels",1,"neh","order2","random_ee",500,95.22,10,0.78],
+["japanese_vowels",1,"neh","order2","random_ei",500,95.65,10,0.43],
+["japanese_vowels",1,"neh","order2","var_hag",500,95.68,10,0.4],
 ["japanese_vowels",1,"nlms","half_squares","mean_hag",500,96.08,10,1.0],
 ["japanese_vowels",1,"nlms","half_squares","random_ee",500,97.7,10,0.48],
 ["japanese_vowels",1,"nlms","half_squares","random_ei",500,97.76,10,0.4],
@@ -1369,6 +1410,10 @@ a{color:#185FA5}
 ["japanese_vowels",1,"nlms","leverage:2080","random_ee",500,98.14,10,0.48],
 ["japanese_vowels",1,"nlms","leverage:2080","random_ei",500,97.92,10,0.4],
 ["japanese_vowels",1,"nlms","leverage:2080","var_hag",500,97.35,10,0.21],
+["japanese_vowels",1,"nlms","linear","mean_hag",500,97.59,10,0.3],
+["japanese_vowels",1,"nlms","linear","random_ee",500,98.35,10,0.39],
+["japanese_vowels",1,"nlms","linear","random_ei",500,98.19,10,0.4],
+["japanese_vowels",1,"nlms","linear","var_hag",500,98.0,10,0.51],
 ["japanese_vowels",1,"nlms","maclaurin:2080","mean_hag",500,97.35,10,0.44],
 ["japanese_vowels",1,"nlms","maclaurin:2080","random_ee",500,96.03,10,0.26],
 ["japanese_vowels",1,"nlms","maclaurin:2080","random_ei",500,97.97,10,0.51],
@@ -1385,6 +1430,10 @@ a{color:#185FA5}
 ["japanese_vowels",1,"nlms","nystrom:2080","random_ee",500,95.51,10,0.41],
 ["japanese_vowels",1,"nlms","nystrom:2080","random_ei",500,98.32,10,0.57],
 ["japanese_vowels",1,"nlms","nystrom:2080","var_hag",500,97.03,10,0.46],
+["japanese_vowels",1,"nlms","order2","mean_hag",500,95.62,10,1.2],
+["japanese_vowels",1,"nlms","order2","random_ee",500,95.95,10,0.46],
+["japanese_vowels",1,"nlms","order2","random_ei",500,95.19,10,0.87],
+["japanese_vowels",1,"nlms","order2","var_hag",500,97.08,10,0.38],
 ["japanese_vowels",1,"nlms","pca:64","mean_hag",500,95.68,10,0.28],
 ["japanese_vowels",1,"nlms","pca:64","random_ee",500,96.81,10,0.33],
 ["japanese_vowels",1,"nlms","pca:64","random_ei",500,97.57,10,0.31],
@@ -1429,6 +1478,10 @@ a{color:#185FA5}
 ["japanese_vowels",1,"ridge","leverage:2080","random_ee",500,97.49,10,0.13],
 ["japanese_vowels",1,"ridge","leverage:2080","random_ei",500,97.35,10,0.28],
 ["japanese_vowels",1,"ridge","leverage:2080","var_hag",500,98.43,10,0.25],
+["japanese_vowels",1,"ridge","linear","mean_hag",500,98.7,10,0.4],
+["japanese_vowels",1,"ridge","linear","random_ee",500,98.59,10,0.31],
+["japanese_vowels",1,"ridge","linear","random_ei",500,98.81,10,0.14],
+["japanese_vowels",1,"ridge","linear","var_hag",500,98.81,10,0.26],
 ["japanese_vowels",1,"ridge","maclaurin:2080","mean_hag",500,97.14,10,0.23],
 ["japanese_vowels",1,"ridge","maclaurin:2080","random_ee",500,98.41,10,0.37],
 ["japanese_vowels",1,"ridge","maclaurin:2080","random_ei",500,98.32,10,0.31],
@@ -1445,6 +1498,10 @@ a{color:#185FA5}
 ["japanese_vowels",1,"ridge","nystrom:2080","random_ee",500,97.62,10,0.17],
 ["japanese_vowels",1,"ridge","nystrom:2080","random_ei",500,98.65,10,0.36],
 ["japanese_vowels",1,"ridge","nystrom:2080","var_hag",500,96.43,10,0.17],
+["japanese_vowels",1,"ridge","order2","mean_hag",500,98.78,10,0.14],
+["japanese_vowels",1,"ridge","order2","random_ee",500,98.86,10,0.31],
+["japanese_vowels",1,"ridge","order2","random_ei",500,98.95,10,0.09],
+["japanese_vowels",1,"ridge","order2","var_hag",500,99.19,10,0.0],
 ["japanese_vowels",1,"ridge","pca:64","mean_hag",500,96.46,10,0.41],
 ["japanese_vowels",1,"ridge","pca:64","random_ee",500,96.16,10,0.4],
 ["japanese_vowels",1,"ridge","pca:64","random_ei",500,96.11,10,0.46],
@@ -1719,12 +1776,22 @@ const focusPlugin = {id: 'focus', afterDatasetsDraw(chart) {
   c.restore();
 }};
 let chart = null;
+const DATASET_INFO = {  // (the dataset shown: one short line; the split as "train → test")
+  marron1: ['marron1', ['1 canari', '459 chants', '13 MFCC', 'phrase suivante, 29 classes', '367 → 92 chants']],
+  japanese_vowels: ['JapaneseVowels', ['9 locuteurs, /ae/', '12 LPC, 7 à 29 trames', '9 classes', '270 → 370 énoncés']],
+  insect_sound: ['InsectSound', ['ailes de moustiques et de mouches', '600 pas, en MFCC', '10 classes', '25 000 → 25 000']],
+};
+function showDatasetInfo(dataset) {
+  const [name, facts] = DATASET_INFO[dataset] || [dataset, []];
+  element('dataset-info').innerHTML = `<b>${name}</b>` + facts.map(f => `<span${f.includes('→') ? ' title="entraînement → test"' : ''}>${f}</span>`).join('');
+}
 function draw() {
   if (chart) chart.destroy();
   const test = isTest();
   STUDIES = test ? TESTS : CV_STUDIES;
   fill('dataset', unique(STUDIES.map(s => s.dataset)).sort((a, b) => (a === 'marron1' ? -1 : b === 'marron1' ? 1 : a.localeCompare(b))));
   const dataset = element('dataset').value;
+  showDatasetInfo(dataset);
   // (the rows of the binomial standard error: those of the cross-validation, or the test instances)
   const ofDataset = STUDIES.filter(s => s.dataset === dataset), outputs = DATA.outputs[dataset];
   const rows = test ? (DATA.test_rows || {})[dataset] || DATA.rows[dataset] : DATA.rows[dataset];

@@ -43,9 +43,9 @@ details p{margin:6px 0 6px 18px}
 .wide{overflow-x:auto}
 </style>
 </head>
-<body>
+<body><style id="home-link-style">.home-link{display:inline-flex;vertical-align:-0.08em;margin-right:.4em;color:inherit;text-decoration:none}@media print{.home-link{display:none}}</style>
 <main>
-<h1>Coût de calcul des sélections de produits et des règles du readout</h1>
+<h1><a class="home-link" href="../index.html" title="Index des visualisations" aria-label="Index des visualisations"><svg viewBox="0 0 24 24" width="0.92em" height="0.92em" aria-hidden="true"><path d="M12 2.8 2 11.4h2.8V21h5.4v-6.2h3.6V21h5.4v-9.6H22z" fill="currentColor"/></svg></a>Coût de calcul des sélections de produits et des règles du readout</h1>
 <p>Chaque coût est dérivé du code (<code>bachue/models/product_selection.py</code>, <code>generalized_readout.py</code>, <code>readout_rules/</code>, <code>reservoirs.py</code>). Il compte les multiplications des termes dominants, à un facteur constant près. Un produit d'une matrice n × k par une matrice k × m compte n k m multiplications, même quand NumPy n'en calcule que la moitié pour un produit symétrique A A<sup>⊤</sup>. Un facteur 2 dans une formule signale deux produits de cette taille. Une décomposition en valeurs propres d'une matrice de côté n compte n³, alors qu'elle en coûte plutôt 4 à 9 n³. Ces comptes donnent l'ordre de grandeur et la façon dont le coût croît, pas des durées. Un produit de matrices, une décomposition en valeurs propres et une boucle compilée par JAX n'ont pas le même débit.</p>
 
 <h2>Ce que les comptes montrent</h2>
